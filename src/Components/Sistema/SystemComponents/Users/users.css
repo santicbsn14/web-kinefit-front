@@ -1,0 +1,96 @@
+.userTableContainer {
+  display: flex;
+  flex-direction: column; /* Asegura que los elementos estén en columna */
+  align-items: center;
+  margin-top: 5rem; /* Separación superior */
+  margin-left: 3rem;
+}
+
+.addUserContainer {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  margin-left: 0rem !important; 
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px;
+  background-color: #007bff;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.addUserIcon {
+  font-size: 24px; /* Tamaño del ícono */
+  color: white; /* Color del ícono */
+  margin-right: 8px; /* Espacio entre el ícono y el texto */
+}
+
+.addUserText {
+  font-size: 18px; /* Tamaño del texto */
+  color: white; /* Color del texto */
+}
+
+.userTable {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 800px; /* Ajusta el ancho máximo de la tabla */
+}
+
+.userTable th, .userTable td {
+  border: 1px solid #ddd;
+  color: white;
+  padding: 8px;
+  text-align: center;
+}
+
+.userTable th {
+  background-color: orange;
+  font-weight: bold;
+}
+
+.statusIndicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.statusIndicator.true {
+  background-color: green;
+}
+
+.statusIndicator.false {
+  background-color: red;
+}
+.userForm {
+  display: flex;
+  flex-direction: column;
+  width: 60%;
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 5px;
+  margin-top: 20px;
+  margin-bottom: 3rem;
+}
+
+.userForm select,
+.userForm input,
+.userForm button {
+  margin-bottom: 10px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.userForm button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.userForm button:hover {
+  background-color: #0056b3;
+}

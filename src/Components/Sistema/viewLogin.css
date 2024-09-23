@@ -1,0 +1,18 @@
+.mainForm{
+    margin-top: 3rem
+}
+.form-control{
+    width: 20rem;
+    margin-left: 2rem;
+}
+.btn{
+    width: 20rem;
+    margin-left: 2rem;
+    background-color: orange;
+}
+:hover .btn{
+    background-color: white;
+}
+h2{
+    color: rgb(151, 143, 127);
+}

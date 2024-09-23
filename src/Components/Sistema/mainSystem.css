@@ -1,0 +1,23 @@
+.mosaic {
+    background-color: orange;
+    width: 178px;
+    height: 80%; 
+    display: flex;
+    flex-direction: column; 
+    justify-content: flex-start; 
+    align-items: center; 
+    position: fixed; 
+    left: 0;
+    top: 80px;
+  }
+  .mosaic span{
+    text-decoration: none;
+  }
+  .mosaic-item {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px ;
+    width: 100%; 
+    box-sizing: border-box; 
+    text-align: left;
+  }

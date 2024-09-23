@@ -1,0 +1,154 @@
+.professionalTableContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 5rem;
+    margin-left: 3rem;
+  }
+  
+  .actionsContainer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 900px; /* Ajustar el ancho de la acción */
+    margin-bottom: 20px; /* Espacio entre los botones y la tabla */
+  }
+  
+  .addPatientContainer, .scheduleConfigContainer {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 10px;
+    background-color: #007bff;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+.scheduleConfigContainer span{
+    color: white;
+  }
+  .addPatientContainer span{
+    color: white;
+  }
+  .addPatientContainer:hover, .scheduleConfigContainer:hover {
+    background-color: #0056b3;
+  }
+  
+  .addPatientIcon, .addScheduleIcon {
+    font-size: 24px;
+    color: white;
+    margin-right: 8px;
+  }
+  
+  .professionalTable {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 900px; /* Ajusta el ancho máximo de la tabla */
+  }
+  
+  .professionalTable th, .professionalTable td {
+    border: 1px solid #ddd;
+    color: white;
+    padding: 8px;
+    text-align: center;
+  }
+  
+  .professionalTable th {
+    background-color: orange;
+    font-weight: bold;
+  }
+  
+  .professionalForm {
+    display: flex;
+    flex-direction: column;
+    width: 60%;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 5px;
+    margin-top: 20px;
+  }
+  
+  .professionalForm select,
+  .professionalForm input,
+  .professionalForm button {
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+  .professionalForm button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .appointmentForm button:hover {
+    background-color: #0056b3;
+  }
+@media screen and (max-width: 768px) {
+  .professionalsContainer {
+    padding: 1rem;
+  }
+  
+  .addProfessionalText {
+    font-size: 16px;
+  }
+  
+  .professionalForm input,
+  .professionalForm button {
+    max-width: 100%;
+  }
+}
+.modal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modalContent {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  position: relative;
+}
+
+.closeModal {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+  font-size: 24px;
+}
+
+.scheduleForm label {
+  display: block;
+  margin-bottom: 10px;
+}
+.scheduleForm button {
+  background-color: #007bff;
+  width: 6rem;
+  border-radius: 3px;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.scheduleForm button:hover{
+  background-color:  #0056b3;
+}
+.scheduleForm input, .scheduleForm select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+}

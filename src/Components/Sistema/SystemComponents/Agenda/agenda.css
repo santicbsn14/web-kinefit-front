@@ -1,0 +1,44 @@
+.mainAgenda {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-top: 5rem;
+    margin-left: 5rem;
+  }
+  
+  .agendaTable {
+    border-collapse: collapse;
+    width: 80%;
+    margin-left: 8rem;
+  }
+  
+  .agendaTable th, .agendaTable td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+  }
+  
+  .agendaTable th {
+    background-color: orange;
+    font-weight: bold;
+  }
+  
+  .hourColumn {
+    background-color: orange;
+    font-weight: bold;
+    width: 100px; /* Ancho fijo para la columna de horas */
+  }
+  
+  .agendaCell {
+    height: 50px; /* Ajusta la altura de las celdas */
+  }
+
+  .turnoLabel {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 4px;
+    display: inline-block;
+    text-align: left; /* Alineación del texto del cartelito */
+    font-size: 12px; /* Tamaño del texto para que sea pequeño */
+  }

@@ -1,0 +1,101 @@
+.patientTableContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 5rem;
+    margin-left: 3rem;
+  }
+  
+  .addPatientContainer {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    cursor: pointer;
+    padding: 10px;
+    background-color: #007bff;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .addPatientIcon {
+    font-size: 24px;
+    color: white;
+    margin-right: 8px;
+  }
+  
+  .addPatientText {
+    font-size: 18px;
+    color: black;
+  }
+  
+  .patientTable {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 800px;
+  }
+  
+  .patientTable th, .patientTable td {
+    border: 1px solid #ddd;
+    color: white;
+    padding: 8px;
+    text-align: center;
+  }
+  
+  .patientTable th {
+    background-color: orange;
+    font-weight: bold;
+  }
+  
+  .statusIndicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  
+  .statusIndicator.activo {
+    background-color: green;
+  }
+  
+  .statusIndicator.inactivo {
+    background-color: red;
+  }
+  
+  .patientForm {
+    display: flex;
+    flex-direction: column;
+    width: 60%;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 5px;
+    margin-top: 20px;
+    margin-bottom: 3rem;
+  }
+  
+  .patientForm select,
+  .patientForm input,
+  .patientForm button,
+  .patientForm textarea {
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+  .patientForm textarea {
+    resize: vertical; /* Permite redimensionar solo verticalmente */
+    min-height: 100px; /* Altura mínima para hacer el área más grande */
+  }
+  
+  .patientForm button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .patientForm button:hover {
+    background-color: #0056b3;
+  }
+  
