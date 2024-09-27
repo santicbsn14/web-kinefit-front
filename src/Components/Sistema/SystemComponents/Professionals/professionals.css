@@ -3,7 +3,7 @@
     flex-direction: column;
     align-items: center;
     margin-top: 5rem;
-    margin-left: 3rem;
+    margin-left: 4rem;
   }
   
   .actionsContainer {
@@ -88,6 +88,19 @@
   .appointmentForm button:hover {
     background-color: #0056b3;
   }
+  
+  .delete-button{
+    background-color: red;
+    color: white;
+    border: none;
+    cursor: pointer;
+    padding: 5px 10px;
+    margin-left: 5px;
+    border-radius: 3px;
+  }
+  .delete-button:hover{
+    background-color: rgb(190, 1, 1);
+  }
 @media screen and (max-width: 768px) {
   .professionalsContainer {
     padding: 1rem;
@@ -121,8 +134,9 @@
   border-radius: 8px;
   width: 400px;
   position: relative;
+  max-height: 35rem; /* Ajusta este valor según sea necesario */
+  overflow-y: auto; /* Activa el scroll vertical */
 }
-
 .closeModal {
   position: absolute;
   top: 10px;
@@ -151,4 +165,64 @@
   width: 100%;
   padding: 8px;
   margin-top: 5px;
+}
+.scheduleDay {
+  margin-bottom: 15px;
+}
+
+.scheduleDay h3 {
+  margin-bottom: 5px;
+}
+
+.schedule-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 5px 10px;
+  margin-left: 5px;
+  border-radius: 3px;
+}
+.schedule-button:hover {
+  background-color: #218838;
+}
+.saveChange{
+  background-color: #007bff;
+  width: 8rem;
+  height: 3rem;
+  border-radius: 3px;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 1rem;
+}
+.profesionalTimeSlotsTable {
+  border-collapse: collapse;
+  width: 60%;
+  margin: auto;
+  margin-top: 3rem;
+}
+
+.profesionalTimeSlotsTable th, 
+.profesionalTimeSlotsTable td {
+  border: 1px solid #ddd;
+  color: white;
+  padding: 8px;
+  text-align: center;
+}
+
+.profesionalTimeSlotsTable th {
+  background-color: orange;
+  font-weight: bold;
+}
+
+.profesionalIdColumn {
+  background-color: orange;
+  font-weight: bold;
+  width: 100px;
+}
+
+.timeSlotCell {
+  height: 50px;
 }

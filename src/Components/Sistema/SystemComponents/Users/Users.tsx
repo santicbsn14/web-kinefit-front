@@ -2,9 +2,11 @@ import React from 'react';
 import './users.css';
 import { createUser, getUsers, IUser } from '../../../../MockService/users';
 import { getRoles } from '../../../../MockService/roles';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Users = () => {
-  const [roles, setRoles] = React.useState<{_id: string, name: string}[]>([]);
+  const [roles, setRoles] = React.useState<{id: string, name: string}[]>([]);
   const [users, setUsers] = React.useState<IUser[]>([])
   const [showForm, setShowForm] = React.useState(false);
   const [formData, setFormData] = React.useState({
@@ -33,13 +35,7 @@ const Users = () => {
     fetchRoles();
     fetchUsers()
   }, []);
-  console.log(users)
-  // const usuarios = [
-  //   { id: '1', nombre: 'Juan', apellido: 'Perez', categoria: 'Paciente', estado: 'activo' },
-  //   { id: '2', nombre: 'Maria', apellido: 'Garcia', categoria: 'Profesional', estado: 'inactivo' },
-  //   { id: '3', nombre: 'Carlos', apellido: 'Lopez', categoria: 'Secretario', estado: 'activo' }
-  // ];
-
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
   
@@ -51,9 +47,15 @@ const Users = () => {
     setShowForm(!showForm);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    createUser(formData as unknown as  IUser);
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    try {
+      e.preventDefault();
+      await createUser(formData as unknown as  IUser);
+      toast.success('¡Creacion de usuario exitosa!')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(errorMessage);
+    }
   };
 
   return (
@@ -78,7 +80,7 @@ const Users = () => {
               <td>{user.id}</td>
               <td>{user.firstname}</td>
               <td>{user.lastname}</td>
-              <td>{user.role?.name|| ` ${user.role}`}</td>
+              <td>{user.role?.name || ` ${user.role}`}</td>
               <td>
                 <span className={`statusIndicator ${user.status}`}></span>
               </td>
@@ -138,7 +140,7 @@ const Users = () => {
             >
               <option value="">Seleccione el rol</option>
               {roles.map((role) => (
-                <option key={role._id} value={role._id}>
+                <option key={role.id} value={role.id}>
                   {role.name}
                 </option>
               ))}
@@ -179,6 +181,7 @@ const Users = () => {
           <button type="submit">Agregar Usuario</button>
         </form>
       )}
+      <ToastContainer />
     </div>
   );
 };

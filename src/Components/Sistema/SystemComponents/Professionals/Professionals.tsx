@@ -1,112 +1,229 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import './professionals.css';
-import { getProfessionals } from '../../../../MockService/professionals';
+import {
+  createProfessional,
+  createProfessionalTimeSlots,
+  deleteProfessional,
+  getProfessionals,
+  getProfessionalTimeSlots,
+  Professional
+} from '../../../../MockService/professionals';
 import { getUsers } from '../../../../MockService/users';
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import ProfesionalTimeSlots from './ProfessionalSchedule';
+import { ProfessionalTimeSlotsBBDD } from '../../../../Utils/Types/professionalTypes';
 
 interface FormData {
-  username: string;
-  especialidades: string[];
+  user_id: string;
+  specialties: string[];
 }
 
-
-
 const Professionals: React.FC = () => {
-  const [professionals, setProfessionals] = useState<{ _id: string, user_id: { firstname: string } }[]>([]);
-  const [users, setUsers] = useState<{ _id: string,  firstname: string  }[]>([]);
+  const [professionals, setProfessionals] = useState<{
+    _id: string;
+    user_id: { firstname: string; lastname: string; email: string; phone: string };
+    specialties: string[];
+  }[]>([]);
+  const [users, setUsers] = useState<{ id: string; firstname: string; lastname: string }[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showProfessionalSchedules, setShowProfessionalSchedules] = useState(false);
+  const [showDataPTS, setShowDataPTS] = useState<ProfessionalTimeSlotsBBDD | null>(null);
+  const [selectedProfessionalName, setSelectedProfessionalName] = useState<string>('');
   const [formData, setFormData] = useState<FormData>({
-    username: '',
-    especialidades: [],
+    user_id: '',
+    specialties: [],
   });
-  useEffect(() => {
-    const fetchProfessionals = async () => {
-      const professionalsData = await getProfessionals();
-      setProfessionals(professionalsData.professionals);
-    };
-    const fetchUsers = async () => {
-      const usersData = await getUsers()
-      setUsers(usersData.users)
-    }
-    fetchProfessionals();
-    fetchUsers()
-  }, []);
+
   const [scheduleData, setScheduleData] = useState({
-    name_professional: '',
-    week_day: 1,
-    time_slots: [{ start_time: '', end_time: '' }],
-    state: 'Disponible', 
+    professional_id: '',
+    schedule: [{ week_day: 1, time_slots: { start_time: '', end_time: '' } }],
+    state: 'Disponible',
   });
-  
-  const profesionales= [
-    {
-      id: '1',
-      nombre: 'Ana',
-      apellido: 'Martínez',
-      especialidades: ['Cardiología', 'Interna'],
-      email: 'ana.martinez@example.com',
-      telefono: '123-456-7890',
-    },
-    {
-      id: '2',
-      nombre: 'Luis',
-      apellido: 'Gómez',
-      especialidades: ['Neurología'],
-      email: 'luis.gomez@example.com',
-      telefono: '987-654-3210',
-    },
-    {
-      id: '3',
-      nombre: 'Elena',
-      apellido: 'Rodríguez',
-      especialidades: ['Dermatología', 'Pediatría'],
-      email: 'elena.rodriguez@example.com',
-      telefono: '555-555-5555',
-    },
-  ];
 
-  const especialidades = ['Terapia de manos', 'Rehabilitacion de rodilla', 'Osteopatia'];
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+  const openScheduleModal = async (idP: string) => {
+    try {
+      const data: ProfessionalTimeSlotsBBDD = await getProfessionalTimeSlots(idP);
+      const professional = professionals.find(p => p._id === idP);
+      if (professional) {
+        setSelectedProfessionalName(`${professional.user_id.firstname} ${professional.user_id.lastname}`);
+      }
+      setShowProfessionalSchedules(true);
+      setShowDataPTS(data);
+      console.log(data);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(errorMessage);
+    }
   };
 
-  const handleCheckboxChange = (especialidad: string) => {
-    setFormData((prevData) => {
-      if (prevData.especialidades.includes(especialidad)) {
+  const addScheduleSlot = useCallback(() => {
+    setScheduleData(prevData => ({
+      ...prevData,
+      schedule: [
+        ...prevData.schedule,
+        { week_day: 1, time_slots: { start_time: '', end_time: '' } }, // valores predeterminados
+      ],
+    }));
+  }, []);
+
+  // Nueva función para eliminar un horario
+  const deleteScheduleSlot = useCallback((index: number) => {
+    setScheduleData(prevData => ({
+      ...prevData,
+      schedule: prevData.schedule.filter((_, i) => i !== index),
+    }));
+  }, []);
+
+  const handleScheduleSlotChange = useCallback((index: number, field: string, value: any) => {
+    setScheduleData(prevData => {
+      const newSchedule = [...prevData.schedule];
+      if (field === 'week_day') {
+        newSchedule[index].week_day = value;
+      } else {
+        newSchedule[index].time_slots[field] = value;
+      }
+      return { ...prevData, schedule: newSchedule };
+    });
+  }, []);
+
+  const specialties = useMemo(() => ['Terapia de manos', 'Rehabilitacion de rodilla', 'Osteopatia'], []);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const [professionalsData, usersData] = await Promise.all([getProfessionals(), getUsers()]);
+
+      setProfessionals(professionalsData.professionals);
+      setUsers(usersData.users);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast.error('Error al cargar los datos');
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({ ...prevData, [name]: value }));
+  }, []);
+
+  const handleCheckboxChange = useCallback((especialidad: string) => {
+    setFormData(prevData => {
+      if (prevData.specialties.includes(especialidad)) {
         return {
           ...prevData,
-          especialidades: prevData.especialidades.filter((e) => e !== especialidad),
+          specialties: prevData.specialties.filter(e => e !== especialidad),
         };
       } else {
         return {
           ...prevData,
-          especialidades: [...prevData.especialidades, especialidad],
+          specialties: [...prevData.specialties, especialidad],
         };
       }
     });
-  };
+  }, []);
 
-  const toggleForm = () => {
-    setShowForm(!showForm);
-  };
+  const toggleForm = useCallback(() => setShowForm(prev => !prev), []);
+  const toggleModal = useCallback(() => setShowModal(prev => !prev), []);
 
-  const toggleModal = () => {
-    setShowModal(!showModal);
-  };
+  const handleScheduleSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      const convertTime = (timeString: string) => {
+        const [hours, minutes] = timeString.replace('hs', '').trim().split(':');
+        const date = new Date();
+        date.setHours(parseInt(hours, 10));
+        date.setMinutes(parseInt(minutes, 10));
+        date.setSeconds(0);
+        date.setMilliseconds(0);
+        const offset = date.getTimezoneOffset() * 60000; // Offset en milisegundos
+        const localDate = new Date(date.getTime() - offset);
 
-  const handleScheduleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setScheduleData({ ...scheduleData, [name]: value });
-  };
+        return localDate.toISOString().slice(0, 19); // Devuelve el string sin la Z de UTC
+      };
 
-  const handleScheduleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log(scheduleData);
-    toggleModal(); 
-  };
+      const convertedScheduleData = {
+        ...scheduleData,
+        schedule: scheduleData.schedule.map(slot => ({
+          ...slot,
+          time_slots: {
+            start_time: convertTime(slot.time_slots.start_time),
+            end_time: convertTime(slot.time_slots.end_time),
+          },
+        })),
+      };
+      const professional = professionals.find(p => p._id === scheduleData.professional_id);
+
+      try {
+        await createProfessionalTimeSlots(convertedScheduleData);
+        toast.success(
+          `Se configuró el horario de ${professional?.user_id.firstname} ${professional?.user_id.lastname} con éxito`
+        );
+        toggleModal();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        toast.error(errorMessage);
+      }
+    },
+    [scheduleData, professionals, toggleModal]
+  );
+
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      try {
+        await createProfessional(formData as unknown as Professional);
+        toast.success('¡Creación de profesional exitosa!');
+        fetchData();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        toast.error(errorMessage);
+      }
+    },
+    [formData, fetchData]
+  );
+
+  const handleDelete = useCallback(
+    async (professionalId: string) => {
+      try {
+        await deleteProfessional(professionalId);
+        toast.success('¡Profesional eliminado exitosamente!');
+        fetchData();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(error);
+        toast.error(errorMessage);
+      }
+    },
+    [fetchData]
+  );
+
+  const renderProfessionalRows = useMemo(
+    () =>
+      professionals.map(professional => (
+        <tr key={professional._id}>
+          <td>{professional._id}</td>
+          <td>{professional.user_id?.firstname || 'N/A'}</td>
+          <td>{professional.user_id?.lastname || 'N/A'}</td>
+          <td>{professional.specialties?.join(', ') || 'No especificado'}</td>
+          <td>{professional.user_id?.email || 'No email'}</td>
+          <td>{professional.user_id?.phone || 'No teléfono'}</td>
+          <td>
+            <button onClick={() => handleDelete(professional._id)} className="delete-button">
+              <i className="fa-solid fa-trash"></i>
+            </button>
+            <button onClick={() => openScheduleModal(professional._id)} className="schedule-button">
+              <i className="fa-solid fa-calendar-check "></i>
+            </button>
+          </td>
+        </tr>
+      )),
+    [professionals, handleDelete]
+  );
 
   return (
     <div className="professionalTableContainer">
@@ -130,50 +247,40 @@ const Professionals: React.FC = () => {
             <th>Especialidades</th>
             <th>Email</th>
             <th>Teléfono</th>
+            <th>Acciones</th>
           </tr>
         </thead>
-        <tbody>
-          {profesionales.map((profesional) => (
-            <tr key={profesional.id}>
-              <td>{profesional.id}</td>
-              <td>{profesional.nombre}</td>
-              <td>{profesional.apellido}</td>
-              <td>{profesional.especialidades.join(', ')}</td>
-              <td>{profesional.email}</td>
-              <td>{profesional.telefono}</td>
-            </tr>
-          ))}
-        </tbody>
+        <tbody>{renderProfessionalRows}</tbody>
       </table>
 
       {showForm && (
-        <form onSubmit={() => { }} className="professionalForm">
-              <label>
-                Nombre Usuario:
-                <select
-                  name="userId"
-                  value={formData.username}
-                  onChange={() => handleInputChange}
-                  required
-                >
-                  <option value="">Seleccione un usuario</option>
-                  {users.map((user) => (
-                    <option key={user._id} value={user._id}>
-                      {user.firstname}
-                    </option>
-                  ))}
-                </select>
-                </label>
+        <form onSubmit={handleSubmit} className="professionalForm">
+          <label>
+            Nombre Usuario:
+            <select
+              name="user_id"
+              value={formData.user_id}
+              onChange={handleInputChange}
+              required
+            >
+              <option value="">Seleccione un usuario</option>
+              {users.map(user => (
+                <option key={user.id} value={user.id}>
+                  {user.firstname} {user.lastname}
+                </option>
+              ))}
+            </select>
+          </label>
           <div>
             <label>Especialidad(es):</label>
-            {especialidades.map((especialidad) => (
+            {specialties.map(especialidad => (
               <div key={especialidad}>
                 <input
                   type="checkbox"
                   id={especialidad}
-                  name="especialidades"
+                  name="specialties"
                   value={especialidad}
-                  checked={formData.especialidades.includes(especialidad)}
+                  checked={formData.specialties.includes(especialidad)}
                   onChange={() => handleCheckboxChange(especialidad)}
                 />
                 <label htmlFor={especialidad}>{especialidad}</label>
@@ -195,47 +302,77 @@ const Professionals: React.FC = () => {
               <label>
                 Nombre Profesional:
                 <select
-                  name="professionalId"
-                  value={scheduleData.name_professional}
-                  onChange={handleScheduleChange}
+                  name="professional_id"
+                  value={scheduleData.professional_id}
+                  onChange={e =>
+                    setScheduleData({ ...scheduleData, professional_id: e.target.value })
+                  }
                   required
                 >
                   <option value="">Seleccione un profesional</option>
-                  {professionals.map((professional) => (
+                  {professionals.map(professional => (
                     <option key={professional._id} value={professional._id}>
-                      {professional.user_id?.firstname || `Profesional ${professional._id}` }
+                      {professional.user_id?.firstname || `Profesional ${professional._id}`}
                     </option>
                   ))}
                 </select>
               </label>
-              <label>
-                Día de la Semana:
-                <select
-                  name="week_day"
-                  value={scheduleData.week_day}
-                  onChange={handleScheduleChange}
-                >
-                  <option value={1}>Lunes</option>
-                  <option value={2}>Martes</option>
-                  <option value={3}>Miércoles</option>
-                  <option value={4}>Jueves</option>
-                  <option value={5}>Viernes</option>
-                </select>
-              </label>
-              <label>
-                Hora de Inicio:
-                <input type="time" name="start_time" onChange={handleScheduleChange} required />
-              </label>
-              <label>
-                Hora de Fin:
-                <input type="time" name="end_time" onChange={handleScheduleChange} required />
-              </label>
+
+              {scheduleData.schedule.map((slot, index) => (
+                <div key={index} className="scheduleSlot">
+                  <label>
+                    Día de la Semana:
+                    <select
+                      value={slot.week_day}
+                      onChange={e => handleScheduleSlotChange(index, 'week_day', Number(e.target.value))}
+                    >
+                      <option value={1}>Lunes</option>
+                      <option value={2}>Martes</option>
+                      <option value={3}>Miércoles</option>
+                      <option value={4}>Jueves</option>
+                      <option value={5}>Viernes</option>
+                      <option value={6}>Sábado</option>
+                      <option value={0}>Domingo</option>
+                    </select>
+                  </label>
+                  <label>
+                    Hora de Inicio:
+                    <input
+                      type="time"
+                      value={slot.time_slots.start_time}
+                      onChange={e => handleScheduleSlotChange(index, 'start_time', e.target.value)}
+                      required
+                    />
+                  </label>
+                  <label>
+                    Hora de Fin:
+                    <input
+                      type="time"
+                      value={slot.time_slots.end_time}
+                      onChange={e => handleScheduleSlotChange(index, 'end_time', e.target.value)}
+                      required
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => deleteScheduleSlot(index)}
+                    className="deleteScheduleButton"
+                    style={{margin:'1rem'}}
+                  >
+                    Eliminar Horario
+                  </button>
+                </div>
+              ))}
+
+              <button type="button" onClick={addScheduleSlot}>
+                Agregar Horario
+              </button>
+
               <label>
                 Estado:
                 <select
-                  name="state"
                   value={scheduleData.state}
-                  onChange={(e) => setScheduleData({ ...scheduleData, state: e.target.value })}
+                  onChange={e => setScheduleData({ ...scheduleData, state: e.target.value })}
                 >
                   <option value="Disponible">Disponible</option>
                   <option value="No disponible">No disponible</option>
@@ -249,6 +386,14 @@ const Professionals: React.FC = () => {
           </div>
         </div>
       )}
+
+      {showProfessionalSchedules && showDataPTS && (
+        <ProfesionalTimeSlots
+          data={showDataPTS}
+          nombreProfesional={selectedProfessionalName}
+        />
+      )}
+      <ToastContainer />
     </div>
   );
 };

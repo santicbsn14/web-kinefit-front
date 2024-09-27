@@ -1,16 +1,15 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import dotenv from 'dotenv'
-dotenv.config()
+
 // Otras importaciones que necesites
 
 const firebaseConfig = {
-  apiKey: process.env.API_KEY_FIREBASE,
+  apiKey: import.meta.env.VITE_API_KEY_FIREBASE,
   authDomain: "sistema-kinefit.firebaseapp.com",
-  projectId: process.env.PROJECT_ID,
+  projectId: import.meta.env.VITE_PROJECT_ID,
   storageBucket: "sistema-kinefit.appspot.com",
-  messagingSenderId: process.env.MESSAGING_SENDER_ID,
-  appId: process.env.APP_ID
+  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_APP_ID
 };
 
 // Inicializa Firebase

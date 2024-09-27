@@ -12,54 +12,28 @@ const AuthContext = createContext<AuthContextType>({ user: null, loading: true, 
 
 interface AuthProviderProps {
   children: ReactNode;
-  sessionTimeout?: number; // Tiempo en milisegundos
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children, sessionTimeout = 30 * 60 * 1000 }) => {
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
-
-  const resetTimer = () => {
-    if (timer) clearTimeout(timer);
-    const newTimer = setTimeout(() => {
-      logout();
-    }, sessionTimeout);
-    setTimer(newTimer);
-  };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      console.log('cambio el estado de usuario', currentUser);
+      setUser(currentUser);
       setLoading(false);
-      if (user) {
-        resetTimer();
-      }
     });
 
     return () => {
       unsubscribe();
-      if (timer) clearTimeout(timer);
     };
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      window.addEventListener('mousemove', resetTimer);
-      window.addEventListener('keypress', resetTimer);
-    }
-
-    return () => {
-      window.removeEventListener('mousemove', resetTimer);
-      window.removeEventListener('keypress', resetTimer);
-    };
-  }, [user]);
-
   const logout = async () => {
-    console.log('me pegaron')
+    console.log('Cerrando sesión');
     await signOut(auth);
     setUser(null);
-    if (timer) clearTimeout(timer);
   };
 
   return (

@@ -13,7 +13,7 @@ export interface DaySchedule {
 export interface CreateAppointmentDto {
     pacient: string;          
     professional: string;     
-    date_time: Date;
+    date_time: Date | null;
     schedule: DaySchedule;             
     state: string;               
     session_type: string;        

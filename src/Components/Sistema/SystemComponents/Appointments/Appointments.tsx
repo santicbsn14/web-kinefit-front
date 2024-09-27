@@ -3,6 +3,9 @@ import './appointments.css';
 import { makeAppointment } from '../../../../MockService/appointments';
 import { getProfessionals } from '../../../../MockService/professionals';
 import { getPatients } from '../../../../MockService/patients';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 export const turnos = [
   { id: '1', paciente: 'Juan Pérez', profesional: 'Dr. Ana Martínez', hora: '08:00', tratamiento: 'Consulta general', estado: 'Confirmado', fecha: '2024-09-18' },
@@ -14,8 +17,8 @@ export const turnos = [
 const Appointments = (): JSX.Element => {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    pacient: '',
-    professional: '',
+    pacient_id: '',
+    professional_id: '',
     date_time: null as Date | null, // Cambiado a tipo Date
     schedule: { week_day: 0, time_slots: { start_time: '', end_time: '' } },
     state: '',
@@ -46,12 +49,32 @@ const Appointments = (): JSX.Element => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    if (name === 'week_day') {
-      const weekDayNumber = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'].indexOf(value);
-      setFormData(prevData => ({
-        ...prevData,
-        schedule: { ...prevData.schedule, week_day: weekDayNumber }
-      }));
+    
+    if (name === 'date_time') {
+      // Convertir el valor a Date
+      const dateValue = value ? new Date(value) : null;
+  
+      // Calcular el día de la semana y actualizar el estado
+      if (dateValue) {
+        const weekDayNumber = dateValue.getUTCDay(); // Obtiene el día de la semana (0: Domingo, 1: Lunes, ...)
+        setFormData(prevData => ({
+          ...prevData,
+          date_time: dateValue,
+          schedule: {
+            ...prevData.schedule,
+            week_day: weekDayNumber // Actualizar automáticamente el week_day
+          }
+        }));
+      } else {
+        setFormData(prevData => ({
+          ...prevData,
+          date_time: null,
+          schedule: {
+            ...prevData.schedule,
+            week_day: 0 // O cualquier valor por defecto si dateValue es null
+          }
+        }));
+      }
     } else if (name === 'start_time') {
       const endTime = calculateEndTime(value);
       setFormData(prevData => ({
@@ -60,12 +83,6 @@ const Appointments = (): JSX.Element => {
           ...prevData.schedule, 
           time_slots: { start_time: value, end_time: endTime }
         }
-      }));
-    } else if (name === 'date_time') {
-      // Convertir el valor a Date
-      setFormData(prevData => ({
-        ...prevData,
-        date_time: value ? new Date(value) : null
       }));
     } else {
       setFormData({ ...formData, [name]: value });
@@ -76,10 +93,39 @@ const Appointments = (): JSX.Element => {
     setShowForm(!showForm);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log(formData);
-    // makeAppointment(formData);
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    try {
+      e.preventDefault();
+      const { date_time, schedule } = formData;
+      if (date_time) {
+        const startTimeParts = schedule.time_slots.start_time.split(':');
+        const endTimeParts = schedule.time_slots.end_time.split(':');
+
+        const appointmentStartTime = new Date(date_time);
+        appointmentStartTime.setHours(Number(startTimeParts[0]), Number(startTimeParts[1]));
+
+        const appointmentEndTime = new Date(date_time);
+        appointmentEndTime.setHours(Number(endTimeParts[0]), Number(endTimeParts[1]));
+
+
+        const appointmentData = {
+          ...formData,
+          schedule: {
+            ...schedule,
+            time_slots: {
+              start_time: appointmentStartTime,
+              end_time: appointmentEndTime,
+            }
+          }
+        };
+        await makeAppointment(appointmentData);
+      }
+      toast.success('El turno ha sido creado con exito')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(errorMessage);
+    }
+
   };
 
   return (
@@ -127,8 +173,8 @@ const Appointments = (): JSX.Element => {
       {showForm && (
         <form onSubmit={handleSubmit} className="appointmentForm">
           <select
-            name="professional"
-            value={formData.professional}
+            name="professional_id"
+            value={formData.professional_id}
             onChange={handleInputChange}
             required
           >
@@ -141,8 +187,8 @@ const Appointments = (): JSX.Element => {
           </select>
 
           <select
-            name="pacient"
-            value={formData.pacient}
+            name="pacient_id"
+            value={formData.pacient_id}
             onChange={handleInputChange}
             required
           >
@@ -161,19 +207,6 @@ const Appointments = (): JSX.Element => {
             onChange={handleInputChange}
             required
           />
-          <select
-            name="week_day"
-            value={['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][formData.schedule.week_day]}
-            onChange={handleInputChange}
-            required
-          >
-            <option value="">Seleccione un día</option>
-            <option value="Lunes">Lunes</option>
-            <option value="Martes">Martes</option>
-            <option value="Miércoles">Miércoles</option>
-            <option value="Jueves">Jueves</option>
-            <option value="Viernes">Viernes</option>
-          </select>
           <input
             type="time"
             name="start_time"
@@ -192,9 +225,10 @@ const Appointments = (): JSX.Element => {
             <option value="Chequeo anual">Chequeo anual</option>
             <option value="Examen dermatológico">Examen dermatológico</option>
           </select>
-          <button type="submit">Agregar Turno</button>
+          <button type="submit">Guardar</button>
         </form>
       )}
+      <ToastContainer />
     </div>
   );
 };
