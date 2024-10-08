@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth} from 'firebase/auth';
+
 
 // Otras importaciones que necesites
 
@@ -15,3 +16,4 @@ const firebaseConfig = {
 // Inicializa Firebase
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);  // Ejemplo para la autenticación
+

@@ -1,0 +1,77 @@
+.bulkAppointmentsContainer {
+    width: 60%;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 5px;
+    margin-top: 20px;
+  }
+  
+  .bulkAppointmentsTitle {
+    margin-bottom: 20px;
+    color: #333;
+  }
+  
+  .bulkAppointmentsForm {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .appointmentField {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+  }
+  
+  .bulkAppointmentsForm select,
+  .bulkAppointmentsForm input,
+  .bulkAppointmentsForm button {
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+  .removeButton,
+  .addButton,
+  .submitButton,
+  .cancelButton {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .removeButton:hover,
+  .addButton:hover,
+  .submitButton:hover,
+  .cancelButton:hover {
+    background-color: #0056b3;
+  }
+  
+  .removeButton {
+    background-color: #dc3545;
+  }
+  
+  .removeButton:hover {
+    background-color: #c82333;
+  }
+  
+  .formActions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+  
+  .formActions button {
+    flex: 1;
+    margin-right: 10px;
+  }
+  
+  .formActions button:last-child {
+    margin-right: 0;
+  }

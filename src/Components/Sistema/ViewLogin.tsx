@@ -17,6 +17,7 @@ import 'react-toastify/dist/ReactToastify.css';
       event.preventDefault();
       try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        console.log(userCredential)
         const user : userLoginSucces = userCredential.user;
         if (user.accessToken) {
           setErrorMessage('')

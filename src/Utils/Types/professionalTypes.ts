@@ -21,8 +21,8 @@ export interface ProfessionalTimeSlots {
 export interface DayScheduleBBDD {
     week_day: number; 
     time_slots: {
-        start_time: Date;
-        end_time: Date;
+        start_time: Date | string;
+        end_time: Date | string;
     }
 }
 export interface ProfessionalTimeSlotsBBDD {

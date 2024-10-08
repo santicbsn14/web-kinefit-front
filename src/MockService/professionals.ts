@@ -2,7 +2,11 @@ import axios from "axios";
 import { handleError } from "../Utils/ErrorManager/handleApiError";
 import { ProfessionalTimeSlots } from "../Utils/Types/professionalTypes";
 export interface Professional {
-  user_id: string,
+  user_id: {username: string,
+    firstname:string,
+    lastname:string,
+    email: string
+  },
   _id?: string,
   specialties: string[]
 }
@@ -17,6 +21,15 @@ export const getProfessionals = async () => {
     }
   }
 export const createProfessional = async (data: Professional) => {
+  try {
+    const response = await axios.post('http://localhost:8080/api/professionals', data)
+    return response.data
+  } catch (error) {
+    const errorhandler = handleError(error)
+    throw Error(errorhandler)
+  }
+}
+export const updateProfessional = async (id:string, data: Professional) => {
   try {
     const response = await axios.post('http://localhost:8080/api/professionals', data)
     return response.data
@@ -56,7 +69,6 @@ export const getProfessionalTimeSlots = async (id:string) => {
 export const updateProfessionalTimeSlots = async(id:string, data:Partial<Professional>) => {
   try {
     const response = await axios.put(`http://localhost:8080/api/professionalTimeSlots/${id}`, data)
-    
     return response.data
   } catch (error) {
     const errorhandler = handleError(error)

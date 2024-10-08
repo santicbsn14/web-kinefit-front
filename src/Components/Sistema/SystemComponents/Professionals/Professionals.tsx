@@ -6,7 +6,8 @@ import {
   deleteProfessional,
   getProfessionals,
   getProfessionalTimeSlots,
-  Professional
+  Professional,
+  updateProfessional
 } from '../../../../MockService/professionals';
 import { getUsers } from '../../../../MockService/users';
 import { ToastContainer, toast } from 'react-toastify';
@@ -18,6 +19,11 @@ interface FormData {
   user_id: string;
   specialties: string[];
 }
+interface ConfirmDeleteModalProps {
+  onClose: () => void;         // Función que no devuelve nada
+  onConfirm: () => void;       // Función que no devuelve nada
+  professionalName: string;    // Nombre del profesional, es un string
+}
 
 const Professionals: React.FC = () => {
   const [professionals, setProfessionals] = useState<{
@@ -27,7 +33,11 @@ const Professionals: React.FC = () => {
   }[]>([]);
   const [users, setUsers] = useState<{ id: string; firstname: string; lastname: string }[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [professionalToDelete, setProfessionalToDelete] = useState<{ id: string; name: string } | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [professionalToEdit, setProfessionalToEdit] = useState<Professional | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [showProfessionalSchedules, setShowProfessionalSchedules] = useState(false);
   const [showDataPTS, setShowDataPTS] = useState<ProfessionalTimeSlotsBBDD | null>(null);
   const [selectedProfessionalName, setSelectedProfessionalName] = useState<string>('');
@@ -108,24 +118,24 @@ const Professionals: React.FC = () => {
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({ ...prevData, [name]: value }));
-  }, []);
-
-  const handleCheckboxChange = useCallback((especialidad: string) => {
+    if (name in formData) {
+      setFormData(prevData => ({ ...prevData, [name]: value }));
+    }
+  }, [formData]);
+  const handleCheckboxChange = (especialidad: string) => {
     setFormData(prevData => {
-      if (prevData.specialties.includes(especialidad)) {
-        return {
-          ...prevData,
-          specialties: prevData.specialties.filter(e => e !== especialidad),
-        };
-      } else {
-        return {
-          ...prevData,
-          specialties: [...prevData.specialties, especialidad],
-        };
-      }
+      const updatedSpecialties = prevData.specialties.includes(especialidad)
+        ? prevData.specialties.filter(item => item !== especialidad)
+        : [...prevData.specialties, especialidad];
+      
+      return {
+        ...prevData,
+        specialties: updatedSpecialties
+      };
     });
-  }, []);
+  };
+  
+  
 
   const toggleForm = useCallback(() => setShowForm(prev => !prev), []);
   const toggleModal = useCallback(() => setShowModal(prev => !prev), []);
@@ -187,10 +197,54 @@ const Professionals: React.FC = () => {
     [formData, fetchData]
   );
 
-  const handleDelete = useCallback(
-    async (professionalId: string) => {
+  const handleEditSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      if(professionalToEdit?._id)
+      await updateProfessional(professionalToEdit._id,professionalToEdit);
+      toast.success('¡Actualización de profesional exitosa!');
+      fetchData(); // Vuelve a cargar los datos
+      setShowEditForm(false);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(errorMessage);
+    }
+  }, [professionalToEdit, fetchData]);
+  
+
+  const handleEditClick = useCallback((professional: Professional) => {
+    setProfessionalToEdit(professional);
+    setShowEditForm(true);
+  }, []);
+
+  const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({ onClose, onConfirm, professionalName }) => {
+    if(!showDeleteModal) return (
+      <div></div>
+    )
+    return (
+      <div className="modal-two">
+        <div className="modalContent-two">
+          <h2>Confirmar eliminación</h2>
+          <p>¿Estás seguro que quieres eliminar al profesional {professionalName}?</p>
+          <div className="modalButtons-two">
+            <button onClick={onClose}>Cancelar</button>
+            <button onClick={onConfirm}>Confirmar</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+
+  const handleDeleteClick = useCallback((professionalId: string, professionalName: string) => {
+    setProfessionalToDelete({ id: professionalId, name: professionalName });
+    setShowDeleteModal(true);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (professionalToDelete) {
       try {
-        await deleteProfessional(professionalId);
+        await deleteProfessional(professionalToDelete.id);
         toast.success('¡Profesional eliminado exitosamente!');
         fetchData();
       } catch (error) {
@@ -198,9 +252,10 @@ const Professionals: React.FC = () => {
         console.error(error);
         toast.error(errorMessage);
       }
-    },
-    [fetchData]
-  );
+    }
+    setShowDeleteModal(false);
+    setProfessionalToDelete(null);
+  }, [professionalToDelete, fetchData]);
 
   const renderProfessionalRows = useMemo(
     () =>
@@ -213,16 +268,19 @@ const Professionals: React.FC = () => {
           <td>{professional.user_id?.email || 'No email'}</td>
           <td>{professional.user_id?.phone || 'No teléfono'}</td>
           <td>
-            <button onClick={() => handleDelete(professional._id)} className="delete-button">
+            <button style={{margin:'2px'}} onClick={() => handleDeleteClick(professional._id, `${professional.user_id?.firstname} ${professional.user_id?.lastname}`)} className="delete-button">
               <i className="fa-solid fa-trash"></i>
             </button>
-            <button onClick={() => openScheduleModal(professional._id)} className="schedule-button">
+            <button style={{margin:'2px'}} onClick={() => openScheduleModal(professional._id)} className="schedule-button">
               <i className="fa-solid fa-calendar-check "></i>
+            </button>
+            <button style={{margin:'2px'}} onClick={() => handleEditClick(professional as unknown as Professional)} className="edit-button">
+              <i className="fa-solid fa-edit"></i>
             </button>
           </td>
         </tr>
       )),
-    [professionals, handleDelete]
+    [professionals, handleDeleteConfirm]
   );
 
   return (
@@ -280,8 +338,8 @@ const Professionals: React.FC = () => {
                   id={especialidad}
                   name="specialties"
                   value={especialidad}
-                  checked={formData.specialties.includes(especialidad)}
-                  onChange={() => handleCheckboxChange(especialidad)}
+                  checked={formData.specialties.includes(especialidad)} // Verifica en formData
+                  onChange={() => handleCheckboxChange(especialidad)} // Cambia formData
                 />
                 <label htmlFor={especialidad}>{especialidad}</label>
               </div>
@@ -393,6 +451,34 @@ const Professionals: React.FC = () => {
           nombreProfesional={selectedProfessionalName}
         />
       )}
+      {showEditForm && professionalToEdit && (
+        <form onSubmit={handleEditSubmit} className="editForm">
+          <div>
+            <label>Especialidad(es):</label>
+            {specialties.map(especialidad => (
+              <div key={especialidad}>
+                <input
+                  type="checkbox"
+                  id={`specialty-${especialidad}`}
+                  name="specialties"
+                  value={especialidad}
+                  checked={professionalToEdit.specialties.includes(especialidad)}
+                  onChange={() => handleCheckboxChange(especialidad)}
+                />
+                <label htmlFor={`specialty-${especialidad}`}>{especialidad}</label>
+              </div>
+            ))}
+          </div>
+          <button type="submit">Guardar cambios</button>
+        </form>
+      )}
+
+        <ConfirmDeleteModal
+        isOpen={showDeleteModal} 
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteConfirm}
+        professionalName={professionalToDelete?.name || ''}
+      />
       <ToastContainer />
     </div>
   );

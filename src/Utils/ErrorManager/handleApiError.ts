@@ -56,6 +56,9 @@ type ErrorResponse = {
             if(data.message.includes('Los pacientes no pueden ser profesionales')){
               return "Los pacientes no pueden ser profesionales"
             }
+            if(data.message.includes('The professional does not work in that time slot')){
+              return "El profesional no trabaja en el horario ingresado"
+            }
             if(data.message.includes('El recurso ya ha sido creado previamente')){
               return 'El recurso ya ha sido creado previamente'
             }

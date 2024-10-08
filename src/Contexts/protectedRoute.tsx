@@ -2,7 +2,7 @@ import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import * as React from 'react'
 import { useAuth } from './authContext';
 const ProtectedRoute: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading} = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 

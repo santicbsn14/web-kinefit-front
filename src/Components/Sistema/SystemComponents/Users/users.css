@@ -3,7 +3,8 @@
   flex-direction: column; /* Asegura que los elementos estén en columna */
   align-items: center;
   margin-top: 5rem; /* Separación superior */
-  margin-left: 3rem;
+  margin-left: 5rem;
+  margin-bottom: 5rem;
 }
 
 .addUserContainer {
@@ -93,4 +94,88 @@
 
 .userForm button:hover {
   background-color: #0056b3;
+}
+.edit-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 5px 10px;
+  margin-left: 5px;
+  border-radius: 3px;
+}
+.edit-button:hover {
+  background-color: #218838;
+}
+.delete-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 5px 10px;
+  margin-left: 5px;
+  border-radius: 3px;
+}
+.delete-button:hover {
+  background-color: #218838;
+}
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  width: 300px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.modal-buttons button {
+  background-color: #007bff;;
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 5px 10px;
+  margin-left: 5px;
+  border-radius: 3px;
+}
+.modal-buttons button:hover{
+  background-color:  #0056b3;
+}
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.paginationButton {
+  padding: 5px 10px;
+  margin: 0 5px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  cursor: pointer;
+}
+
+.paginationButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  margin: 0 10px;
 }
