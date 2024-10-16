@@ -54,7 +54,7 @@ const BulkAppointments = ({ patients, professionals, onClose, onSuccess }) => {
         
         // Convert to 1-7 range where 1 is Monday and 7 is Sunday
         const adjustedWeekDay = weekDay === 0 ? 7 : weekDay;
-
+        const end_time = appointmentDate.add(1,'hour')
         return {
           pacient_id: appointment.pacient_id,
           professional_id: appointment.professional_id,
@@ -62,14 +62,13 @@ const BulkAppointments = ({ patients, professionals, onClose, onSuccess }) => {
           schedule: {
             week_day: adjustedWeekDay,
             time_slots: {
-              start_time: appointment.start_time,
-              end_time: appointment.end_time
+              start_time: appointmentDate.toDate(),
+              end_time: end_time.toDate()
             }
           },
           session_type: appointment.session_type
         };
       });
-
       await bulkAppointments(appointmentData);
       toast.success('Los turnos han sido creados con éxito');
       onSuccess();

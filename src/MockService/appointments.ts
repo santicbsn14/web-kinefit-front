@@ -55,7 +55,18 @@ export const updateAppointment = async (id: string, data: Partial<CreateAppointm
 }
 export const bulkAppointments = async (data:CreateAppointmentDto[]) => {
   try {
-    const response = await axios.post('http://localhost:8080/api/appointments/bulkAppointments', data)
+    const auth = getAuth(); 
+    const token = await auth.currentUser?.getIdToken(); 
+    
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+    const response = await axios.post('http://localhost:8080/api/appointments/bulkAppointments', data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}` // Agregar el token en la cabecera
+        }
+      })
     
     return response.data
   } catch (error) {
@@ -67,7 +78,7 @@ export const makeAppointmentByPatient = async (data: CreateAppointmentDto) => {
   try {
     const auth = getAuth(); 
     const token = await auth.currentUser?.getIdToken(); 
-
+    
     if (!token) {
       throw new Error('No authentication token available');
     }
@@ -83,6 +94,26 @@ export const makeAppointmentByPatient = async (data: CreateAppointmentDto) => {
     );
     
     return response.data;
+  } catch (error) {
+    const errorhandler = handleError(error)
+    throw Error(errorhandler)
+  }
+}
+export const deleteAppointment = async (id: string) =>{
+  try {
+    const auth = getAuth(); 
+    const token = await auth.currentUser?.getIdToken(); 
+    
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+    const response = await axios.delete(`http://localhost:8080/api/appointments/${id}`, 
+      {
+        headers: {
+          Authorization: `Bearer ${token}` // Agregar el token en la cabecera
+        }
+      })
+      return response
   } catch (error) {
     const errorhandler = handleError(error)
     throw Error(errorhandler)

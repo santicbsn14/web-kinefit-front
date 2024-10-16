@@ -31,5 +31,6 @@ export interface CreateAppointment {
     date_time: Date | null;
     schedule: DaySchedule;             
     state: string;               
-    session_type: string;        
+    session_type: string;    
+    order_photo: string;    
 }

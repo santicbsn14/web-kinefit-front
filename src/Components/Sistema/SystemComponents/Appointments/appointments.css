@@ -115,3 +115,12 @@ body {
 .appointmentForm button:hover {
   background-color: #0056b3;
 }
+.order_url{
+  background-color: #0056b3;
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 5px 10px;
+  margin-left: 5px;
+  border-radius: 3px;
+}

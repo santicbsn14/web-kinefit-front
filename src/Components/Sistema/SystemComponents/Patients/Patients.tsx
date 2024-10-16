@@ -16,6 +16,8 @@ const Patients = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [currentPatientId, setCurrentPatientId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const patientsPerPage = 6;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -95,6 +97,12 @@ const Patients = () => {
       }
     }
   };
+    // Lógica de paginación
+    const indexOfLastPatient = currentPage * patientsPerPage;
+    const indexOfFirstPatient = indexOfLastPatient - patientsPerPage;
+    const currentPatients = patients.slice(indexOfFirstPatient, indexOfLastPatient);
+  
+    const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   return (
     <div className="patientTableContainer">
@@ -114,7 +122,7 @@ const Patients = () => {
           </tr>
         </thead>
         <tbody>
-          {patients.map((paciente) => (
+          {currentPatients.map((paciente) => (
             <tr key={paciente._id}>
               <td>{paciente._id}</td>
               <td>{paciente.user_id.firstname}</td>
@@ -135,6 +143,23 @@ const Patients = () => {
           ))}
         </tbody>
       </table>
+      <div className="pagination">
+        <button 
+          onClick={() => paginate(currentPage - 1)} 
+          disabled={currentPage === 1}
+          className="paginationButton"
+        >
+          Anterior
+        </button>
+        <span className="pageInfo">{`Página ${currentPage} de ${Math.ceil(users.length / patientsPerPage)}`}</span>
+        <button 
+          onClick={() => paginate(currentPage + 1)} 
+          disabled={indexOfLastPatient>= patients.length}
+          className="paginationButton"
+        >
+          Siguiente
+        </button>
+      </div>
       {showForm && (
         <form onSubmit={handleSubmit} className="patientForm">
           <label>

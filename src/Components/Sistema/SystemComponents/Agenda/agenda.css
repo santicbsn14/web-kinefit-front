@@ -30,6 +30,10 @@
   }
   
   .agendaCell {
+    position: relative;
+    height: 50px; /* Mantén la altura de las celdas */
+  }
+  .agendaCell {
     height: 50px; /* Ajusta la altura de las celdas */
   }
 

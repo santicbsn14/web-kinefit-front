@@ -7,6 +7,8 @@ import isBetween from 'dayjs/plugin/isBetween';
 import './agenda.css';
 import { getAppointments } from '../../../../MockService/appointments';
 import { CreateAppointment } from '../../../../Utils/Types/appointmentTypes';
+import { getAuth } from 'firebase/auth';
+import AppointmentCell from './AppointmentCell';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -15,8 +17,9 @@ dayjs.extend(isBetween);
 
 const Agenda = () => {
   const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-  const hours = Array.from({ length: 9 }, (_, i) => `${8 + i}:00`);
+  const hours = Array.from({ length: 12 }, (_, i) => `${8 + i}:00`);
   const [appointments, setAppointments] = useState<CreateAppointment[]>([]);
+  const [professionalEmail, setProfessionalEmail] = useState<string | null>(null);
 
   
   const fetchAppointments = async () => {
@@ -26,6 +29,11 @@ const Agenda = () => {
 
   useEffect(() => {
     fetchAppointments();
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (user) {
+      setProfessionalEmail(user.email);
+    }
   }, []);
 
   
@@ -34,7 +42,12 @@ const Agenda = () => {
     return now.week(); 
   };
 
-  // Verificar si el turno está en la semana actual
+  const filterAppointmentsByProfessional = (appointments: CreateAppointment[]) => {
+    return appointments.filter(appointment => 
+      appointment.professional_id.user_id.email === professionalEmail
+    );
+  };
+  
   const isInCurrentWeek = (date: string) => {
     const appointmentDate = dayjs(date).utc().startOf('day'); // Ignorar las horas
     const currentWeek = getCurrentWeek();
@@ -42,7 +55,7 @@ const Agenda = () => {
     return appointmentDate.week() === currentWeek;
   };
 
-  // Filtrar los turnos por día de la semana y hora
+  
   const getTurnos = (dayIndex: number, hora: string) => {
     return appointments.filter(appointment => {
       const appointmentDate = dayjs(appointment.date_time).utc();
@@ -64,16 +77,17 @@ const Agenda = () => {
   };
   
 
-  // Obtener los turnos para hoy
+  
   const today = dayjs().utc().startOf('day');
-  const turnosHoy = appointments.filter(appointment => {
-    const appointmentDate = dayjs(appointment.date_time).utc().startOf('day'); // Comparar solo el día
-    return appointmentDate.isSame(today); // Verificar si es hoy
+
+  const turnosHoyProfesional = filterAppointmentsByProfessional(appointments).filter(appointment => {
+    const appointmentDate = dayjs(appointment.date_time).utc().startOf('day');
+    return appointmentDate.isSame(today);
   });
 
-  const totalPacientesHoy = turnosHoy.length; // Contar los turnos de hoy
-  const ultimoTurnoHoy = turnosHoy.length > 0
-    ? dayjs(turnosHoy.reduce((latest, appointment) =>
+  const totalPacientesHoy = turnosHoyProfesional.length; // Contar los turnos de hoy
+  const ultimoTurnoHoy = turnosHoyProfesional.length > 0
+    ? dayjs(turnosHoyProfesional.reduce((latest, appointment) =>
       dayjs(latest.schedule.time_slots.end_time).isAfter(dayjs(appointment.schedule.time_slots.end_time)) ? latest : appointment
     ).schedule.time_slots.end_time).format('HH:mm') // Obtener la hora del último turno de hoy
     : 'No hay turnos'; // Si no hay turnos hoy
@@ -129,9 +143,7 @@ const Agenda = () => {
                 return (
                   <td key={dayIndex} className="agendaCell">
                     {turnosEnEstaHora.map((appointment, index) => (
-                      <div key={index} className="turnoLabel">
-                        {appointment.pacient_id.user_id.firstname} {appointment.pacient_id.user_id.lastname}: {appointment.session_type} ({appointment.state})
-                      </div>
+                      <AppointmentCell key={index} appointment={appointment} />
                     ))}
                   </td>
                 );

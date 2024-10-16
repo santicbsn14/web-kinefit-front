@@ -7,14 +7,15 @@ import { useAuth } from '../../../../Contexts/authContext';
 
 interface ProfesionalTimeSlotsProps {
   data: ProfessionalTimeSlotsBBDD | null;
-  nombreProfesional: string;
+  professionalName: string;
   professionals: Professional[];
   isOpen: boolean;
+  onClose: ()=> boolean
 }
 
 const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-const ProfesionalTimeSlots: React.FC<ProfesionalTimeSlotsProps> = ({ data, nombreProfesional, professionals, isOpen}) => {
+const ProfesionalTimeSlots: React.FC<ProfesionalTimeSlotsProps> = ({ data, professionalName, professionals, isOpen, onClose}) => {
   const { role } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [professionalsOptions, setProfessionalsOptions] = useState<Professional[]>([]);
@@ -37,7 +38,7 @@ const ProfesionalTimeSlots: React.FC<ProfesionalTimeSlotsProps> = ({ data, nombr
   React.useEffect(() => {
     fetchData();
   }, [fetchData]);
-
+  
   if (!isOpen) {
     return null; 
   }
@@ -45,7 +46,9 @@ const ProfesionalTimeSlots: React.FC<ProfesionalTimeSlotsProps> = ({ data, nombr
   const handleEditClick = (schedule: ProfessionalTimeSlotsBBDD) => {
     setScheduleData(schedule);
     setSelectedScheduleId(schedule._id);
-
+    console.log(scheduleData)
+    setShowModal(prevState => !prevState)
+    // onClose(); // Cerrar el modal después de seleccionar el horario
   };
 
   const formatDate = (dateString: string | Date) => {
@@ -121,7 +124,7 @@ const ProfesionalTimeSlots: React.FC<ProfesionalTimeSlotsProps> = ({ data, nombr
         } else {
           toast.error('No se pudo identificar el horario a editar');
         }
-        
+        onClose(); 
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         toast.error(errorMessage);
@@ -129,14 +132,13 @@ const ProfesionalTimeSlots: React.FC<ProfesionalTimeSlotsProps> = ({ data, nombr
     },
     [scheduleData, professionals, onClose, selectedScheduleId]
   );
-
   if (!data) {
-    return <div>No hay datos disponibles</div>;
+    return <h2>No hay datos disponibles</h2>;
   }
 
   return (
     <>
-      <h2>Horarios de {nombreProfesional}</h2>
+      <h2>Horarios de {professionalName}</h2>
       <table className="profesionalTimeSlotsTable">
         <thead>
           <tr>

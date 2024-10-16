@@ -1,5 +1,6 @@
 import axios from "axios";
 import { handleError } from "../Utils/ErrorManager/handleApiError";
+import { getAuth } from "firebase/auth";
 
 export interface Patient {
   _id?: string;
@@ -18,7 +19,18 @@ export const getPatients = async () => {
   }
 export const createPatient = async (data: Patient) => {
   try {
-    const response = await axios.post('http://localhost:8080/api/patients', data)
+    const auth = getAuth(); 
+    const token = await auth.currentUser?.getIdToken(); 
+    
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+    const response = await axios.post('http://localhost:8080/api/patients', data, 
+      {
+        headers: {
+          Authorization: `Bearer ${token}` // Agregar el token en la cabecera
+        }
+      })
     return response.data
   } catch (error) {
     const errorhandler = handleError(error)
@@ -27,7 +39,18 @@ export const createPatient = async (data: Patient) => {
 }
 export const updatePatient = async (id:string, data: Partial<Patient>) => {
   try {
-    const response = await axios.put(`http://localhost:8080/api/patients/${id}`, data)
+    const auth = getAuth(); 
+    const token = await auth.currentUser?.getIdToken(); 
+    
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+    const response = await axios.put(`http://localhost:8080/api/patients/${id}`, data, 
+    {
+      headers: {
+        Authorization: `Bearer ${token}` // Agregar el token en la cabecera
+      }
+    })
     return response.data
   } catch (error) {
     const errorhandler = handleError(error)
@@ -36,7 +59,18 @@ export const updatePatient = async (id:string, data: Partial<Patient>) => {
 }
 export const deletePatient = async (id:string) => {
   try {
-    const response = await axios.delete(`http://localhost:8080/api/patients/${id}`)
+    const auth = getAuth(); 
+    const token = await auth.currentUser?.getIdToken(); 
+    
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+    const response = await axios.delete(`http://localhost:8080/api/patients/${id}`, 
+      {
+        headers: {
+          Authorization: `Bearer ${token}` // Agregar el token en la cabecera
+        }
+      })
     return response.data
   } catch (error) {
     const errorhandler = handleError(error)

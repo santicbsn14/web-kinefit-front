@@ -1,5 +1,6 @@
 import axios from "axios";
 import { handleError } from "../Utils/ErrorManager/handleApiError";
+import { getAuth } from "firebase/auth";
 
 export interface IUser  {
   firstname: string;
@@ -41,8 +42,18 @@ export const getUserByEmail = async (email: string) =>{
 }
 export const createUser = async (userData:IUser) => {
   try {
-    console.log(userData)
-    const response = await axios.post('http://localhost:8080/api/session/signup', userData)
+    const auth = getAuth(); 
+    const token = await auth.currentUser?.getIdToken(); 
+    
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+    const response = await axios.post('http://localhost:8080/api/session/signup', userData, 
+      {
+        headers: {
+          Authorization: `Bearer ${token}` // Agregar el token en la cabecera
+        }
+      })
     return response.data
   } catch (error: unknown) {
     const errorhandler = handleError(error)
@@ -51,7 +62,18 @@ export const createUser = async (userData:IUser) => {
 }
 export const updateUser = async (userid: string, userdata: Partial<IUser>) =>{
   try {
-    const response = await axios.put(`http://localhost:8080/api/users/${userid}`, userdata)
+    const auth = getAuth(); 
+    const token = await auth.currentUser?.getIdToken(); 
+    
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+    const response = await axios.put(`http://localhost:8080/api/users/${userid}`, userdata, 
+      {
+        headers: {
+          Authorization: `Bearer ${token}` // Agregar el token en la cabecera
+        }
+      })
     return response.data
   } catch (error) {
     const errorhandler = handleError(error)
@@ -60,7 +82,18 @@ export const updateUser = async (userid: string, userdata: Partial<IUser>) =>{
 }
 export const deleteUserMongo = async (userid: string) =>{
   try {
-    const response = await axios.delete(`http://localhost:8080/api/users/${userid}`)
+    const auth = getAuth(); 
+    const token = await auth.currentUser?.getIdToken(); 
+    
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+    const response = await axios.delete(`http://localhost:8080/api/users/${userid}`, 
+      {
+        headers: {
+          Authorization: `Bearer ${token}` // Agregar el token en la cabecera
+        }
+      })
     return response.data
   } catch (error) {
     const errorhandler = handleError(error)

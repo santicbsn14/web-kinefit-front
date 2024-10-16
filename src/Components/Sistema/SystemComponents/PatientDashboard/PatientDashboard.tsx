@@ -13,6 +13,7 @@ import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'; // Plugin opcional
 import 'dayjs/locale/es'; // Carga la localización para español
+import axios from 'axios';
 dayjs.extend(localizedFormat);
 dayjs.locale('es');
 const PatientDashboard = () => {
@@ -25,6 +26,9 @@ const PatientDashboard = () => {
   const [showDataPTS, setShowDataPTS] = useState<ProfessionalTimeSlotsBBDD | null>(null);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(null);
   const [selectedProfessionalName, setSelectedProfessionalName] = useState<string>('');
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+const [filePreview, setFilePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     pacient_id: '',
     professional_id: '',
@@ -36,25 +40,45 @@ const PatientDashboard = () => {
   const email = getAuth().currentUser?.email;
   const appointmentUser = async () => {
     try {
-        
         const user = await getUserByEmail(email);
         const appointment = await getAppointments();
-        console.log(appointment.appointments)
-        // Busca el turno correspondiente al user.id
+       
+
+        // Obtener la fecha actual
+        const currentDate = new Date();
+
+        // Filtrar y buscar el turno correspondiente al user.id que sea futuro
         const userAppointment = appointment.appointments.find(
-            (appt) => appt.pacient_id.user_id._id === user.id
+            (appt) => 
+                appt.pacient_id.user_id._id === user.id &&
+                new Date(appt.date_time) >= currentDate
         );
 
         if (userAppointment) {
-            setUserAppointment(userAppointment.date_time)
+            setUserAppointment(userAppointment.date_time);
         } else {
-            setUserAppointment('No tienes turnos asignados')
+            setUserAppointment('No tienes turnos futuros asignados');
         }
         
     } catch (error) {
         console.error('Error al obtener el usuario o los turnos:', error);
     }
 }
+const uploadImageToCloudinary = async (file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', 'upload_test');
+  formData.append('cloud_name', 'ds8ilvysp');
+  
+  try {
+    const response = await axios.post('https://api.cloudinary.com/v1_1/ds8ilvysp/image/upload', formData);
+    return response.data.secure_url;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(error);
+    toast.error(errorMessage);
+  }
+};
   useEffect(() => {
     const fetchProfessionals = async () => {
       const professionalsData = await getProfessionals();
@@ -85,7 +109,7 @@ const PatientDashboard = () => {
         if (professional) {
           setSelectedProfessionalName(`${professional.user_id.firstname} ${professional.user_id.lastname}`);
         }
-        setShowProfessionalSchedules(true);
+        setShowProfessionalSchedules(prevState => !prevState);
         setShowDataPTS(data);
         setSelectedProfessionalId(idP);
       } catch (error) {
@@ -132,46 +156,68 @@ const PatientDashboard = () => {
     const endDate = new Date(2000, 0, 1, hours + 1, minutes);
     return endDate.toTimeString().slice(0, 5);
   };
-
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0] || null;
+    console.log('Archivo seleccionado:', selectedFile);
+    setFile(selectedFile);
+    if (selectedFile) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFilePreview(reader.result as string);
+      };
+      reader.readAsDataURL(selectedFile);
+    }
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const { date_time, schedule, pacient_id, professional_id, state, session_type } = formData;
-    
+
     if (date_time && schedule.time_slots.start_time) {
-      const startTimeParts = schedule.time_slots.start_time.split(':');
-      const endTime = calculateEndTime(schedule.time_slots.start_time);
-      const endTimeParts = endTime.split(':');
-
-      const appointmentDate = new Date(date_time);
-      const appointmentStartTime = new Date(appointmentDate);
-      appointmentStartTime.setHours(Number(startTimeParts[0]), Number(startTimeParts[1]));
-
-      const appointmentEndTime = new Date(appointmentDate);
-      appointmentEndTime.setHours(Number(endTimeParts[0]), Number(endTimeParts[1]));
-
-      const appointmentData: CreateAppointmentDto = {
-        pacient_id,
-        professional_id,
-        date_time: appointmentDate.toISOString(),
-        schedule: {
-          week_day: schedule.week_day + 1,
-          time_slots: {
-            start_time: appointmentStartTime.toISOString(),
-            end_time: appointmentEndTime.toISOString(),
-          }
-        },
-        state,
-        session_type
-      };
-
+      setLoading(true);
       try {
+        let uploadedImageUrl = '';
+        if (file) {
+          uploadedImageUrl = await uploadImageToCloudinary(file);
+        }
+
+        const startTimeParts = schedule.time_slots.start_time.split(':');
+        const endTime = calculateEndTime(schedule.time_slots.start_time);
+        const endTimeParts = endTime.split(':');
+
+        const appointmentDate = new Date(date_time);
+        const appointmentStartTime = new Date(appointmentDate);
+        appointmentStartTime.setHours(Number(startTimeParts[0]), Number(startTimeParts[1]));
+
+        const appointmentEndTime = new Date(appointmentDate);
+        appointmentEndTime.setHours(Number(endTimeParts[0]), Number(endTimeParts[1]));
+
+        const appointmentData: CreateAppointmentDto = {
+          pacient_id,
+          professional_id,
+          date_time: appointmentDate.toISOString(),
+          schedule: {
+            week_day: schedule.week_day + 1,
+            time_slots: {
+              start_time: appointmentStartTime.toISOString(),
+              end_time: appointmentEndTime.toISOString(),
+            }
+          },
+          state,
+          session_type,
+          order_photo: uploadedImageUrl, // Agregamos la URL de la imagen si se subió una
+        };
+        
         await makeAppointmentByPatient(appointmentData);
         toast.success('El turno ha sido creado con éxito');
         setShowForm(false);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         toast.error(errorMessage);
+      } finally {
+        setLoading(false);
       }
+    } else {
+      toast.error('Por favor completa todos los campos requeridos.');
     }
   };
 
@@ -203,7 +249,7 @@ const PatientDashboard = () => {
                       }}
                   >
                       <i className="fa-solid fa-calendar-check"></i>
-                      {selectedProfessionalId === professional._id && showProfessionalSchedules ? ' Cerrar' : ' Abrir'}
+
                   </button>
               </td>
           </tr>
@@ -289,7 +335,7 @@ const PatientDashboard = () => {
 
           {/* Profesional */}
           <div style={{ marginBottom: '15px' }}>
-            <label htmlFor="professional_id" style={{ display: 'block', marginBottom: '5px' }}>Profesional:</label>
+            <label htmlFor="professional_id" style={{ display: 'block', marginBottom: '5px', color:'rgb(151, 143, 127)' }}>Profesional:</label>
             <select
               name="professional_id"
               value={formData.professional_id}
@@ -308,7 +354,7 @@ const PatientDashboard = () => {
 
           {/* Fecha */}
           <div style={{ marginBottom: '15px' }}>
-            <label htmlFor="date_time" style={{ display: 'block', marginBottom: '5px' }}>Fecha:</label>
+            <label htmlFor="date_time" style={{ display: 'block', marginBottom: '5px', color:'rgb(151, 143, 127)' }}>Fecha:</label>
             <input
               type="date"
               name="date_time"
@@ -321,7 +367,7 @@ const PatientDashboard = () => {
 
           {/* Hora de inicio */}
           <div style={{ marginBottom: '15px' }}>
-            <label htmlFor="start_time" style={{ display: 'block', marginBottom: '5px' }}>Hora de inicio:</label>
+            <label htmlFor="start_time" style={{ display: 'block', marginBottom: '5px', color:'rgb(151, 143, 127)' }}>Hora de inicio:</label>
             <input
               type="time"
               name="start_time"
@@ -334,7 +380,7 @@ const PatientDashboard = () => {
 
           {/* Tipo de sesión */}
           <div style={{ marginBottom: '15px' }}>
-            <label htmlFor="session_type" style={{ display: 'block', marginBottom: '5px' }}>Tipo de sesión:</label>
+            <label htmlFor="session_type" style={{ display: 'block', marginBottom: '5px',color:'rgb(151, 143, 127)' }}>Tipo de sesión:</label>
             <input
               type="text"
               name="session_type"
@@ -344,7 +390,15 @@ const PatientDashboard = () => {
               required
             />
           </div>
-
+          <label style={{color:'rgb(151, 143, 127)'}} htmlFor=""> Ingrese la imagen de la orden:
+          <input 
+            type="file"
+            style={{margin:'1rem'}}
+            onChange={handleFileChange} 
+            accept="image/*"
+          />
+          {filePreview && <img src={filePreview} alt="Vista previa" style={{maxWidth: '200px'}} />}
+          </label>
           {/* Botones */}
           <div style={{ textAlign: 'center' }}>
             <button
@@ -403,11 +457,13 @@ const PatientDashboard = () => {
           </table>
         </div>
       )}
+      
       {showProfessionalSchedules && showDataPTS && (
         <ProfesionalTimeSlots
-          data={showDataPTS}
-          nombreProfesional={selectedProfessionalName}
-          isOpen={showProfessionalSchedules}
+        professionalName={selectedProfessionalName} 
+        data={showDataPTS} 
+        onClose={() => setShowProfessionalSchedules(false)}
+        isOpen={showProfessionalSchedules} 
         />
       )}
       <ToastContainer />

@@ -10,7 +10,7 @@ type ErrorResponse = {
     if (error.response) {
       const status = error.response.status;
       const data: ErrorResponse = error.response.data;
-     
+     console.log(error.message)
       switch (status) {
         case 400:
           if (data.message === "Validation error") {
@@ -44,6 +44,9 @@ type ErrorResponse = {
           if (data.message.includes("User don't exist")) {
             return "Usuario no encontrado.";
           }
+          if(data.message.includes('No se han configurado los horarios de este profesional')){
+            return 'No se han configurado los horarios de este profesional'
+          }
           return "No se pudo encontrar el recurso (404)";
   
           case 409:
@@ -75,6 +78,7 @@ type ErrorResponse = {
     } else {
       // Otros errores que no sean de Axios (configuración, etc.)
       return `Error inesperado: ${error.message}`;
+    
     }
   };
   
