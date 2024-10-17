@@ -14,7 +14,7 @@ export interface Professional {
 
 export const getProfessionals = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/api/professionals')
+      const response = await axios.get('https://appointment-system-kinefit-1.onrender.com/api/professionals')
       return response.data
     } catch (error) {
       const errorhandler = handleError(error)
@@ -29,7 +29,7 @@ export const createProfessional = async (data: Professional) => {
     if (!token) {
       throw new Error('No authentication token available');
     }
-    const response = await axios.post('http://localhost:8080/api/professionals', data, 
+    const response = await axios.post('https://appointment-system-kinefit-1.onrender.com/api/professionals', data, 
       {
         headers: {
           Authorization: `Bearer ${token}` // Agregar el token en la cabecera
@@ -48,7 +48,7 @@ export const updateProfessional = async (id:string, data: Professional) => {
     if (!token) {
       throw new Error('No authentication token available');
     }
-    const response = await axios.put(`http://localhost:8080/api/professionals/${id}`, data, 
+    const response = await axios.put(`https://appointment-system-kinefit-1.onrender.com/api/professionals/${id}`, data, 
       {
         headers: {
           Authorization: `Bearer ${token}` // Agregar el token en la cabecera
@@ -68,7 +68,7 @@ export const deleteProfessional = async (id: string) => {
       if (!token) {
         throw new Error('No authentication token available');
       }
-    const response = await axios.delete(`http://localhost:8080/api/professionals/${id}`, 
+    const response = await axios.delete(`https://appointment-system-kinefit-1.onrender.com/api/professionals/${id}`, 
       {
         headers: {
           Authorization: `Bearer ${token}` // Agregar el token en la cabecera
@@ -88,7 +88,7 @@ export const createProfessionalTimeSlots = async (data:ProfessionalTimeSlots) =>
     if (!token) {
       throw new Error('No authentication token available');
     }
-    const response = await axios.post(`http://localhost:8080/api/professionalTimeSlots`, data, 
+    const response = await axios.post(`https://appointment-system-kinefit-1.onrender.com/api/professionalTimeSlots`, data, 
       {
         headers: {
           Authorization: `Bearer ${token}` // Agregar el token en la cabecera
@@ -108,7 +108,7 @@ export const getProfessionalTimeSlots = async (id:string) => {
     if (!token) {
       throw new Error('No authentication token available');
     }
-    const response = await axios.get(`http://localhost:8080/api/professionalTimeSlots/bypro/${id}`, 
+    const response = await axios.get(`https://appointment-system-kinefit-1.onrender.com/api/professionalTimeSlots/bypro/${id}`, 
       {
         headers: {
           Authorization: `Bearer ${token}` // Agregar el token en la cabecera
@@ -129,7 +129,7 @@ export const updateProfessionalTimeSlots = async(id:string, data:Partial<Profess
     if (!token) {
       throw new Error('No authentication token available');
     }
-    const response = await axios.put(`http://localhost:8080/api/professionalTimeSlots/${id}`, data, 
+    const response = await axios.put(`https://appointment-system-kinefit-1.onrender.com/api/professionalTimeSlots/${id}`, data, 
       {
         headers: {
           Authorization: `Bearer ${token}` // Agregar el token en la cabecera

@@ -14,7 +14,7 @@ export const makeAppointment = async (appointmentData: CreateAppointmentDto) => 
     }
 
     const response = await axios.post(
-      'http://localhost:8080/api/appointments/byprofessional', 
+      'https://appointment-system-kinefit-1.onrender.com/api/appointments/byprofessional', 
       appointmentData, 
       {
         headers: {
@@ -31,7 +31,7 @@ export const makeAppointment = async (appointmentData: CreateAppointmentDto) => 
 };
 export const getAppointments = async () => {
   try {
-    const response = await axios.get('http://localhost:8080/api/appointments')
+    const response = await axios.get('https://appointment-system-kinefit-1.onrender.com/api/appointments')
     return response.data
   } catch (error) {
     const errorhandler = handleError(error)
@@ -42,7 +42,7 @@ export const updateAppointment = async (id: string, data: Partial<CreateAppointm
   try {
     const auth = getAuth();
     const token = await auth.currentUser?.getIdToken();
-    const response = await axios.put(`http://localhost:8080/api/appointments/${id}`, data, {
+    const response = await axios.put(`https://appointment-system-kinefit-1.onrender.com/api/appointments/${id}`, data, {
       headers: {
         Authorization: `Bearer ${token}`, // Agrega el token al encabezado
       },
@@ -61,7 +61,7 @@ export const bulkAppointments = async (data:CreateAppointmentDto[]) => {
     if (!token) {
       throw new Error('No authentication token available');
     }
-    const response = await axios.post('http://localhost:8080/api/appointments/bulkAppointments', data,
+    const response = await axios.post('https://appointment-system-kinefit-1.onrender.com/api/appointments/bulkAppointments', data,
       {
         headers: {
           Authorization: `Bearer ${token}` // Agregar el token en la cabecera
@@ -84,7 +84,7 @@ export const makeAppointmentByPatient = async (data: CreateAppointmentDto) => {
     }
 
     const response = await axios.post(
-      'http://localhost:8080/api/appointments/bypatient', 
+      'https://appointment-system-kinefit-1.onrender.com/api/appointments/bypatient', 
       data, 
       {
         headers: {
@@ -107,7 +107,7 @@ export const deleteAppointment = async (id: string) =>{
     if (!token) {
       throw new Error('No authentication token available');
     }
-    const response = await axios.delete(`http://localhost:8080/api/appointments/${id}`, 
+    const response = await axios.delete(`https://appointment-system-kinefit-1.onrender.com/api/appointments/${id}`, 
       {
         headers: {
           Authorization: `Bearer ${token}` // Agregar el token en la cabecera

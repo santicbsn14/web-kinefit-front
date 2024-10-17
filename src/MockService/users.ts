@@ -19,7 +19,7 @@ export interface IUser  {
 
 export const getUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/api/users')
+      const response = await axios.get('https://appointment-system-kinefit-1.onrender.com/api/users')
       return response.data
     } catch (error) {
       const errorhandler = handleError(error)
@@ -29,7 +29,7 @@ export const getUsers = async () => {
 export const getUserByEmail = async (email: string) =>{
   try {
     
-    const response = await axios.get('http://localhost:8080/api/users/email', {
+    const response = await axios.get('https://appointment-system-kinefit-1.onrender.com/api/users/email', {
       params: {email} 
     });
 
@@ -48,7 +48,7 @@ export const createUser = async (userData:IUser) => {
     if (!token) {
       throw new Error('No authentication token available');
     }
-    const response = await axios.post('http://localhost:8080/api/session/signup', userData, 
+    const response = await axios.post('https://appointment-system-kinefit-1.onrender.com/api/session/signup', userData, 
       {
         headers: {
           Authorization: `Bearer ${token}` // Agregar el token en la cabecera
@@ -68,7 +68,7 @@ export const updateUser = async (userid: string, userdata: Partial<IUser>) =>{
     if (!token) {
       throw new Error('No authentication token available');
     }
-    const response = await axios.put(`http://localhost:8080/api/users/${userid}`, userdata, 
+    const response = await axios.put(`https://appointment-system-kinefit-1.onrender.com/api/users/${userid}`, userdata, 
       {
         headers: {
           Authorization: `Bearer ${token}` // Agregar el token en la cabecera
@@ -88,7 +88,7 @@ export const deleteUserMongo = async (userid: string) =>{
     if (!token) {
       throw new Error('No authentication token available');
     }
-    const response = await axios.delete(`http://localhost:8080/api/users/${userid}`, 
+    const response = await axios.delete(`https://appointment-system-kinefit-1.onrender.com/api/users/${userid}`, 
       {
         headers: {
           Authorization: `Bearer ${token}` // Agregar el token en la cabecera
