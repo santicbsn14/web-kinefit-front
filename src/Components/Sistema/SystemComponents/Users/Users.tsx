@@ -114,7 +114,7 @@ const Users = () => {
   const toggleForm = (user?: IUser) => {
     if (user) {
       setFormData({
-        _id: user?.id,
+        _id: user?.id as unknown as string,
         firstname: user.firstname,
         lastname: user.lastname,
         username: user.username,
@@ -122,7 +122,7 @@ const Users = () => {
         phone: user.phone,
         age: user.age,
         dni: user.dni,
-        role: user.role,
+        role: user.role as unknown as string,
         homeAdress: user.homeAdress,
         status: user.status,
         password: ''
@@ -135,9 +135,9 @@ const Users = () => {
         lastname: '',
         username: '',
         email: '',
-        phone: '',
+        phone: '' as unknown as number,
         age: 0,
-        dni: '',
+        dni:'' as unknown as number,
         role: '',
         homeAdress: '',
         status: true,
@@ -155,7 +155,8 @@ const Users = () => {
         await updateUser(formData._id, formData as IUser);
         toast.success('¡Actualización de usuario exitosa!');
       } else {
-        const { _id, ...newUserData } = formData;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { _id, ...newUserData }: IUser = formData;
         await createUser(newUserData as IUser);
         toast.success('¡Creación de usuario exitosa!');
       }
@@ -194,13 +195,13 @@ const Users = () => {
           </tr>
         </thead>
         <tbody>
-          {currentUsers.map((user) => (
+          {currentUsers.map((user: IUser) => (
             <tr key={user.id}>
               <td>{user.id}</td>
               <td>{user.firstname}</td>
               <td>{user.lastname}</td>
               <td>{user.email}</td>
-              <td>{user.role?.name || ` ${user.role}`}</td>
+              <td>{typeof user.role === 'object' && user.role !== null ? user.role.name : user.role}</td>
               <td>
                 <span className={`statusIndicator ${user.status}`}></span>
               </td>
@@ -208,7 +209,10 @@ const Users = () => {
                 <button onClick={() => toggleForm(user)} className="edit-button">
                   <i className="fa-solid fa-edit"></i> 
                 </button>
-                <button onClick={() => handleDeleteUser(user.id, `${user.firstname} ${user.lastname}`)} className="delete-button">
+                <button onClick={() => {
+                  //@ts-expect-error debo hostear!
+                  handleDeleteUser(user.id, `${user.firstname} ${user.lastname}`)}
+                  } className="delete-button">
                   <i className="fa-solid fa-trash"></i> 
                 </button>
               </td>

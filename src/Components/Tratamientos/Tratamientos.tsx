@@ -1,4 +1,3 @@
-import * as React from 'react'
 import './tratamientos.css'
 import mep from '../Imagenes/mep.png'
 import plantillas from '../Imagenes/plantillas.png'

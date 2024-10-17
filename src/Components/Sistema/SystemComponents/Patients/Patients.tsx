@@ -60,10 +60,10 @@ const Patients = () => {
     e.preventDefault();
     try {
       if (isEditing && currentPatientId) {
-        await updatePatient(currentPatientId, formData);
+        await updatePatient(currentPatientId, formData as unknown as Patient);
         toast.success('¡Actualización de paciente exitosa!');
       } else {
-        await createPatient(formData);
+        await createPatient(formData as unknown as Patient);
         toast.success('¡Creación de paciente exitosa!');
       }
       fetchPatients();
@@ -78,9 +78,9 @@ const Patients = () => {
     setFormData({
       user_id: patient.user_id._id,
       mutual: patient?.mutual || 'No hay mutual',
-      clinical_data: patient.clinical_data,
+      clinical_data: patient.clinical_data as string[],
     });
-    setCurrentPatientId(patient._id);
+    setCurrentPatientId(patient._id as unknown as string);
     setIsEditing(true);
     setShowForm(true);
   };
@@ -132,7 +132,7 @@ const Patients = () => {
                 <span className={`statusIndicator`}></span>
               </td>
               <td>
-                <button className='edit-button' onClick={() => handleEdit(paciente)}>
+                <button className='edit-button' onClick={() => handleEdit(paciente as unknown as Patient)}>
                 <i className="fa-solid fa-edit"></i>
                 </button>
                 <button className='delete-button' onClick={() => handleDelete(paciente._id)}>

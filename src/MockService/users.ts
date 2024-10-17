@@ -11,9 +11,13 @@ export interface IUser  {
   dni: number,
   homeAdress: string,
   phone: number,
-  role:string,
+  role: {
+    name: string;
+    permissions:string[],
+  } | string;
   password: string;
   id?: string
+  _id?: string
   status: boolean
 }
 

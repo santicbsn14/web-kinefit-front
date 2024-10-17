@@ -1,4 +1,3 @@
-import * as React from 'react'
 import ruso from '../Imagenes/ruso.png'
 import joaquin from '../Imagenes/joaquin.png'
 import frenteKinefit from '../Imagenes/frenteKinefit.png'

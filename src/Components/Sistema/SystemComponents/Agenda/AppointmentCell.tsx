@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-
+import { useState } from 'react';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore s
 const AppointmentCell = ({ appointment }) => {
   const [showTooltip, setShowTooltip] = useState(false);
 

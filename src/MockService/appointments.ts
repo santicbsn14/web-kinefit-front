@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { CreateAppointmentDto} from '../Utils/Types/appointmentTypes';
+import { CreateAppointment, CreateAppointmentDto} from '../Utils/Types/appointmentTypes';
 import { handleError } from '../Utils/ErrorManager/handleApiError';
 
 import { getAuth } from 'firebase/auth'; // Importar Firebase Auth
@@ -74,7 +74,7 @@ export const bulkAppointments = async (data:CreateAppointmentDto[]) => {
     throw Error(errorhandler)
   }
 }
-export const makeAppointmentByPatient = async (data: CreateAppointmentDto) => {
+export const makeAppointmentByPatient = async (data: CreateAppointmentDto | CreateAppointment) => {
   try {
     const auth = getAuth(); 
     const token = await auth.currentUser?.getIdToken(); 

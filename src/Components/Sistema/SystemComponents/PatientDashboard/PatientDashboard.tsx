@@ -1,17 +1,18 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import React, { useState, useEffect, useMemo } from 'react';
 import { getProfessionals, getProfessionalTimeSlots, Professional } from '../../../../MockService/professionals';
-import { getPatients } from '../../../../MockService/patients';
+import { getPatients, Patient } from '../../../../MockService/patients';
 import { getAppointments, makeAppointmentByPatient } from '../../../../MockService/appointments';
-import { CreateAppointmentDto } from '../../../../Utils/Types/appointmentTypes';
+import { CreateAppointment } from '../../../../Utils/Types/appointmentTypes';
 import { toast, ToastContainer } from 'react-toastify';
 import './patientDashboard.css'
 import { ProfessionalTimeSlotsBBDD } from '../../../../Utils/Types/professionalTypes';
 import ProfesionalTimeSlots from '../Professionals/ProfessionalSchedule';
 import { getAuth } from 'firebase/auth';
 import { getUserByEmail } from '../../../../MockService/users';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
-import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'; // Plugin opcional
+
 import 'dayjs/locale/es'; // Carga la localización para español
 import axios from 'axios';
 dayjs.extend(localizedFormat);
@@ -27,7 +28,8 @@ const PatientDashboard = () => {
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(null);
   const [selectedProfessionalName, setSelectedProfessionalName] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
+ 
+  const [, setLoading] = useState(false);
 const [filePreview, setFilePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     pacient_id: '',
@@ -40,7 +42,8 @@ const [filePreview, setFilePreview] = useState<string | null>(null);
   const email = getAuth().currentUser?.email;
   const appointmentUser = async () => {
     try {
-        const user = await getUserByEmail(email);
+
+        const user = await getUserByEmail(email as unknown as string);
         const appointment = await getAppointments();
        
 
@@ -49,9 +52,10 @@ const [filePreview, setFilePreview] = useState<string | null>(null);
 
         // Filtrar y buscar el turno correspondiente al user.id que sea futuro
         const userAppointment = appointment.appointments.find(
-            (appt) => 
+            (appt: CreateAppointment) =>
+              //@ts-expect-error s
                 appt.pacient_id.user_id._id === user.id &&
-                new Date(appt.date_time) >= currentDate
+                new Date(appt.date_time as unknown as Date) >= currentDate
         );
 
         if (userAppointment) {
@@ -158,7 +162,6 @@ const uploadImageToCloudinary = async (file: File) => {
   };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
-    console.log('Archivo seleccionado:', selectedFile);
     setFile(selectedFile);
     if (selectedFile) {
       const reader = new FileReader();
@@ -191,15 +194,15 @@ const uploadImageToCloudinary = async (file: File) => {
         const appointmentEndTime = new Date(appointmentDate);
         appointmentEndTime.setHours(Number(endTimeParts[0]), Number(endTimeParts[1]));
 
-        const appointmentData: CreateAppointmentDto = {
+        const appointmentData: CreateAppointment = {
           pacient_id,
           professional_id,
-          date_time: appointmentDate.toISOString(),
+          date_time: appointmentDate.toISOString() as unknown as Date,
           schedule: {
             week_day: schedule.week_day + 1,
             time_slots: {
-              start_time: appointmentStartTime.toISOString(),
-              end_time: appointmentEndTime.toISOString(),
+              start_time: appointmentStartTime.toISOString() as unknown as Dayjs,
+              end_time: appointmentEndTime.toISOString()as unknown as Dayjs,
             }
           },
           state,
@@ -237,7 +240,7 @@ const uploadImageToCloudinary = async (file: File) => {
               <td>{professional.user_id?.phone || 'No teléfono'}</td>
               <td>
                   <button
-                      onClick={() => openScheduleModal(professional._id)}
+                      onClick={() => openScheduleModal(professional._id as unknown as string)}
                       className="schedule-button"
                       style={{
                           backgroundColor: selectedProfessionalId === professional._id && showProfessionalSchedules ? '#dc3545' : '#28a745',
@@ -325,7 +328,7 @@ const uploadImageToCloudinary = async (file: File) => {
               required
             >
               <option value="">Seleccione un paciente</option>
-              {patients.map((patient) => (
+              {patients.map((patient: Patient) => (
                 <option key={patient._id} value={patient._id}>
                   {patient.user_id.firstname} {patient.user_id.lastname}
                 </option>
@@ -460,9 +463,10 @@ const uploadImageToCloudinary = async (file: File) => {
       
       {showProfessionalSchedules && showDataPTS && (
         <ProfesionalTimeSlots
+        professionals={professionals}
         professionalName={selectedProfessionalName} 
         data={showDataPTS} 
-        onClose={() => setShowProfessionalSchedules(false)}
+        onClose={() => setShowProfessionalSchedules(false) as unknown as boolean}
         isOpen={showProfessionalSchedules} 
         />
       )}

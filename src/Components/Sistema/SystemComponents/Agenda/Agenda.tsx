@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -9,6 +9,7 @@ import { getAppointments } from '../../../../MockService/appointments';
 import { CreateAppointment } from '../../../../Utils/Types/appointmentTypes';
 import { getAuth } from 'firebase/auth';
 import AppointmentCell from './AppointmentCell';
+import { Professional } from '../../../../MockService/professionals';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -41,13 +42,17 @@ const Agenda = () => {
     const now = dayjs().utc();
     return now.week(); 
   };
-
-  const filterAppointmentsByProfessional = (appointments: CreateAppointment[]) => {
-    return appointments.filter(appointment => 
-      appointment.professional_id.user_id.email === professionalEmail
-    );
+  const isProfessional = (id: Professional | string): id is Professional => {
+    return (id as Professional).user_id !== undefined;
   };
-  
+  const filterAppointmentsByProfessional = (appointments: CreateAppointment[]) => {
+    return appointments.filter(appointment => {
+      if (isProfessional(appointment.professional_id)) {
+        return appointment.professional_id.user_id.email === professionalEmail;
+      }
+      return false; // O manejar el caso en que professional_id es un string
+    });
+  };
   const isInCurrentWeek = (date: string) => {
     const appointmentDate = dayjs(date).utc().startOf('day'); // Ignorar las horas
     const currentWeek = getCurrentWeek();
@@ -70,6 +75,8 @@ const Agenda = () => {
       const matchesHour = startTime.hour() === targetHour.hour();
   
       const matchesDay = appointmentWeekDay === dayIndex;
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+     //@ts-ignore s
       const inCurrentWeek = isInCurrentWeek(appointment.date_time);
 
       return matchesDay && matchesHour && inCurrentWeek;
@@ -138,7 +145,7 @@ const Agenda = () => {
           {hours.map((hour, index) => (
             <tr key={index}>
               <td className="hourColumn">{hour}</td>
-              {days.map((day, dayIndex) => {
+              {days.map((_, dayIndex) => {
                 const turnosEnEstaHora = getTurnos(dayIndex, hour); // Obtener los turnos de ese día y hora
                 return (
                   <td key={dayIndex} className="agendaCell">

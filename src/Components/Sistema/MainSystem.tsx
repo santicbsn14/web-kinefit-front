@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import  { useEffect, useState } from 'react';
 import './mainSystem.css';
 import { getAuth } from 'firebase/auth';
 import { getUserByEmail } from '../../MockService/users';

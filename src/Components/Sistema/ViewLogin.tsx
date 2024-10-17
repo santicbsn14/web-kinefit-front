@@ -17,7 +17,7 @@ import 'react-toastify/dist/ReactToastify.css';
       event.preventDefault();
       try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log(userCredential)
+        //@ts-expect-error debo hostear!
         const user : userLoginSucces = userCredential.user;
         if (user.accessToken) {
           setErrorMessage('')
@@ -27,10 +27,11 @@ import 'react-toastify/dist/ReactToastify.css';
             navigate(`/system`);
           }, 2000);;
         }
-      } catch (error: unknown) {
-        toast.error('Error en el login: ' + error.message)
-        setErrorMessage('Error en el login: ' + error.message);
-        console.error('Error en el login:', error);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+        toast.error('Error en el login: ' + errorMessage);
+        setErrorMessage('Error en el login: ' + errorMessage);
+      
       }
     };
   

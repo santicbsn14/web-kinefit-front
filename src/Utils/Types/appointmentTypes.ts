@@ -26,11 +26,11 @@ export interface Criteria {
 }
 export interface CreateAppointment {
     _id?: string;
-    pacient_id: Patient;          
-    professional_id: Professional;     
+    pacient_id: Patient | string;          
+    professional_id: Professional | string;     
     date_time: Date | null;
     schedule: DaySchedule;             
-    state: string;               
+    state?: string;               
     session_type: string;    
-    order_photo: string;    
+    order_photo?: string;    
 }

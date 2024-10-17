@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { auth } from '../MockService/auth';
-import axios from 'axios'; // Asegúrate de tener axios instalado para hacer solicitudes a tu API
 import { getUserByEmail } from '../MockService/users';
 
 interface AuthContextType {
   user: User | null;
-  role: string | null; // Agregamos el rol
+  role: {name: string, permissions: string[]} | null | string; // Agregamos el rol
   loading: boolean;
   logout: () => Promise<void>;
 }

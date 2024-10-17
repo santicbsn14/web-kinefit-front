@@ -2,12 +2,9 @@ import axios from "axios";
 import { handleError } from "../Utils/ErrorManager/handleApiError";
 import { ProfessionalTimeSlots } from "../Utils/Types/professionalTypes";
 import { getAuth } from "firebase/auth";
+import { IUser } from "./users";
 export interface Professional {
-  user_id: {username: string,
-    firstname:string,
-    lastname:string,
-    email: string
-  },
+  user_id: IUser,
   _id?: string,
   specialties: string[]
 }

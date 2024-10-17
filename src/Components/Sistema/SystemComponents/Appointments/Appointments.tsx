@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import React, { useState, useEffect } from 'react';
 import './appointments.css';
 import { deleteAppointment, getAppointments, makeAppointment, updateAppointment } from '../../../../MockService/appointments';
-import { getProfessionals } from '../../../../MockService/professionals';
-import { getPatients } from '../../../../MockService/patients';
+import { getProfessionals, Professional } from '../../../../MockService/professionals';
+import { getPatients, Patient } from '../../../../MockService/patients';
 import { ToastContainer, toast } from 'react-toastify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {faWhatsapp} from  '@fortawesome/free-brands-svg-icons'
@@ -11,8 +12,10 @@ import BulkAppointments from './BulkAppointments';
 import { CreateAppointment, CreateAppointmentDto } from '../../../../Utils/Types/appointmentTypes';
 import { sendWhatsAppMessageConfirmAppointment } from '../../../../MockService/messages';
 import axios from 'axios';
+import { DaySchedule } from '../../../../Utils/Types/professionalTypes';
 
 interface ConfirmDeleteModalProps {
+  isOpen:boolean;
   onClose: () => void;         // Función que no devuelve nada
   onConfirm: () => void;       // Función que no devuelve nada
   patientName: string;    // Nombre del profesional, es un string
@@ -133,7 +136,6 @@ const Appointments = (): JSX.Element => {
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
-    console.log('Archivo seleccionado:', selectedFile);
     setFile(selectedFile);
     if (selectedFile) {
       const reader = new FileReader();
@@ -143,7 +145,12 @@ const Appointments = (): JSX.Element => {
       reader.readAsDataURL(selectedFile);
     }
   };
-
+  const isPatient = (id: Patient | string): id is Patient => {
+    return (id as Patient).user_id !== undefined;
+  };
+  const isProfessional = (id: Professional | string): id is Professional => {
+    return (id as Professional).user_id !== undefined;
+  };
   const toggleForm = () => {
     setShowForm(!showForm);
     if (showForm) {
@@ -168,16 +175,21 @@ const Appointments = (): JSX.Element => {
   const handleEdit = (appointment: CreateAppointment) => {
     setIsEditing(true);
     setEditingAppointment(appointment);
+  
     setFormData({
-      pacient_id: appointment.pacient_id._id,
-      professional_id: appointment.professional_id._id,
-      date_time: new Date(appointment.date_time),
-      schedule: appointment.schedule,
-      state: appointment.state,
+      //@ts-expect-error debo hostear!
+      pacient_id: typeof appointment.pacient_id !== 'string' ? appointment.pacient_id._id : '' , 
+      //@ts-expect-error debo hostear!
+      professional_id: typeof appointment.professional_id !== 'string' ? appointment.professional_id._id : '', 
+      date_time: appointment.date_time ? new Date(appointment.date_time) : null, 
+      schedule: appointment.schedule as unknown as  DaySchedule,
+      state: appointment.state as string,
       session_type: appointment.session_type
     });
+  
     setShowForm(true);
   };
+  
   const handleDeleteClick = (appointmentId: string, patientName: string) => {
     setAppointmentToDelete({ id: appointmentId, name: patientName });
     setShowDeleteModal(true);
@@ -296,25 +308,45 @@ const Appointments = (): JSX.Element => {
             <tr key={appointment._id}>
               <td>{appointment._id}</td>
               <td>{formatDate(appointment.date_time as unknown as Date)}</td>
-              <td>{appointment.pacient_id?.user_id?.firstname || 'N/A'} {appointment.pacient_id?.user_id?.lastname || 'N/A'}</td>
-              <td>{appointment.professional_id?.user_id?.firstname || 'N/A'} {appointment.professional_id?.user_id?.lastname|| 'N/A'}</td>
+              <td>
+                {isPatient(appointment.pacient_id)
+                  ? `${appointment.pacient_id.user_id.firstname} ${appointment.pacient_id.user_id.lastname}`
+                  : 'N/A'}
+              </td>
+              <td>
+                {isProfessional(appointment.professional_id)
+                  ? `${appointment.professional_id.user_id.firstname} ${appointment.professional_id.user_id.lastname}`
+                  : 'N/A'}
+              </td>
               <td>{formatTime(appointment.schedule.time_slots.start_time as unknown as string)}</td>
               <td>{appointment.session_type}</td>
               <td>
-                <span className={`statusIndicator ${appointment.state.toLowerCase()}`}></span>
+                <span className={`statusIndicator ${appointment.state?.toLowerCase() }`}></span>
                 {appointment.state}
               </td>
               <td>
                 <button className='edit-button' style={{margin:'0.5rem'}} onClick={() => handleEdit(appointment)}>
                 <i className="fa-solid fa-edit"></i>
                 </button>
-                <button className='edit-button' style={{margin:'0.5rem'}} onClick={() => sendWhatsAppMessageConfirmAppointment(appointment.pacient_id.user_id.phone, appointment.date_time)}>
+                <button className='edit-button' style={{margin:'0.5rem'}} onClick={() => {
+                  //@ts-expect-error debo hostear!
+                  sendWhatsAppMessageConfirmAppointment(appointment.pacient_id.user_id.phone, appointment.date_time)
+                }}>
                 <FontAwesomeIcon className="iconosRedes" icon={faWhatsapp}   />
                 </button>
-                <button style={{margin:'0.5rem'}} onClick={() => handleDeleteClick(appointment._id, `${appointment.pacient_id.user_id?.firstname} ${appointment.pacient_id.user_id?.lastname}`)} className="delete-button">
+
+                <button style={{margin:'0.5rem'}} onClick={() =>{
+                  //@ts-expect-error debo hostear!
+                  handleDeleteClick(appointment._id, `${appointment.pacient_id.user_id?.firstname} ${appointment.pacient_id.user_id?.lastname}`)
+                }} className="delete-button">
                             <i className="fa-solid fa-trash"></i>
                 </button>
-                <button className='order_url' style={{margin:'0.5rem'}} onClick={() => openPhotoOrder(appointment.order_photo)} >
+                
+                <button className='order_url' style={{margin:'0.5rem'}} onClick={() => {
+  if (typeof appointment.order_photo === 'string') {
+    openPhotoOrder(appointment.order_photo);
+  }
+}}>
                             <i className="fa-regular fa-image"></i>
                 </button>
               </td>
@@ -421,8 +453,8 @@ const Appointments = (): JSX.Element => {
       )}
       {showBulkForm && (
         <BulkAppointments
-          patients={patients}
-          professionals={professionals}
+          patients={patients as unknown as Patient[]}
+          professionals={professionals as unknown as Professional[]}
           onClose={toggleBulkForm}
           onSuccess={fetchAppointments}
         />
