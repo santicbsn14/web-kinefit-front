@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'; // Importa useNavigate
 import { toast, ToastContainer } from 'react-toastify';
 
 const MainSystem = (): JSX.Element => {
-    const [userRole, setUserRole] = useState(null);
+    const [userRole, setUserRole] = useState<{ name: string; permissions: string[] } | null>(null); 
     const [isLoading, setIsLoading] = useState(true);
     const email = getAuth().currentUser?.email;
     const navigate = useNavigate();
