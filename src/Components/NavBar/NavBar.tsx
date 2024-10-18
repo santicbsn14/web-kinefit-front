@@ -55,7 +55,7 @@ const NavBar = (): JSX.Element => {
         top: isMobile ? '50px' : 'auto',
         right: isMobile ? '0' : 'auto',
         backgroundColor: 'orange',
-        width: isMobile ? '200px' : 'auto',
+        width: isMobile ? '100%' : 'auto',
         margin: '0',
         padding: isMobile ? '20px' : '0',
         zIndex: 1000,
@@ -77,25 +77,44 @@ const NavBar = (): JSX.Element => {
                     <li style={menuItemStyle}><Link to='/obrasSociales' className='nav-link'>Obras Sociales</Link></li>
                     <li style={menuItemStyle}><Link to='/quienesSomos' className='nav-link'>Quienes Somos</Link></li>
                     <li style={menuItemStyle}>Contacto</li>
-
+                    {/* Solo incluir el botón de Iniciar Sesión en el menú cuando está abierto */}
+                    {isMobile && isMenuOpen && (
+                        <li style={menuItemStyle}>
+                            {isSystemRoute ? (
+                                <button onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>
+                                    <i style={{ color: 'black' }} className="fa-solid fa-right-to-bracket">Cerrar sesión</i>
+                                </button>
+                            ) : (
+                                <Link to='/login' className='nav-link'>
+                                    <i style={{ color: 'black' }} className="fa-solid fa-right-to-bracket"></i>
+                                    <span>Iniciar Sesión</span>
+                                </Link>
+                            )}
+                        </li>
+                    )}
                 </ul>
-                <div style={{ position: 'absolute', right: '20px', textTransform: 'uppercase' }}>
-            {isSystemRoute ? (
-                    <button onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>
-                        <i style={{ color: 'black' }} className="fa-solid fa-right-to-bracket">Cerrar sesión</i>
-                    </button>
-                ) : (
-                    <Link to='/login' className='nav-link'>
-                        <i style={{ color: 'black' }} className="fa-solid fa-right-to-bracket"></i>
-                        <span>Iniciar Sesión</span>
-                    </Link>
+                {/* Mantener el botón de Iniciar Sesión fuera del menú en modo desktop */}
+                {!isMobile && (
+                    <div style={{ position: 'absolute', right: '20px', textTransform: 'uppercase' }}>
+                        {isSystemRoute ? (
+                            <button onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>
+                                <i style={{ color: 'black' }} className="fa-solid fa-right-to-bracket">Cerrar sesión</i>
+                            </button>
+                        ) : (
+                            <Link to='/login' className='nav-link'>
+                                <i style={{ color: 'black' }} className="fa-solid fa-right-to-bracket"></i>
+                                <span>Iniciar Sesión</span>
+                            </Link>
+                        )}
+                    </div>
                 )}
-            </div>
                 {isMobile && (
                     <button onClick={toggleMenu} style={{ 
                         background: 'none', 
                         border: 'none', 
                         fontSize: '24px', 
+                        position:'absolute',
+                        right:'20px',
                         padding: '0 20px',
                         height: '100%'
                     }}>

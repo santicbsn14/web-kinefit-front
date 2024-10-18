@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import React, { useState, useCallback } from 'react';
 import { ProfessionalTimeSlotsBBDD } from '../../../../Utils/Types/professionalTypes';
 import './professionals.css';
@@ -148,7 +149,8 @@ const ProfesionalTimeSlots: React.FC<ProfesionalTimeSlotsProps> = ({ data, profe
             <th>Hora de Inicio</th>
             <th>Hora de Fin</th>
             <th>Estado</th>
-            <th>Acciones</th>
+            {/* @ts-expect-error s */}
+            {role?.name !== 'patient' && <th>Acciones</th>}
           </tr>
         </thead>
         <tbody>
@@ -158,14 +160,14 @@ const ProfesionalTimeSlots: React.FC<ProfesionalTimeSlotsProps> = ({ data, profe
               <td>{formatDate(schedule.time_slots.start_time)}</td>
               <td>{formatDate(schedule.time_slots.end_time)}</td>
               <td>{data.state}</td>
+              {/* @ts-expect-error s */}
+              {role?.name !== 'patient' && (
               <td>
-             {//@ts-expect-error debo Hostear!
-             role?.name !== 'patient' && (
-          <button onClick={() => handleEditClick(data)} className="edit-button">
-            <i className="fa-solid fa-edit"></i>
-          </button>
-        )}
-      </td>
+                <button onClick={() => handleEditClick(data)} className="edit-button">
+                  <i className="fa-solid fa-edit"></i>
+                </button>
+              </td>
+            )}
             </tr>
           ))}
         </tbody>

@@ -1,27 +1,55 @@
 .professionalTable {
-    border-collapse: collapse;
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 900px;
+}
+
+/* Asegurarte de que las celdas sean responsivas */
+.professionalTable th, .professionalTable td {
+  border: 1px solid #ddd;
+  color: white;
+  padding: 8px;
+  text-align: center;
+  word-wrap: break-word; 
+}
+
+/* Estilos para el encabezado de la tabla */
+.professionalTable th {
+  background-color: orange;
+  font-weight: bold;
+}
+
+/* Estilos para el formulario */
+.professionalForm {
+  display: flex;
+  flex-direction: column;
+  width: 100%; /* Cambia el ancho al 100% para que ocupe todo el espacio disponible */
+  max-width: 600px; /* Define un ancho máximo para pantallas grandes */
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+/*  */
+/* Media query para pantallas pequeñas */
+@media (max-width: 768px) {
+
+
+.professionalTable {
+    overflow-x:auto; 
+    font-size: 14px; 
+    display: block;
     width: 100%;
-    max-width: 900px;
+    margin-left: -6rem;
   }
-  
-  .professionalTable th, .professionalTable td {
-    border: 1px solid #ddd;
-    color: white;
-    padding: 8px;
-    text-align: center;
-  }
-  
-  .professionalTable th {
-    background-color: orange;
-    font-weight: bold;
-  }
-  
   .professionalForm {
-    display: flex;
-    flex-direction: column;
-    width: 60%;
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 5px;
-    margin-top: 20px;
+      width: 90%; /* Aumenta el ancho del formulario en móviles */
+      padding: 15px; /* Ajusta el padding */
   }
+  .appointmentMessage {
+    padding: 8px 15px; /* Reduce el padding */
+    font-size: 1rem; /* Tamaño de fuente más pequeño */
+    margin-left: -4rem;
+    margin-right: 4rem;
+}
+}

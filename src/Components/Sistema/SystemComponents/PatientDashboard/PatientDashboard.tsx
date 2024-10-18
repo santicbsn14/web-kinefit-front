@@ -232,7 +232,6 @@ const uploadImageToCloudinary = async (file: File) => {
         
       professionals.map(professional => (
           <tr key={professional._id}>
-              <td>{professional._id}</td>
               <td>{professional.user_id?.firstname || 'N/A'}</td>
               <td>{professional.user_id?.lastname || 'N/A'}</td>
               <td>{professional.specialties?.join(', ') || 'No especificado'}</td>
@@ -279,7 +278,7 @@ const uploadImageToCloudinary = async (file: File) => {
           padding: '10px 20px',
           borderRadius: '15px',
           fontWeight: 'bold'
-        }}>
+        }} className='appointmentMessage'>
           <i style={{ marginRight: '5px' }} className="fa-solid fa-hospital-user"></i>
           Tenes un turno asignado para el dia:{formattedDate}
         </div>
@@ -443,11 +442,10 @@ const uploadImageToCloudinary = async (file: File) => {
         </form>
       </div>)}
       {showProfessionals && (
-        <div style={{ overflowX: 'auto', marginLeft:'13rem' }}>
+        <div style={{  marginLeft:'11rem' }}>
           <table className="professionalTable">
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Nombre</th>
                 <th>Apellido</th>
                 <th>Especialidades</th>
