@@ -1,0 +1,35 @@
+nav {
+    position: relative;
+}
+
+.hamburger-menu {
+    display: none;
+}
+
+/* Estilos responsive para móviles */
+@media (max-width: 768px) {
+    nav {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .hamburger-menu {
+        display: block;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        display: none;
+        width: 100%;
+        background-color: orange;
+        text-align: center;
+    }
+
+    .nav-links.open {
+        display: flex;
+    }
+
+    .nav-links li {
+        margin: 10px 0;
+    }
+}

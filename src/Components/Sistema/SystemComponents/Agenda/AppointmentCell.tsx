@@ -3,7 +3,9 @@ import { useState } from 'react';
 //@ts-ignore s
 const AppointmentCell = ({ appointment }) => {
   const [showTooltip, setShowTooltip] = useState(false);
-
+  if (!appointment || !appointment.pacient_id || !appointment.professional_id) {
+    return <div>Cargando...</div>;
+  }
   return (
     <div 
       className="turnoLabel"

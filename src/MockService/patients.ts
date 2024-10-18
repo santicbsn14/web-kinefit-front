@@ -4,7 +4,7 @@ import { getAuth } from "firebase/auth";
 
 export interface Patient {
   _id?: string;
-  user_id:  {_id:string, firstname: string, lastname: string};
+  user_id:  {_id:string, firstname: string, lastname: string, phone: string};
   mutual?: string;
   clinical_data: unknown[] | string;
 }

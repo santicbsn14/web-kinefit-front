@@ -22,6 +22,7 @@ interface ConfirmDeleteModalProps {
 }
 const Appointments = (): JSX.Element => {
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [appointmentToDelete, setAppointmentToDelete] = useState<{ id: string; name: string } | null>(null);
@@ -40,14 +41,38 @@ const Appointments = (): JSX.Element => {
   const [currentPage, setCurrentPage] = useState(1); // Estado para la página actual
   const [appointmentsPerPage] = useState(10); // Número de citas por página
 
-  const [professionals, setProfessionals] = useState<{ _id: string, user_id: { firstname: string, lastname:string} }[]>([]);
+  const [professionals, setProfessionals] = useState<{ _id: string, user_id: { firstname: string, lastname:string, phone: string} }[]>([]);
   const [patients, setPatients] = useState<{ _id: string, user_id: { firstname: string, lastname:string, phone: string } }[]>([]);
   const [appointments, setAppointments] = useState<CreateAppointment[]>([]);
   
-  const fetchAppointments = async () => {
-    const appointmentsData = await getAppointments();
-    setAppointments(appointmentsData.appointments);
-  };
+
+  const fetchAppointments = React.useCallback(async () => {
+    setLoading(true); // Inicia la carga
+    try {
+      const appointmentsData = await getAppointments();
+      setAppointments(appointmentsData.appointments);
+    } catch (error) {
+      // Manejar el error aquí si es necesario
+      console.error("Error fetching appointments:", error);
+    } finally {
+      setLoading(false); // Finaliza la carga
+    }
+  }, []); // Aquí puedes añadir dependencias si las hay
+
+  const handleDeleteConfirm = React.useCallback(async () => {
+    if (appointmentToDelete) {
+      try {
+        await deleteAppointment(appointmentToDelete.id);
+        toast.success('¡El turno ha sido eliminado exitosamente!');
+        fetchAppointments();
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        toast.error(errorMessage);
+      }
+    }
+    setShowDeleteModal(false);
+    setAppointmentToDelete(null);
+  }, [appointmentToDelete, fetchAppointments]);
 
   useEffect(() => {
     const fetchProfessionals = async () => {
@@ -58,10 +83,20 @@ const Appointments = (): JSX.Element => {
       const patientsData = await getPatients();
       setPatients(patientsData.patients);
     };
-    fetchProfessionals();
-    fetchPatients();
-    fetchAppointments();
+
+    // Fetch all data concurrently
+    const fetchData = async () => {
+      await Promise.all([fetchProfessionals(), fetchPatients(), fetchAppointments()]);
+      setLoading(false); // Finaliza la carga después de todas las recuperaciones
+    };
+
+    fetchData();
   }, []);
+  if(loading) return(
+    <div>
+      Cargando...
+    </div>
+  )
   const uploadImageToCloudinary = async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -145,12 +180,23 @@ const Appointments = (): JSX.Element => {
       reader.readAsDataURL(selectedFile);
     }
   };
-  const isPatient = (id: Patient | string): id is Patient => {
+  const isPatient = (id: Patient | string | null): id is Patient => {
+    // Verifica si 'id' es null o undefined antes de hacer la comprobación
+    if (id === null || id === undefined) {
+        return false; // Devuelve false si 'id' es null o undefined
+    }
+    
+    // Si no es null, intenta acceder a user_id
     return (id as Patient).user_id !== undefined;
-  };
-  const isProfessional = (id: Professional | string): id is Professional => {
+};
+
+const isProfessional = (id: Professional | string | null): id is Professional => {
+    if (id === null || id === undefined) {
+        return false; // Devuelve false si 'id' es null o undefined
+    }
+    
     return (id as Professional).user_id !== undefined;
-  };
+};
   const toggleForm = () => {
     setShowForm(!showForm);
     if (showForm) {
@@ -194,20 +240,7 @@ const Appointments = (): JSX.Element => {
     setAppointmentToDelete({ id: appointmentId, name: patientName });
     setShowDeleteModal(true);
   }
-  const handleDeleteConfirm = React.useCallback(async () => {
-    if (appointmentToDelete) {
-      try {
-        await deleteAppointment(appointmentToDelete.id);
-        toast.success('¡El turno ha sido eliminado exitosamente!');
-        fetchAppointments();
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        toast.error(errorMessage);
-      }
-    }
-    setShowDeleteModal(false);
-    setAppointmentToDelete(null);
-  }, [appointmentToDelete, fetchAppointments]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     try {
       e.preventDefault();
@@ -255,7 +288,7 @@ const Appointments = (): JSX.Element => {
     }
   };
   const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({ onClose, onConfirm, patientName }) => {
-    if(!showDeleteModal) return (
+    if (!showDeleteModal) return (
       <div></div>
     )
     return (
@@ -271,6 +304,7 @@ const Appointments = (): JSX.Element => {
       </div>
     );
   };
+  
   const indexOfLastAppointment = currentPage * appointmentsPerPage;
   const indexOfFirstAppointment = indexOfLastAppointment - appointmentsPerPage;
   const currentAppointments = appointments.slice(indexOfFirstAppointment, indexOfLastAppointment);
@@ -291,69 +325,79 @@ const Appointments = (): JSX.Element => {
         </div>
       </div>
       <table className="appointmentsTable">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Fecha</th>
-            <th>Paciente</th>
-            <th>Profesional</th>
-            <th>Hora</th>
-            <th>Tratamiento</th>
-            <th>Estado</th>
-            <th>Acciones</th> {/* Nueva columna para acciones */}
-          </tr>
-        </thead>
-        <tbody>
-          {currentAppointments.map((appointment) => (
-            <tr key={appointment._id}>
-              <td>{appointment._id}</td>
-              <td>{formatDate(appointment.date_time as unknown as Date)}</td>
-              <td>
-                {isPatient(appointment.pacient_id)
-                  ? `${appointment.pacient_id.user_id.firstname} ${appointment.pacient_id.user_id.lastname}`
-                  : 'N/A'}
-              </td>
-              <td>
-                {isProfessional(appointment.professional_id)
-                  ? `${appointment.professional_id.user_id.firstname} ${appointment.professional_id.user_id.lastname}`
-                  : 'N/A'}
-              </td>
-              <td>{formatTime(appointment.schedule.time_slots.start_time as unknown as string)}</td>
-              <td>{appointment.session_type}</td>
-              <td>
-                <span className={`statusIndicator ${appointment.state?.toLowerCase() }`}></span>
-                {appointment.state}
-              </td>
-              <td>
-                <button className='edit-button' style={{margin:'0.5rem'}} onClick={() => handleEdit(appointment)}>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Fecha</th>
+      <th>Paciente</th>
+      <th>Profesional</th>
+      <th>Hora</th>
+      <th>Tratamiento</th>
+      <th>Estado</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  {currentAppointments.length > 0 ? (
+    <tbody>
+      {currentAppointments.map((appointment) => (
+        <tr key={appointment._id}>
+          <>
+            <td>{appointment._id || 'N/A'}</td>
+            <td>{appointment.date_time ? formatDate(appointment.date_time as unknown as Date) : 'N/A'}</td>
+            <td>
+              {isPatient(appointment.pacient_id)
+                ? `${appointment.pacient_id.user_id.firstname} ${appointment.pacient_id.user_id.lastname}`
+                : 'N/A'}
+            </td>
+            <td>
+              {isProfessional(appointment.professional_id)
+                ? `${appointment.professional_id.user_id.firstname} ${appointment.professional_id.user_id.lastname}`
+                : 'N/A'}
+            </td>
+            <td>{appointment.schedule?.time_slots?.start_time ? formatTime(appointment.schedule.time_slots.start_time as unknown as string) : 'N/A'}</td>
+            <td>{appointment.session_type || 'N/A'}</td>
+            <td>
+              <span className={`statusIndicator ${appointment.state?.toLowerCase() || ''}`}></span>
+              {appointment.state || 'N/A'}
+            </td>
+            <td>
+              <button className='edit-button' style={{margin:'0.5rem'}} onClick={() => handleEdit(appointment)}>
                 <i className="fa-solid fa-edit"></i>
-                </button>
-                <button className='edit-button' style={{margin:'0.5rem'}} onClick={() => {
-                  //@ts-expect-error debo hostear!
+              </button>
+              <button className='edit-button' style={{margin:'0.5rem'}} onClick={() => {
+                if (isPatient(appointment.pacient_id) && appointment.date_time) {
                   sendWhatsAppMessageConfirmAppointment(appointment.pacient_id.user_id.phone, appointment.date_time)
-                }}>
-                <FontAwesomeIcon className="iconosRedes" icon={faWhatsapp}   />
-                </button>
-
-                <button style={{margin:'0.5rem'}} onClick={() =>{
-                  //@ts-expect-error debo hostear!
+                }
+              }}>
+                <FontAwesomeIcon className="iconosRedes" icon={faWhatsapp} />
+              </button>
+              <button style={{margin:'0.5rem'}} onClick={() => {
+                if (appointment._id && isPatient(appointment.pacient_id)) {
                   handleDeleteClick(appointment._id, `${appointment.pacient_id.user_id?.firstname} ${appointment.pacient_id.user_id?.lastname}`)
-                }} className="delete-button">
-                            <i className="fa-solid fa-trash"></i>
-                </button>
-                
-                <button className='order_url' style={{margin:'0.5rem'}} onClick={() => {
-  if (typeof appointment.order_photo === 'string') {
-    openPhotoOrder(appointment.order_photo);
-  }
-}}>
-                            <i className="fa-regular fa-image"></i>
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                }
+              }} className="delete-button">
+                <i className="fa-solid fa-trash"></i>
+              </button>
+              <button className='order_url' style={{margin:'0.5rem'}} onClick={() => {
+                if (typeof appointment.order_photo === 'string') {
+                  openPhotoOrder(appointment.order_photo);
+                }
+              }}>
+                <i className="fa-regular fa-image"></i>
+              </button>
+            </td>
+          </>
+        </tr>
+      ))}
+    </tbody>
+  ) : (
+    <tbody>
+      <tr>
+        <td colSpan={8}>Cargando turnos...</td>
+      </tr>
+    </tbody>
+  )}
+</table>
       <div className="pagination">
         <button
           onClick={() => paginate(currentPage - 1)}
@@ -366,7 +410,7 @@ const Appointments = (): JSX.Element => {
         <button
           onClick={() => paginate(currentPage + 1)}
           disabled={currentPage === Math.ceil(appointments.length / appointmentsPerPage)}
-           className="paginationButton"  // Deshabilitar si está en la última página
+          className="paginationButton"  // Deshabilitar si está en la última página
         >
           Siguiente
         </button>
@@ -435,15 +479,15 @@ const Appointments = (): JSX.Element => {
               onChange={handleInputChange}
               required
             />
-                      <label style={{color:'rgb(151, 143, 127)'}} htmlFor=""> Ingrese la imagen de la orden:
-          <input 
-            type="file"
-            style={{margin:'1rem'}}
-            onChange={handleFileChange} 
-            accept="image/*"
-          />
-          {filePreview && <img src={filePreview} alt="Vista previa" style={{maxWidth: '200px'}} />}
-          </label>
+            <label style={{ color: 'rgb(151, 143, 127)' }} htmlFor=""> Ingrese la imagen de la orden:
+              <input
+                type="file"
+                style={{ margin: '1rem' }}
+                onChange={handleFileChange}
+                accept="image/*"
+              />
+              {filePreview && <img src={filePreview} alt="Vista previa" style={{ maxWidth: '200px' }} />}
+            </label>
           </div>
           <div className="formActions">
             <button type="submit">{isEditing ? 'Actualizar' : 'Crear'} Turno</button>
@@ -459,8 +503,8 @@ const Appointments = (): JSX.Element => {
           onSuccess={fetchAppointments}
         />
       )}
-        <ConfirmDeleteModal
-        isOpen={showDeleteModal} 
+      <ConfirmDeleteModal
+        isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDeleteConfirm}
         patientName={appointmentToDelete?.name || ''}
