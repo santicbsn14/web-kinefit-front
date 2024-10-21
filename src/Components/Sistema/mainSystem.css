@@ -1,23 +1,81 @@
 .mosaic {
-    background-color: orange;
-    width: 178px;
-    height: 80%; 
-    display: flex;
-    flex-direction: column; 
-    justify-content: flex-start; 
-    align-items: center; 
-    position: fixed; 
-    left: 0;
-    top: 80px;
-  }
-  .mosaic span{
-    text-decoration: none;
-  }
-  .mosaic-item {
-    margin: 10px 0;
+  background-color: orange;
+  width: 178px;
+  height: 80%; 
+  display: flex;
+  flex-direction: column; 
+  justify-content: flex-start; 
+  position: fixed; 
+  left: 3px;
+  top: 80px;
+}
+
+.mosaic span {
+  text-decoration: none;
+}
+
+.mosaic-item {
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px;
+  width: 100%; 
+  box-sizing: border-box; 
+  text-align: left;
+  display: flex; /* Aseguramos que el contenido interno se alinee */
+  align-items: center; /* Centrar verticalmente */
+}
+
+.mosaic-item i {
+  margin-right: 10px; /* Espacio entre el ícono y el texto */
+}
+
+  .toggle-button {
+    display: none;
+    position: fixed;
+    top: 3.3rem;
+    left: 10px;
+    background-color: #333;
+    color: white;
     padding: 10px;
-    border: 1px ;
-    width: 100%; 
-    box-sizing: border-box; 
-    text-align: left;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 100;
+  }
+  
+  /* Mostrar el botón en pantallas pequeñas */
+  @media (max-width: 768px) {
+    .toggle-button {
+      display: block;
+    }
+    
+    /* Estilos cuando la navbar está colapsada */
+    .mosaic.collapsed {
+      transform: translateX(-100%); /* Oculta la navbar fuera de la pantalla */
+      transition: transform 0.3s ease;
+    }
+  
+    /* Estilos cuando la navbar está abierta */
+    .mosaic.open {
+      transform: translateX(0); /* Muestra la navbar */
+      transition: transform 0.3s ease;
+    }
+  
+    /* Ajustar la navbar para que ocupe toda la altura y sea vertical */
+    .mosaic {
+      position: fixed;
+      top: 3.1rem;
+      left: 0;
+      height: 100%;
+      width: 250px;
+      background-color: orange;
+      z-index: 99;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+  
+    .mosaic-item {
+      margin: 20px 0;
+    }
   }
