@@ -16,6 +16,7 @@ export interface IUser  {
     permissions:string[],
   } | string;
   password: string;
+  confirmPassword?:string;
   id?: string
   _id?: string
   status: boolean

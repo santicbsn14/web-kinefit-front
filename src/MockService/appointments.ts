@@ -107,6 +107,7 @@ export const deleteAppointment = async (id: string) =>{
     if (!token) {
       throw new Error('No authentication token available');
     }
+  
     const response = await axios.delete(`https://appointment-system-kinefit-1.onrender.com/api/appointments/${id}`, 
       {
         headers: {

@@ -17,6 +17,7 @@ interface FormData {
   homeAdress: string;
   status: boolean;
   password: string;
+  confirmPassword?: string
 }
 
 
@@ -46,7 +47,8 @@ const Users = () => {
     role: '',
     homeAdress: '',
     status: true,
-    password: ''
+    password: '',
+    confirmPassword:''
   });
 
   // Nuevo estado para paginación
@@ -150,13 +152,20 @@ const Users = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Las contraseñas no coinciden');
+      return;
+    }
+
     try {
       if (isEditing) {
-        await updateUser(formData._id, formData as IUser);
+         // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { confirmPassword, ...userData } = formData;
+        await updateUser(formData._id, userData as IUser);
         toast.success('¡Actualización de usuario exitosa!');
       } else {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { _id, ...newUserData }: IUser = formData;
+        const { _id, confirmPassword, ...newUserData }: IUser = formData;
         await createUser(newUserData as IUser);
         toast.success('¡Creación de usuario exitosa!');
       }
@@ -289,6 +298,14 @@ const Users = () => {
             value={formData.password}
             onChange={handleInputChange}
             placeholder="Contraseña"
+            required={!isEditing}
+          />
+          <input
+            type="password"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleInputChange}
+            placeholder="Confirmar contraseña"
             required={!isEditing}
           />
           <label>

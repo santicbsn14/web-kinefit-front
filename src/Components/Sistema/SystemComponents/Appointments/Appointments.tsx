@@ -52,8 +52,8 @@ const Appointments = (): JSX.Element => {
       const appointmentsData = await getAppointments();
       setAppointments(appointmentsData.appointments);
     } catch (error) {
-      // Manejar el error aquí si es necesario
-      console.error("Error fetching appointments:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(errorMessage);
     } finally {
       setLoading(false); // Finaliza la carga
     }
@@ -390,10 +390,16 @@ const isProfessional = (id: Professional | string | null): id is Professional =>
         </tr>
       ))}
     </tbody>
-  ) : (
+  ) : loading?(
     <tbody>
       <tr>
-        <td colSpan={8}>Cargando turnos...</td>
+        <td colSpan={8}> Cargando...</td>
+      </tr>
+    </tbody>
+  ): (
+    <tbody>
+      <tr>
+        <td colSpan={8}> No hay turnos ingresados</td>
       </tr>
     </tbody>
   )}
