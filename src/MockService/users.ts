@@ -108,7 +108,7 @@ export const deleteUserMongo = async (userid: string) =>{
 export const updatePasswordMongo = async(data: Partial<IUser>, userid:string)=>{
   try {
 
-    const response = await axios.put(`http://localhost:8080/api/session/${userid}`, data)
+    const response = await axios.put(`https://appointment-system-kinefit-1.onrender.com/api/session/${userid}`, data)
     console.log(response.data)
     return response.data
   } catch (error) {
