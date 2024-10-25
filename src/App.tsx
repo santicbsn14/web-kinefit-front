@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Tratamientos from './Components/Tratamientos/Tratamientos'
 import QuienesSomos from './Components/QuienesSomos/Quienes_Somos'
 import ObrasSociales from './Components/ObrasSociales/Obras_Sociales'
-import LoginComponent from './Components/Sistema/ViewLogin'
+import LoginComponent from './Components/Sistema/SystemComponents/Login/ViewLogin'
 import MainSystem from './Components/Sistema/MainSystem'
 import Agenda from './Components/Sistema/SystemComponents/Agenda/Agenda'
 import DashboardLayout from './Components/Sistema/DashboardLayout'
@@ -16,6 +16,8 @@ import Appointments from './Components/Sistema/SystemComponents/Appointments/App
 import ProtectedRoute from './Contexts/protectedRoute'
 import { AuthProvider } from './Contexts/authContext'
 import PatientDashboard from './Components/Sistema/SystemComponents/PatientDashboard/PatientDashboard'
+import ResetPassword from './Components/Sistema/SystemComponents/ForgotPassword/ChangePassword'
+import ForgotPassword from './Components/Sistema/SystemComponents/ForgotPassword/ForgotPassword'
 function App() {
   return (
     <AuthProvider>
@@ -28,6 +30,8 @@ function App() {
             <Route path='/quienesSomos' element={<QuienesSomos/>}/>
             <Route path='/obrasSociales' element={<ObrasSociales/>}/>
             <Route path='/login' element={<LoginComponent/>}/>
+            <Route path='/forgotPassword' element={<ForgotPassword/>}/>
+            <Route path='/resetPassword' element={<ResetPassword/>}/>
             <Route element={<ProtectedRoute/>}>
               <Route path='/system' element={<DashboardLayout />}>
                 <Route index element={<MainSystem />} />

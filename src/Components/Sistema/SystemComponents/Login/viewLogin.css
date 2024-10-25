@@ -10,7 +10,7 @@
     margin-left: 2rem;
     background-color: orange;
 }
-:hover .btn{
+.btn:hover{
     background-color: white;
 }
 h2{

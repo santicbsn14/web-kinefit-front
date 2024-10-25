@@ -2,8 +2,8 @@ import {useNavigate } from 'react-router-dom';
 import './viewLogin.css'
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import * as React from 'react'
-import { auth } from '../../MockService/auth';
-import { userLoginSucces } from '../../Utils/Types/userTypes';
+import { auth } from '../../../../MockService/auth';
+import { userLoginSucces } from '../../../../Utils/Types/userTypes';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -55,6 +55,7 @@ import 'react-toastify/dist/ReactToastify.css';
                 onChange={(e) => setPassword(e.target.value)}
               />
               <button className='btn align-self-start mt-3' type="submit">Iniciar sesión</button>
+              <p style={{textAlign:'center'}}>Te olvidaste la contraseña? <a href="http://localhost:5173/forgotPassword" target="_blank" rel="noopener noreferrer"> Ingresa aqui</a></p>
             </div>
             {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
             {errorMessage && <p style={{color:'red'}}>{errorMessage}</p>}

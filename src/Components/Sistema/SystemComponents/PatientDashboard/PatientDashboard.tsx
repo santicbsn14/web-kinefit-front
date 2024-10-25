@@ -30,7 +30,7 @@ const PatientDashboard = () => {
   const [file, setFile] = useState<File | null>(null);
  
   const [, setLoading] = useState(false);
-const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     pacient_id: '',
     professional_id: '',
@@ -65,9 +65,21 @@ const [filePreview, setFilePreview] = useState<string | null>(null);
         }
         
     } catch (error) {
-        console.error('Error al obtener el usuario o los turnos:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast.error(errorMessage);
     }
 }
+const sessionTypes = [
+  'Terapia de manos',
+  'Kinesiologia adulto/pediatrico',
+  'Terapia manual',
+  'Osteopatia',
+  'Cupping',
+  'Neuromodulacion',
+  'Electroterapia',
+  'Readaptacion deportiva',
+  'Puncion seca'
+];
 const uploadImageToCloudinary = async (file: File) => {
   const formData = new FormData();
   formData.append('file', file);
@@ -379,20 +391,24 @@ const uploadImageToCloudinary = async (file: File) => {
               required
             />
           </div>
-
-          {/* Tipo de sesión */}
-          <div style={{ marginBottom: '15px' }}>
-            <label htmlFor="session_type" style={{ display: 'block', marginBottom: '5px',color:'rgb(151, 143, 127)' }}>Tipo de sesión:</label>
-            <input
-              type="text"
-              name="session_type"
-              value={formData.session_type}
-              onChange={handleInputChange}
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-              required
-            />
-          </div>
-          <label style={{color:'rgb(151, 143, 127)'}} htmlFor=""> Ingrese la imagen de la orden:
+            <div style={{ marginBottom: '15px' }}>
+              <label htmlFor="session_type" style={{ display: 'block', marginBottom: '5px', color: 'rgb(151, 143, 127)' }}>Tipo de sesión:</label>
+              <select
+                name="session_type"
+                value={formData.session_type}
+                onChange={handleInputChange}
+                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                required
+              >
+                <option value="">Seleccione un tipo de sesión</option>
+                {sessionTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+          <label style={{color:'rgb(151, 143, 127)'}} htmlFor="">  Ingrese la imagen de la orden (opcional):
           <input 
             type="file"
             style={{margin:'1rem'}}
