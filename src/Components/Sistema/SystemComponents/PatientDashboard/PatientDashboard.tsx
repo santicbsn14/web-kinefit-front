@@ -12,10 +12,12 @@ import { getAuth } from 'firebase/auth';
 import { getUserByEmail } from '../../../../MockService/users';
 import dayjs, { Dayjs } from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
+import timezone from 'dayjs/plugin/timezone';
 
 import 'dayjs/locale/es'; // Carga la localización para español
 import axios from 'axios';
 dayjs.extend(localizedFormat);
+dayjs.extend(timezone);
 dayjs.locale('es');
 const PatientDashboard = () => {
   const [patients, setPatients] = useState([]);
@@ -270,10 +272,11 @@ const uploadImageToCloudinary = async (file: File) => {
       )),
     [professionals]
   );
+  
   const formattedDate = userAppointment 
-    ? dayjs(userAppointment).format('dddd, D [de] MMMM [de] YYYY') 
+    ? dayjs.utc(userAppointment).format('dddd, D [de] MMMM [de] YYYY') 
     : 'No tienes turnos asignados';
-
+    
   return (
     <div style={{ padding: '20px' }}>
       <h1 style={{ marginBottom: '20px', color:'rgb(151, 143, 127)' }}>Panel de Paciente</h1>
