@@ -12,7 +12,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  role: null, // Inicializamos el rol como null
+  role: null, 
   loading: true,
   logout: async () => {},
 });
@@ -23,7 +23,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<string | null>(null); // Estado para almacenar el rol
+  const [role, setRole] = useState<string | null>(null); 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,12 +33,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (currentUser) {
         try {
           const response = await getUserByEmail(currentUser.email as unknown as string);
-          setRole(response.role); // Almacena el rol del usuario
+          setRole(response.role); 
         } catch (error) {
           console.error('Error fetching user data:', error);
         }
       } else {
-        setRole(null); // Reinicia el rol si no hay usuario
+        setRole(null); 
       }
 
       setLoading(false);
@@ -50,7 +50,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
   
   const logout = async () => {
-    console.log('Cerrando sesión');
     await signOut(auth);
     setUser(null);
     setRole(null); // Reinicia el rol al cerrar sesión

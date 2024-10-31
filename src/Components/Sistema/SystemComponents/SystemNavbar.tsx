@@ -1,16 +1,28 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../../Contexts/authContext";
 import '../mainSystem.css';
 
 const SystemNavbar = (): JSX.Element => {
   const { role } = useAuth();
-  const [isOpen, setIsOpen] = useState(false); // Estado para controlar si la navbar está abierta o cerrada
- //@ts-expect-error debo hostear!
-  if (role?.name === 'patient') {
-    return <div> </div>;
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); 
+  useEffect(() => {
+    // Una vez que role tenga un valor (no sea null o undefined), desactivamos el estado de carga
+    if (role !== undefined) {
+      setIsLoading(false);
+    }
+  }, [role]);
+
+  
+  if (isLoading) {
+    return <div></div>; 
   }
 
+   //@ts-expect-error debo hostear!
+  if (role?.name === 'patient') {
+    return <div></div>; 
+  }
   const toggleNavbar = () => {
     setIsOpen(!isOpen); // Cambiar el estado de la navbar (abrir/cerrar)
   };
