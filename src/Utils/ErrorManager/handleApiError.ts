@@ -62,6 +62,9 @@ type ErrorResponse = {
             if(data.message.includes('The professional does not work in that time slot')){
               return "El profesional no trabaja en el horario ingresado"
             }
+            if(data.message.includes('The professional is not available at the moment')){
+              return "El profesional no se encuentra disponible por el momento"
+            }
             if(data.message.includes('El recurso ya ha sido creado previamente')){
               return 'El recurso ya ha sido creado previamente'
             }

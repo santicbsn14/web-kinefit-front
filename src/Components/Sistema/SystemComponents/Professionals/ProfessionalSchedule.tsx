@@ -43,19 +43,22 @@ const ProfesionalTimeSlots: React.FC<ProfesionalTimeSlotsProps> = ({ data, profe
   if (!isOpen) {
     return null; 
   }
-  const toggleModal = () => setShowModal(!showModal);
+  const toggleModal = () =>{
+    setShowModal(!showModal);
+    console.log(showModal) 
+  }
+
   const handleEditClick = (schedule: ProfessionalTimeSlotsBBDD) => {
     setScheduleData(schedule);
     setSelectedScheduleId(schedule._id);
-    console.log(scheduleData)
-    setShowModal(prevState => !prevState)
-    // onClose(); // Cerrar el modal después de seleccionar el horario
+    setShowModal(prevState => !prevState); // toggle the modal state
   };
-
   const formatDate = (dateString: string | Date) => {
-    const date = new Date(dateString);
-    const localDate = new Date(date.toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' }));
-    return localDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+    if(typeof dateString === 'string'){
+    const hours = dateString.slice(11, 13);
+    const minutes = dateString.slice(14, 16);
+    return `${hours}:${minutes}`;
+    }
   };
 
   const handleScheduleSlotChange = (index: number, field: string, value: unknown) => {
@@ -119,7 +122,11 @@ const ProfesionalTimeSlots: React.FC<ProfesionalTimeSlotsProps> = ({ data, profe
           },
         })),
       };
-      
+      if (convertedScheduleData.schedule.length === 0) {
+        //@ts-expect-error es un caso especial de edicion
+        delete convertedScheduleData.schedule;
+      }
+      console.log(convertedScheduleData)
       try {
         if (selectedScheduleId) {
           await updateProfessionalTimeSlots(selectedScheduleId, convertedScheduleData);
@@ -143,35 +150,46 @@ const ProfesionalTimeSlots: React.FC<ProfesionalTimeSlotsProps> = ({ data, profe
     <>
       <h2>Horarios de {professionalName}</h2>
       <table className="profesionalTimeSlotsTable">
-        <thead>
-          <tr>
-            <th>Día de la Semana</th>
-            <th>Hora de Inicio</th>
-            <th>Hora de Fin</th>
-            <th>Estado</th>
-            {/* @ts-expect-error s */}
-            {role?.name !== 'patient' && <th>Acciones</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {data.schedule.map((schedule, index) => (
+      <thead>
+        <tr>
+          <th>Día de la Semana</th>
+          <th>Hora de Inicio</th>
+          <th>Hora de Fin</th>
+          <th>Estado</th>
+          {role && typeof role === 'object' && 'name' in role &&  <th>Acciones</th>}
+        </tr>
+      </thead>
+      <tbody>
+        {data.schedule.length > 0 ? (
+          data.schedule.map((schedule, index) => (
             <tr key={`${data._id}-${index}`}>
-              <td>{diasSemana[parseInt(schedule.week_day as unknown as  string)]}</td>
+              <td>{diasSemana[parseInt(schedule.week_day as unknown as string)]}</td>
               <td>{formatDate(schedule.time_slots.start_time)}</td>
               <td>{formatDate(schedule.time_slots.end_time)}</td>
               <td>{data.state}</td>
-              {/* @ts-expect-error s */}
-              {role?.name !== 'patient' && (
-              <td>
+              {role && typeof role === 'object' && 'name' in role && role.name !== 'patient' && (
+                <td>
+                  <button onClick={() => handleEditClick(data)} className="edit-button">
+                    <i className="fa-solid fa-edit"></i>
+                  </button>
+                </td>
+              )}
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td colSpan={role && typeof role === 'object' && 'name' in role && role.name !== 'patient' ? 5 : 4}>
+              No hay horarios programados
+              {role && typeof role === 'object' && 'name' in role && role.name !== 'patient' && (
                 <button onClick={() => handleEditClick(data)} className="edit-button">
                   <i className="fa-solid fa-edit"></i>
                 </button>
-              </td>
-            )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              )}
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
 
       {/* Modal */}
       {showModal && (

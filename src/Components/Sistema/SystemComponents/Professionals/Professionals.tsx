@@ -370,7 +370,9 @@ const Professionals: React.FC = () => {
             <button style={{margin:'2px'}} onClick={() => handleDeleteClick(professional._id, `${professional.user_id?.firstname} ${professional.user_id?.lastname}`)} className="delete-button">
               <i className="fa-solid fa-trash"></i>
             </button>
-            <button style={{margin:'2px'}} onClick={() => openScheduleModal(professional._id)} className="schedule-button">
+            <button style={{margin:'2px'}} onClick={() =>{ openScheduleModal(professional._id)
+
+            }} className="schedule-button">
               <i className="fa-solid fa-calendar-check "></i>
             </button>
             <button style={{margin:'2px'}} onClick={() => handleEditClick(professional as unknown as Professional)} className="edit-button">
@@ -583,7 +585,7 @@ const Professionals: React.FC = () => {
           data={state.showDataPTS} 
           onClose={() => {
             dispatch({ type: 'SET_PROFESSIONAL_SCHEDULES', payload: { show: false } });
-            return false; // Asegura que se devuelva un booleano
+            return false; 
           }}
           isOpen={state.showProfessionalSchedules} 
         />
