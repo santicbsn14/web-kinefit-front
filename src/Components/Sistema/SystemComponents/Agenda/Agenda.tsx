@@ -62,26 +62,26 @@ const Agenda = () => {
 
   
   const getTurnos = (dayIndex: number, hora: string) => {
-    return appointments.filter(appointment => {
+    const professionalAppointments = filterAppointmentsByProfessional(appointments);
+    return professionalAppointments.filter(appointment => {
       const appointmentDate = dayjs(appointment.date_time).utc();
       const appointmentWeekDay = (appointmentDate.day() + 6) % 7; // Ajuste para que lunes sea 0
   
       // Asumimos que start_time es una cadena en formato "HH:mm"
-      const startTime = dayjs(appointment.schedule.time_slots.start_time, "HH:mm")
+      const startTime = dayjs(appointment.schedule.time_slots.start_time, "HH:mm");
       const [hours, minutes] = hora.trim().split(":");
       const targetHour = dayjs().hour(parseInt(hours, 10)).minute(parseInt(minutes, 10));
-
+  
       // Comparamos solo las horas
       const matchesHour = startTime.hour() === targetHour.hour();
-  
       const matchesDay = appointmentWeekDay === dayIndex;
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-     //@ts-ignore s
+       //@ts-expect-error debo hostear!
       const inCurrentWeek = isInCurrentWeek(appointment.date_time);
-
+  
       return matchesDay && matchesHour && inCurrentWeek;
     });
   };
+  
   
 
   
@@ -92,12 +92,12 @@ const Agenda = () => {
     return appointmentDate.isSame(today);
   });
 
-  const totalPacientesHoy = turnosHoyProfesional.length; // Contar los turnos de hoy
+  const totalPacientesHoy = turnosHoyProfesional.length; 
   const ultimoTurnoHoy = turnosHoyProfesional.length > 0
     ? dayjs(turnosHoyProfesional.reduce((latest, appointment) =>
       dayjs(latest.schedule.time_slots.end_time).isAfter(dayjs(appointment.schedule.time_slots.end_time)) ? latest : appointment
-    ).schedule.time_slots.end_time).format('HH:mm') // Obtener la hora del último turno de hoy
-    : 'No hay turnos'; // Si no hay turnos hoy
+    ).schedule.time_slots.end_time).format('HH:mm') 
+    : 'No hay turnos'; 
 
 
 

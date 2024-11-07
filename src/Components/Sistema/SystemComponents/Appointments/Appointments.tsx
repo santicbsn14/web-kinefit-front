@@ -13,6 +13,7 @@ import { CreateAppointment, CreateAppointmentDto } from '../../../../Utils/Types
 import { sendWhatsAppMessageConfirmAppointment } from '../../../../MockService/messages';
 import axios from 'axios';
 import { DaySchedule } from '../../../../Utils/Types/professionalTypes';
+import { useAuth } from '../../../../Contexts/authContext';
 
 interface ConfirmDeleteModalProps {
   isOpen:boolean;
@@ -44,13 +45,18 @@ const Appointments = (): JSX.Element => {
   const [professionals, setProfessionals] = useState<{ _id: string, user_id: { firstname: string, lastname:string, phone: string} }[]>([]);
   const [patients, setPatients] = useState<{ _id: string, user_id: { firstname: string, lastname:string, phone: string } }[]>([]);
   const [appointments, setAppointments] = useState<CreateAppointment[]>([]);
-  
+  const {user} = useAuth()
 
   const fetchAppointments = React.useCallback(async () => {
     setLoading(true); // Inicia la carga
     try {
       const appointmentsData = await getAppointments();
-      setAppointments(appointmentsData.appointments);
+      const filteredAppointments = appointmentsData.appointments.filter(
+        (appointment: CreateAppointment) => 
+          //@ts-expect-error si existe
+          appointment.professional_id.user_id.email === user.email
+      );
+      setAppointments(filteredAppointments);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       toast.error(errorMessage);
@@ -126,7 +132,14 @@ const Appointments = (): JSX.Element => {
   }
   const calculateEndTime = (startTime: string): string => {
     const [hours, minutes] = startTime.split(':').map(Number);
-    const endDate = new Date(2000, 0, 1, hours + 1, minutes);
+    const endDate = new Date(2000, 0, 1, hours, minutes);
+
+    if (user && user.email === 'gda014@gmail.com') {
+      endDate.setMinutes(endDate.getMinutes() + 45);
+    } else {
+      endDate.setHours(endDate.getHours() + 1);
+    }
+  
     return endDate.toTimeString().slice(0, 5);
   };
 

@@ -150,7 +150,7 @@ const uploadImageToCloudinary = async (file: File) => {
         [name]: value,
         schedule: {
           ...prevData.schedule,
-          week_day: weekDay 
+          week_day: weekDay
         },
       }));
     } else if (name === 'start_time') {
@@ -161,6 +161,11 @@ const uploadImageToCloudinary = async (file: File) => {
           time_slots: { start_time: value },
         },
       }));
+    } else if (name === 'session_type') {
+      setFormData((prevData) => ({ ...prevData, [name]: value }));
+      if (value === 'Osteopatia') {
+        toast.info('Los turnos de Osteopatia se atienden solo los martes, jueves y sábados por la mañana.');
+      }
     } else {
       setFormData((prevData) => ({ ...prevData, [name]: value }));
     }
@@ -169,9 +174,16 @@ const uploadImageToCloudinary = async (file: File) => {
     setShowProfessionals(!showProfessionals);
   };
 
-  const calculateEndTime = (startTime: string): string => {
+  const calculateEndTime = (startTime: string, idP?: string): string => {
     const [hours, minutes] = startTime.split(':').map(Number);
-    const endDate = new Date(2000, 0, 1, hours + 1, minutes);
+    const endDate = new Date(2000, 0, 1, hours, minutes);
+
+    if (idP && idP === '67165c64b2049e188f8f1a37') {
+      endDate.setMinutes(endDate.getMinutes() + 45);
+    } else {
+      endDate.setHours(endDate.getHours() + 1);
+    }
+  
     return endDate.toTimeString().slice(0, 5);
   };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -198,7 +210,7 @@ const uploadImageToCloudinary = async (file: File) => {
         }
 
         const startTimeParts = schedule.time_slots.start_time.split(':');
-        const endTime = calculateEndTime(schedule.time_slots.start_time);
+        const endTime = calculateEndTime(schedule.time_slots.start_time, professional_id);
         const endTimeParts = endTime.split(':');
 
         const appointmentDate = new Date(date_time);
@@ -223,7 +235,6 @@ const uploadImageToCloudinary = async (file: File) => {
           session_type,
           order_photo: uploadedImageUrl, // Agregamos la URL de la imagen si se subió una
         };
-        
         await makeAppointmentByPatient(appointmentData);
         toast.success('El turno ha sido creado con éxito');
         setShowForm(false);

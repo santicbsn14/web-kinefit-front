@@ -84,7 +84,7 @@ export const makeAppointmentByPatient = async (data: CreateAppointmentDto | Crea
     }
 
     const response = await axios.post(
-      'http://localhost:8080/api/appointments/bypatient', 
+      'https://appointment-system-kinefit-1.onrender.com/api/appointments/bypatient', 
       data, 
       {
         headers: {
