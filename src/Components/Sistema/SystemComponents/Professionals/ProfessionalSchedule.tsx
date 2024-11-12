@@ -45,13 +45,13 @@ const ProfesionalTimeSlots: React.FC<ProfesionalTimeSlotsProps> = ({ data, profe
   }
   const toggleModal = () =>{
     setShowModal(!showModal);
-    console.log(showModal) 
   }
 
   const handleEditClick = (schedule: ProfessionalTimeSlotsBBDD) => {
     setScheduleData(schedule);
     setSelectedScheduleId(schedule._id);
-    setShowModal(prevState => !prevState); // toggle the modal state
+
+    setShowModal(true);
   };
   const formatDate = (dateString: string | Date) => {
     if(typeof dateString === 'string'){
@@ -126,11 +126,11 @@ const ProfesionalTimeSlots: React.FC<ProfesionalTimeSlotsProps> = ({ data, profe
         //@ts-expect-error es un caso especial de edicion
         delete convertedScheduleData.schedule;
       }
-      console.log(convertedScheduleData)
       try {
         if (selectedScheduleId) {
           await updateProfessionalTimeSlots(selectedScheduleId, convertedScheduleData);
           toast.success('El horario fue actualizado con éxito');
+          setShowModal(false);
         } else {
           toast.error('No se pudo identificar el horario a editar');
         }
@@ -148,7 +148,25 @@ const ProfesionalTimeSlots: React.FC<ProfesionalTimeSlotsProps> = ({ data, profe
 
   return (
     <>
-      <h2>Horarios de {professionalName}</h2>
+<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+  <h2>Horarios de {professionalName}</h2>
+  <button 
+    onClick={onClose}
+    className="close-button"
+    style={{
+      padding: '8px 16px',
+      backgroundColor: '#f44336',
+      color: 'white',
+      border: 'none',
+      borderRadius: '4px',
+      cursor: 'pointer',
+      marginTop: '16px' // Ajusta el margen según sea necesario
+    }}
+  >
+    Ocultar horarios
+  </button>
+</div>
+
       <table className="profesionalTimeSlotsTable">
       <thead>
         <tr>
@@ -156,7 +174,8 @@ const ProfesionalTimeSlots: React.FC<ProfesionalTimeSlotsProps> = ({ data, profe
           <th>Hora de Inicio</th>
           <th>Hora de Fin</th>
           <th>Estado</th>
-          {role && typeof role === 'object' && 'name' in role &&  <th>Acciones</th>}
+          {role && typeof role === 'object' && role.name === 'professional' && <th>Acciones</th>}
+
         </tr>
       </thead>
       <tbody>

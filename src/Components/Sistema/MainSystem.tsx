@@ -38,7 +38,7 @@ const MainSystem = (): JSX.Element => {
             <div className="fixed inset-0 flex items-center justify-center bg-orange-500">
                 <div className="text-center">
                     {/* <CompanyLogo className="w-32 h-32 mx-auto mb-4" /> */}
-                    <p className="text-white text-xl font-bold">Cargando...</p>
+                    <p style={{color:'white'}} className="text-white text-xl font-bold">Cargando...</p>
                 </div>
             </div>
         );

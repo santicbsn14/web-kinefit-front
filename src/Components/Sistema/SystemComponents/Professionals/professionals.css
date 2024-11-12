@@ -328,4 +328,17 @@
   align-items: center;
   margin-bottom: 5px;
 }
+.professional-time-slots-container {
+  padding: 20px;
+}
 
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.close-button:hover {
+  background-color: #d32f2f;
+}

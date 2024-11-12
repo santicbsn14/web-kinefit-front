@@ -76,7 +76,7 @@ const NavBar = (): JSX.Element => {
                     <li style={menuItemStyle}><Link to='/tratamientos' className='nav-link'>Tratamientos</Link></li>
                     <li style={menuItemStyle}><Link to='/obrasSociales' className='nav-link'>Obras Sociales</Link></li>
                     <li style={menuItemStyle}><Link to='/quienesSomos' className='nav-link'>Quienes Somos</Link></li>
-                    <li style={menuItemStyle}>Contacto</li>
+                    <li style={menuItemStyle}><Link to='/contact' className='nav-link'>Contacto</Link></li>
                     {/* Solo incluir el botón de Iniciar Sesión en el menú cuando está abierto */}
                     {isMobile && isMenuOpen && (
                         <li style={menuItemStyle}>

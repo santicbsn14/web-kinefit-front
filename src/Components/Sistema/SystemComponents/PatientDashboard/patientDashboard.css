@@ -43,12 +43,12 @@
     margin-left: -6rem;
   }
   .professionalForm {
-      width: 90%; /* Aumenta el ancho del formulario en móviles */
-      padding: 15px; /* Ajusta el padding */
+      width: 90%; 
+      padding: 15px;
   }
   .appointmentMessage {
-    padding: 8px 15px; /* Reduce el padding */
-    font-size: 1rem; /* Tamaño de fuente más pequeño */
+    padding: 8px 15px; 
+    font-size: 1rem; 
     margin-left: -4rem;
     margin-right: 4rem;
 }

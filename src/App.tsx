@@ -18,6 +18,7 @@ import { AuthProvider } from './Contexts/authContext'
 import PatientDashboard from './Components/Sistema/SystemComponents/PatientDashboard/PatientDashboard'
 import ResetPassword from './Components/Sistema/SystemComponents/ForgotPassword/ChangePassword'
 import ForgotPassword from './Components/Sistema/SystemComponents/ForgotPassword/ForgotPassword'
+import ContactForm from './Components/Contacto/Contact'
 function App() {
   return (
     <AuthProvider>
@@ -29,6 +30,7 @@ function App() {
             <Route path='/tratamientos' element={<Tratamientos/>}/>
             <Route path='/quienesSomos' element={<QuienesSomos/>}/>
             <Route path='/obrasSociales' element={<ObrasSociales/>}/>
+            <Route path='/contact' element={<ContactForm/>}/>
             <Route path='/login' element={<LoginComponent/>}/>
             <Route path='/forgotPassword' element={<ForgotPassword/>}/>
             <Route path='/resetPassword' element={<ResetPassword/>}/>

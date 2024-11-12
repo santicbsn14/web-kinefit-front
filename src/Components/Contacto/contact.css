@@ -1,0 +1,54 @@
+.mainContact {
+    margin-top: 220px;
+  }
+  
+  .datosUbicacion h3 {
+    color: white;
+    font-size: 26px;
+  }
+  
+  .message {
+    height: 110px;
+  }
+  
+  .mapaUbi {
+    position: relative;
+    left: 0px;
+    width: 400px;
+  }
+  
+  .section {
+    padding-bottom: 80px;
+    padding-right: 0px;
+  }
+  
+  .rojo {
+    background-color: white;
+  }
+  
+  .formularioCon {
+    width: 90%;
+  }
+  
+  @media only screen and (max-width: 990px) {
+    .formularioCon {
+      padding-bottom: 130px;
+    }
+  }
+  
+  .tituloAutoridades {
+    color: white;
+  }
+  
+  /* Asegúrate de que estos estilos están disponibles para el botón */
+  .btn.btnCards {
+    /* Agrega aquí los estilos específicos del botón */
+  }
+  .mainContact{
+    margin-top: 3rem;
+  }
+  .mapaUbi{
+    position: relative;
+    left: 0px;
+    width: 400px;
+}
