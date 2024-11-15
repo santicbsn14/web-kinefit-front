@@ -136,9 +136,8 @@ const uploadImageToCloudinary = async (file: File) => {
       }
     }
   };
-  
-  
-
+  //@ts-expect-error
+  const filteredPatient = patients.filter(patient => patient.user_id.email === email);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -353,7 +352,7 @@ const uploadImageToCloudinary = async (file: File) => {
               required
             >
               <option value="">Seleccione un paciente</option>
-              {patients.map((patient: Patient) => (
+              {filteredPatient.map((patient: Patient) => (
                 <option key={patient._id} value={patient._id}>
                   {patient.user_id.firstname} {patient.user_id.lastname}
                 </option>
