@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import './contact.css'
 const ContactForm = () => {
     const [enConstruccion, setEnConstruccion] = useState(true);
     if (enConstruccion) {
+      setEnConstruccion(true)
         return (
           <div style={{ textAlign: 'center', marginTop: '20px', color: 'white' }}>
             Estamos en la construcción de esta vista...
