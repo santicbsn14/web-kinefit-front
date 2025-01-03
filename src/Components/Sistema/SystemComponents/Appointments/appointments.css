@@ -112,6 +112,10 @@ body {
   transition: background-color 0.3s ease;
   z-index: 9999;
 }
+iframe[src="https://vercel.live/_next-live/feedback/feedback.html"],
+div[style*="position: fixed"] {
+  display: none !important;
+}
 
 .appointmentForm button:hover {
   background-color: #0056b3;
