@@ -112,10 +112,10 @@ body {
   transition: background-color 0.3s ease;
   z-index: 9999;
 }
-div[style*="border-radius: 10ex"][style*="box-shadow: rgba(0, 0, 0, 0.12) 0px 4px 8px"] {
-  display: none !important;
+vercel-live-feedback{
+  z-index: 9999 !important; /* Reducir el z-index para que no interfiera */
+  pointer-events: none; /* Desactivar la interacción del ratón con el feedback */
 }
-
 
 .appointmentForm button:hover {
   background-color: #0056b3;
