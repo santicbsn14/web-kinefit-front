@@ -110,6 +110,7 @@ body {
   border: none;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  z-index: 9999;
 }
 
 .appointmentForm button:hover {
