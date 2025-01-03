@@ -113,8 +113,7 @@ body {
   z-index: 9999;
 }
 vercel-live-feedback{
-  z-index: 9999 !important; /* Reducir el z-index para que no interfiera */
-  pointer-events: none; /* Desactivar la interacción del ratón con el feedback */
+  display: none !important;
 }
 
 .appointmentForm button:hover {
