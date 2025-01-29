@@ -18,7 +18,12 @@
   background-color: orange;
   font-weight: bold;
 }
-
+/* Estilo para tooltip de restricciones */
+option span {
+  margin-left: 5px;
+  font-size: 0.8em;
+  color: orange;
+}
 /* Estilos para el formulario */
 .professionalForm {
   display: flex;

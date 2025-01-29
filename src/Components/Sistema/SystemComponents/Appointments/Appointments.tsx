@@ -379,7 +379,7 @@ const isProfessional = (id: Professional | string | null): id is Professional =>
               </button>
               <button className='edit-button' style={{margin:'0.5rem'}} onClick={() => {
                 if (isPatient(appointment.pacient_id) && appointment.date_time) {
-                  sendWhatsAppMessageConfirmAppointment(appointment.pacient_id.user_id.phone, appointment.date_time)
+                  sendWhatsAppMessageConfirmAppointment(appointment.pacient_id.user_id.phone, appointment.date_time,  formatTime(appointment.schedule.time_slots.start_time as unknown as string))
                 }
               }}>
                 <FontAwesomeIcon className="iconosRedes" icon={faWhatsapp} />

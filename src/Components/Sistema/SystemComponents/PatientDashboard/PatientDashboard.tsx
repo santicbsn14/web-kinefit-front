@@ -19,6 +19,25 @@ import axios from 'axios';
 dayjs.extend(localizedFormat);
 dayjs.extend(timezone);
 dayjs.locale('es');
+
+type TreatmentRestriction = {
+  allowedDays: number[];
+  timeRange: { start: string; end: string };
+  message: string;
+};
+
+const TREATMENT_RESTRICTIONS: Record<string, TreatmentRestriction> = {
+  'Osteopatia': {
+    allowedDays: [2, 4, 6], // Martes, Jueves, Sábados
+    timeRange: { start: '08:00', end: '12:00' },
+    message: 'Los turnos de Osteopatia se atienden solo los martes, jueves y sábados por la mañana.'
+  },
+  'Puncion seca': {
+    allowedDays: [1, 3, 5], 
+    timeRange: { start: '14:00', end: '18:00' },
+    message: 'Los turnos de Punción Seca están disponibles lunes, miércoles y viernes por la tarde.'
+  }
+};
 const PatientDashboard = () => {
   const [patients, setPatients] = useState([]);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
@@ -162,9 +181,17 @@ const uploadImageToCloudinary = async (file: File) => {
       }));
     } else if (name === 'session_type') {
       setFormData((prevData) => ({ ...prevData, [name]: value }));
-      if (value === 'Osteopatia') {
-        toast.info('Los turnos de Osteopatia se atienden solo los martes, jueves y sábados por la mañana.');
-      }
+      if (name === 'session_type') {
+        setFormData((prevData) => ({ ...prevData, [name]: value }));
+        
+        // Verificar y mostrar mensaje para tratamientos con restricciones
+        const restriction = TREATMENT_RESTRICTIONS[value];
+        if (restriction) {
+          toast.info(restriction.message, {
+            position: "top-right",
+            autoClose: 5000,
+          });
+        }}
     } else {
       setFormData((prevData) => ({ ...prevData, [name]: value }));
     }
@@ -251,6 +278,7 @@ const uploadImageToCloudinary = async (file: File) => {
   const toggleForm = () => {
     setShowForm(!showForm);
   };
+
   const renderProfessionalRows = useMemo(
     () =>
         
@@ -335,8 +363,27 @@ const uploadImageToCloudinary = async (file: File) => {
             margin:'1rem'
           }}
         >
-          {showProfessionals ? 'Ocultar Profesionales' : 'Mostrar Profesionales'}
+          {showProfessionals ? 'Ocultar Profesionales' : 'Ver horarios de los Profesionales'}
         </button>
+      {showForm && (
+        <div style={{
+          width: '80%',
+          margin: '20px auto',
+          backgroundColor: '#fff3cd',
+          border: '1px solid #ffeeba',
+          color: '#856404',
+          padding: '15px',
+          borderRadius: '8px',
+          textAlign: 'center',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '10px'
+        }}>
+          <i className="fa-solid fa-clock" style={{ fontSize: '1.2em' }}></i>
+          <span>Algunos tratamientos tienen días y horarios específicos de atención</span>
+        </div>
+      )}
       {showForm && (
       <div style={{ maxWidth: '500px', margin: '0 auto', border: '1px solid #ccc', padding: '20px', borderRadius: '8px' }}>
         <h2 style={{ marginBottom: '20px' }}>Solicitar Turno</h2>
@@ -415,8 +462,15 @@ const uploadImageToCloudinary = async (file: File) => {
               >
                 <option value="">Seleccione un tipo de sesión</option>
                 {sessionTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
+                  <option
+                    key={type}
+                    value={type}
+                    style={{
+                      backgroundColor: TREATMENT_RESTRICTIONS[type] ? '#fff3cd' : 'white',
+                      fontWeight: TREATMENT_RESTRICTIONS[type] ? 'bold' : 'normal'
+                    }}
+                  >
+                    {type} {TREATMENT_RESTRICTIONS[type] ? '⏰' : ''}
                   </option>
                 ))}
               </select>
@@ -471,7 +525,7 @@ const uploadImageToCloudinary = async (file: File) => {
         </form>
       </div>)}
       {showProfessionals && (
-        <div style={{  marginLeft:'11rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
           <table className="professionalTable">
             <thead>
               <tr>
@@ -480,7 +534,7 @@ const uploadImageToCloudinary = async (file: File) => {
                 <th>Especialidades</th>
                 <th>Email</th>
                 <th>Teléfono</th>
-                <th>Acciones</th>
+                <th>Horarios</th>
               </tr>
             </thead>
             <tbody>{renderProfessionalRows}</tbody>
