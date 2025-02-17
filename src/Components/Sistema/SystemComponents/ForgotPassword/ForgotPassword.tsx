@@ -20,9 +20,9 @@ const ForgotPassword = () => {
     setIsLoading(true);
     try {
       await sendPasswordResetEmail(auth, email, {
-        url: window.location.origin + '/resetPassword',
+        url: 'https://web-kinefit-front.vercel.app' + '/resetPassword',
       });
-      toast.success('Hemos enviado un enlace de recuperación a tu correo electrónico.Por favor revisa tu bandeja de entrad')
+      toast.success('Hemos enviado un enlace de recuperación a tu correo electrónico.Por favor revisa tu bandeja de entrada')
       setEmail('');
     } catch (error) {
       
