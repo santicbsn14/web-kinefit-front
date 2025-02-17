@@ -42,7 +42,8 @@ const BulkAppointments: React.FC<BulkAppointmentsProps> = ({
     newAppointments[index][field] = value;
     setAppointments(newAppointments);
   };
-
+  console.log("Pacientes:", patients);
+  console.log("Profesionales:", professionals);
   const addAppointmentField = () => {
     setAppointments([...appointments, { date: '', start_time: '' }]);
   };
