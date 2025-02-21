@@ -1,10 +1,12 @@
 .userTableContainer {
   display: flex;
-  flex-direction: column; /* Asegura que los elementos estén en columna */
+  flex-direction: column;
   align-items: center;
-  margin-top: 5rem; /* Separación superior */
+  margin-top: 5rem;
   margin-left: 5rem;
   margin-bottom: 5rem;
+  width: 95%; /* Ajustamos el ancho para dispositivos móviles */
+  overflow-x: auto; /* Permite scroll horizontal en pantallas pequeñas */
 }
 
 .addUserContainer {
@@ -178,4 +180,79 @@
 
 .pageInfo {
   margin: 0 10px;
+}
+@media screen and (max-width: 768px) {
+  .userTableContainer {
+    margin-left: 1rem;
+    margin-right: 1rem;
+    margin-top: 2rem;
+  }
+  
+  .userTable {
+    font-size: 14px; /* Reducir tamaño de fuente */
+  }
+
+  .userTable th, 
+  .userTable td {
+    padding: 6px 4px; /* Reducir padding */
+  }
+
+  /* Ocultar columnas menos importantes en móvil */
+  .userTable th:nth-child(1),
+  .userTable td:nth-child(1),
+  .userTable th:nth-child(5),
+  .userTable td:nth-child(5) {
+    display: none;
+  }
+
+  /* Ajustar botones de acción */
+  .edit-button,
+  .delete-button {
+    padding: 4px 8px;
+    margin-left: 2px;
+  }
+
+  /* Ajustar iconos en botones */
+  .edit-button i,
+  .delete-button i {
+    font-size: 12px;
+  }
+}
+
+/* Media query para pantallas muy pequeñas */
+@media screen and (max-width: 480px) {
+  .userTableContainer {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+  }
+
+  .userTable {
+    font-size: 12px;
+  }
+
+  /* Ocultar más columnas en pantallas muy pequeñas */
+  .userTable th:nth-child(6),
+  .userTable td:nth-child(6) {
+    display: none;
+  }
+
+  /* Ajustar la columna de acciones */
+  .userTable td:last-child {
+    padding: 4px 2px;
+  }
+
+  /* Ajustar la paginación */
+  .pagination {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .pageInfo {
+    width: 100%;
+    text-align: center;
+    margin: 5px 0;
+  }
+}
+.userTable td:last-child {
+  white-space: nowrap;
 }
