@@ -1,15 +1,6 @@
-import  { useState } from 'react';
 import './contact.css'
 const ContactForm = () => {
-    const [enConstruccion, setEnConstruccion] = useState(true);
-    if (enConstruccion) {
-      setEnConstruccion(true)
-        return (
-          <div style={{ textAlign: 'center', marginTop: '20px', color: 'white' }}>
-            Estamos en la construcción de esta vista...
-          </div>
-        );
-      }
+   
   return (
     <main className="mt-56 mainContact"> {/* mainContact equivalent */}
       <section className="container-fluid my-3">
