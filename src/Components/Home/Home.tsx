@@ -12,7 +12,6 @@ const Home = () :JSX.Element =>{
             <img src={joaquin} alt="" style={{width:'300px', height:'300px', padding:'10px'}} />
         </div>
        
-        
     </div>
     )
 }

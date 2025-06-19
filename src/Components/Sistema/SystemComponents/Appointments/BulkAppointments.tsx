@@ -42,8 +42,7 @@ const BulkAppointments: React.FC<BulkAppointmentsProps> = ({
     newAppointments[index][field] = value;
     setAppointments(newAppointments);
   };
-  console.log("Pacientes:", patients);
-  console.log("Profesionales:", professionals);
+
   const addAppointmentField = () => {
     setAppointments([...appointments, { date: '', start_time: '' }]);
   };
@@ -86,7 +85,7 @@ const BulkAppointments: React.FC<BulkAppointmentsProps> = ({
           session_type: sessionType,
         };
       });
-
+      
       await bulkAppointments(appointmentData as unknown as CreateAppointmentDto[])
 
       // Simular llamada al servicio

@@ -59,7 +59,7 @@
   .items-list {
     position: absolute;
     bottom: -5rem; /* Coloca la lista justo debajo de la imagen */
-    left: 5rem; /* Alinea la lista a la izquierda de la imagen */
+    left: 6.2rem; /* Alinea la lista a la izquierda de la imagen */
     color: #978f7f;
     list-style-type: none; /* Quita los puntos de la lista */
     padding: 0; /* Quita el padding de la lista */
