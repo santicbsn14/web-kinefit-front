@@ -1,77 +1,117 @@
-.bulkAppointmentsContainer {
-    width: 60%;
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 5px;
-    margin-top: 20px;
+/* ====== CONTENEDOR / CARD ====== */
+.bulkAppointmentsContainer{
+  width: min(100%, 780px);
+  margin: 20px auto 0;
+  background: rgba(255,255,255,.04);
+  border: 1px solid #555;
+  border-radius: 12px;
+  padding: 24px;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(0,0,0,.15);
+}
+
+/* Título */
+.bulkAppointmentsTitle{
+  margin: 0 0 16px;
+  font-size: clamp(22px, 2vw, 32px);
+  font-weight: 800;
+  text-align: center;
+  color: #fff;
+}
+
+/* ====== FORM ====== */
+.bulkAppointmentsForm{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Grupo genérico (select / input arriba) */
+.formGroup{
+  display: flex;
+  flex-direction: column;
+}
+
+/* Campo de cita (fecha + hora + eliminar) */
+.appointmentField{
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid #555;
+  border-radius: 10px;
+}
+
+/* En mobile apilamos */
+@media (max-width: 640px){
+  .appointmentField{
+    grid-template-columns: 1fr;
   }
-  
-  .bulkAppointmentsTitle {
-    margin-bottom: 20px;
-    color: #333;
-  }
-  
-  .bulkAppointmentsForm {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .appointmentField {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 15px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background-color: #fff;
-  }
-  
-  .bulkAppointmentsForm select,
-  .bulkAppointmentsForm input,
-  .bulkAppointmentsForm button {
-    margin-bottom: 10px;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-  }
-  
-  .removeButton,
-  .addButton,
-  .submitButton,
-  .cancelButton {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .removeButton:hover,
-  .addButton:hover,
-  .submitButton:hover,
-  .cancelButton:hover {
-    background-color: #0056b3;
-  }
-  
-  .removeButton {
-    background-color: #dc3545;
-  }
-  
-  .removeButton:hover {
-    background-color: #c82333;
-  }
-  
-  .formActions {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
-  }
-  
-  .formActions button {
-    flex: 1;
-    margin-right: 10px;
-  }
-  
-  .formActions button:last-child {
-    margin-right: 0;
-  }
+}
+
+/* Inputs / selects coherentes con dark */
+.bulkAppointmentsForm select,
+.bulkAppointmentsForm input{
+  padding: 10px;
+  border: 1px solid #555;
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.bulkAppointmentsForm input::placeholder{ color:#9ca3af }
+
+.bulkAppointmentsForm select:focus,
+.bulkAppointmentsForm input:focus{
+  border-color:#007bff;
+  box-shadow: 0 0 0 3px rgba(0,123,255,.25);
+  background: rgba(255,255,255,.08);
+}
+
+/* Fix: opciones legibles en el dropdown nativo */
+.bulkAppointmentsForm select option{
+  background: #111;
+  color: #fff;
+}
+
+/* ====== BOTONES ====== */
+.addButton,
+.submitButton,
+.cancelButton,
+.removeButton{
+  padding: .65rem 1rem;
+  border-radius: 10px;
+  border: 0;
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform .04s ease, opacity .15s ease, background-color .15s ease, filter .15s ease;
+}
+.addButton:active,
+.submitButton:active,
+.cancelButton:active,
+.removeButton:active{ transform: translateY(1px) }
+
+/* Colores */
+.addButton{ background:#007bff; color:#fff }
+.addButton:hover{ background:#0056b3 }
+
+.submitButton{ background:#1d4ed8; color:#fff }    /* un azul distinto al de agregar */
+.submitButton:hover{ filter: brightness(.95) }
+
+.cancelButton{
+  background: transparent; color:#fff;
+  border: 1px solid #555;
+}
+.cancelButton:hover{ background: rgba(255,255,255,.06) }
+
+.removeButton{ background:#ef4444; color:#fff }
+.removeButton:hover{ filter: brightness(.95) }
+
+/* ====== FOOTER DE ACCIONES ====== */
+.formActions{
+  display:flex; gap:10px; justify-content:flex-end; margin-top: 6px;
+}
+.formActions .addButton{ margin-right:auto } /* “Agregar turno” a la izquierda */

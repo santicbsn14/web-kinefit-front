@@ -1,35 +1,27 @@
 import { useState } from 'react';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-ignore s
+
+// @ts-expect-error simplificado
 const AppointmentCell = ({ appointment }) => {
   const [showTooltip, setShowTooltip] = useState(false);
+
   if (!appointment || !appointment.pacient_id || !appointment.professional_id) {
-    return <div>Cargando...</div>;
+    return <div className="turnoLabel">Cargando…</div>;
   }
+
+  const patient = `${appointment.pacient_id.user_id.firstname} ${appointment.pacient_id.user_id.lastname}`;
+  const pro = `${appointment.professional_id.user_id.firstname} ${appointment.professional_id.user_id.lastname}`;
+  const detail = `${appointment.session_type} (${appointment.state})`;
+
   return (
-    <div 
+    <div
       className="turnoLabel"
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
-      style={{ position: 'relative' }}
     >
-      {`${appointment.pacient_id.user_id.firstname} ${appointment.pacient_id.user_id.lastname}`}
+      {patient}
       {showTooltip && (
-        <div 
-          style={{
-            position: 'absolute',
-            top: '-40px',
-            left: '0',
-            backgroundColor: 'rgba(0,0,0,0.8)',
-            color: 'white',
-            padding: '5px',
-            borderRadius: '5px',
-            fontSize: '12px',
-            zIndex: 1000,
-            whiteSpace: 'nowrap'
-          }}
-        >
-          {`${appointment.professional_id.user_id.firstname} ${appointment.professional_id.user_id.lastname}:${appointment.session_type} (${appointment.state})`}
+        <div className="turnoTooltip">
+          {pro}: {detail}
         </div>
       )}
     </div>

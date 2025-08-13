@@ -1,101 +1,201 @@
-.patientTableContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 5rem;
-    margin-left: 3rem;
-  }
-  
-  .addPatientContainer {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-    cursor: pointer;
-    padding: 10px;
-    background-color: #007bff;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-  }
-  
-  .addPatientIcon {
-    font-size: 24px;
-    color: white;
-    margin-right: 8px;
-  }
-  
-  .addPatientText {
-    font-size: 18px;
-    color: black;
-  }
-  
-  .patientTable {
-    border-collapse: collapse;
-    width: 100%;
-    max-width: 800px;
-  }
-  
-  .patientTable th, .patientTable td {
-    border: 1px solid #ddd;
-    color: white;
-    padding: 8px;
-    text-align: center;
-  }
-  
-  .patientTable th {
-    background-color: orange;
-    font-weight: bold;
-  }
-  
-  .statusIndicator {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-  }
-  
-  .statusIndicator.activo {
-    background-color: green;
-  }
-  
-  .statusIndicator.inactivo {
-    background-color: red;
-  }
-  
-  .patientForm {
-    display: flex;
-    flex-direction: column;
-    width: 60%;
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 5px;
-    margin-top: 20px;
-    margin-bottom: 3rem;
-  }
-  
-  .patientForm select,
-  .patientForm input,
-  .patientForm button,
-  .patientForm textarea {
-    margin-bottom: 10px;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-  }
-  
-  .patientForm textarea {
-    resize: vertical; /* Permite redimensionar solo verticalmente */
-    min-height: 100px; /* Altura mínima para hacer el área más grande */
-  }
-  
-  .patientForm button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .patientForm button:hover {
-    background-color: #0056b3;
-  }
-  
+/* ====== LAYOUT CON SIDEBAR FIJA ====== */
+:root { --sidebar-w: 280px; --gutter: 24px; }
+
+.patientTableContainer{
+  display:flex; flex-direction:column; align-items:stretch;
+  margin-top:5rem;
+  padding-left: calc(var(--sidebar-w) + var(--gutter));
+  padding-right: var(--gutter);
+  min-width:0;
+}
+
+@media (max-width: 992px){
+  .patientTableContainer{ padding-left: var(--gutter); }
+}
+
+/* ====== CTA superior ====== */
+.addPatientContainer{
+  display:flex; align-items:center; gap:8px; cursor:pointer;
+  padding:10px 14px; background:#007bff; border-radius:8px;
+  transition: background-color .2s ease;
+  width:max-content; margin: 0 0 16px;
+}
+.addPatientContainer:hover{ background:#0056b3 }
+.addPatientIcon{ font-size:20px; color:#fff }
+.addPatientText{ font-size:16px; color:#fff } /* antes negro sobre azul */
+
+/* ====== TABLA (DARK) ====== */
+.table-wrap{
+  width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid rgba(255,165,0,.35);
+  border-radius:10px;
+  background: transparent;
+}
+
+.patientTable{
+  border-collapse: collapse;
+  width:max-content; min-width:100%;
+  table-layout:auto;
+  font-size:14px;
+  background: transparent;
+}
+
+.patientTable th, .patientTable td{
+  padding:10px 12px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  text-align:left;
+  color:#fff;
+  white-space:nowrap;
+}
+
+.patientTable thead th{
+  position:sticky; top:0; z-index:1;
+  background: orange; color:#111; font-weight:700;
+  border-bottom:1px solid #e29900;
+}
+
+.patientTable tbody tr:nth-child(odd){ background: rgba(255,255,255,0.03) }
+.patientTable tbody tr:hover{ background: rgba(255,255,255,0.06) }
+
+/* semáforo estado (si lo usás) */
+.statusIndicator{
+  display:inline-block; width:10px; height:10px; border-radius:50%;
+}
+.statusIndicator.activo{ background:#22c55e }
+.statusIndicator.inactivo{ background:#ef4444 }
+
+/* ====== BOTONES EN CELDA (compactos) ====== */
+.btn-ico{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:34px; height:34px; border-radius:8px; border:0; cursor:pointer;
+  margin: 0 .25rem;
+  background:#e5e7eb; color:#111;
+  transition: transform .05s ease, opacity .2s;
+}
+.btn-ico:hover{ opacity:.9 }
+.btn-ico:active{ transform: translateY(1px) }
+.btn-warning{ background:#f59e0b; color:#111 }
+.btn-danger{ background:#ef4444; color:#fff }
+
+/* compat con clases existentes */
+.edit-button{
+  background:#f59e0b; color:#111; border:0; cursor:pointer;
+  padding:6px 10px; border-radius:6px; margin-right:6px;
+}
+.delete-button{
+  background:#ef4444; color:#fff; border:0; cursor:pointer;
+  padding:6px 10px; border-radius:6px;
+}
+
+/* ====== PAGINACIÓN ====== */
+.pagination{
+  display:flex; gap:8px; align-items:center; justify-content:flex-end;
+  width:100%; max-width:1200px; margin: 8px 0 0;
+}
+.paginationButton{
+  padding:.45rem .75rem; border-radius:8px; border:1px solid #555;
+  background:transparent; color:#fff; cursor:pointer;
+  transition: background-color .15s ease, border-color .15s ease, opacity .15s ease;
+}
+.paginationButton:hover{ background: rgba(255,255,255,.06) }
+.paginationButton:disabled{ opacity:.5; cursor:not-allowed }
+.pageInfo{ color:#9ca3af }
+
+/* ====== FORMULARIO (DARK) ====== */
+.patientForm{
+  display:flex; flex-direction:column; gap:10px;
+  width:min(100%, 760px);
+  background: rgba(255,255,255,.04);
+  padding:20px; border-radius:12px; margin:20px 0 3rem;
+  border:1px solid #555; color:#fff;
+}
+
+.patientForm label{ font-weight:700; margin-bottom:6px; display:block }
+
+.patientForm select,
+.patientForm input,
+.patientForm button,
+.patientForm textarea{
+  padding:10px; border:1px solid #555; border-radius:10px;
+  background: rgba(255,255,255,.06); color:#fff; outline:none;
+  transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+  margin-bottom:10px;
+}
+.patientForm textarea{ resize:vertical; min-height:100px }
+
+.patientForm select:focus,
+.patientForm input:focus,
+.patientForm textarea:focus{
+  border-color:#007bff; box-shadow:0 0 0 3px rgba(0,123,255,.25);
+  background: rgba(255,255,255,.08);
+}
+
+/* opciones del select legibles en el dropdown nativo */
+.patientForm select option{
+  background:#111; color:#fff;
+}
+
+/* botones del form */
+.patientForm button{
+  background:#007bff; color:#fff; border:0; cursor:pointer;
+  transition: background-color .2s ease;
+}
+.patientForm button:hover{ background:#0056b3 }
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 768px){
+  .addPatientContainer{ width:100%; justify-content:center }
+}
+/* ====== Combobox buscador de usuarios ====== */
+.combo{
+  position: relative;
+  display: block;
+}
+.combo-input{
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #555;
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.combo-input:focus{
+  border-color:#007bff;
+  box-shadow:0 0 0 3px rgba(0,123,255,.25);
+  background: rgba(255,255,255,.08);
+}
+
+.combo-list{
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #111;
+  border: 1px solid #555;
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+}
+.combo-option{
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color .12s ease;
+}
+.combo-option:hover{ background: rgba(255,255,255,.08) }
+.combo-option[aria-selected="true"]{ background: rgba(0,123,255,.20) }
+
+.combo-primary{ font-weight: 700 }
+.combo-meta{ color: #9ca3af; font-size: .9rem }
+.combo-empty{
+  padding: 10px; color:#9ca3af; text-align: center;
+}

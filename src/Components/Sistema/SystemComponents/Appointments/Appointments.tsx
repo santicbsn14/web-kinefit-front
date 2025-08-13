@@ -5,8 +5,6 @@ import { deleteAppointment, getAppointments, makeAppointment, updateAppointment 
 import { getProfessionals, Professional } from '../../../../MockService/professionals';
 import { getPatients, Patient } from '../../../../MockService/patients';
 import { ToastContainer, toast } from 'react-toastify';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import {faWhatsapp} from  '@fortawesome/free-brands-svg-icons'
 import 'react-toastify/dist/ReactToastify.css';
 import BulkAppointments from './BulkAppointments';
 import { CreateAppointment, CreateAppointmentDto } from '../../../../Utils/Types/appointmentTypes';
@@ -337,6 +335,7 @@ const isProfessional = (id: Professional | string | null): id is Professional =>
           <span className="addAppointmentText">Carga Masiva de turnos</span>
         </div>
       </div>
+      <div className="table-wrap">
       <table className="appointmentsTable">
   <thead>
     <tr>
@@ -373,32 +372,34 @@ const isProfessional = (id: Professional | string | null): id is Professional =>
               <span className={`statusIndicator ${appointment.state?.toLowerCase() || ''}`}></span>
               {appointment.state || 'N/A'}
             </td>
-            <td>
-              <button className='edit-button' style={{margin:'0.5rem'}} onClick={() => handleEdit(appointment)}>
-                <i className="fa-solid fa-edit"></i>
-              </button>
-              <button className='edit-button' style={{margin:'0.5rem'}} onClick={() => {
-                if (isPatient(appointment.pacient_id) && appointment.date_time) {
-                  sendWhatsAppMessageConfirmAppointment(appointment.pacient_id.user_id.phone, appointment.date_time,  formatTime(appointment.schedule.time_slots.start_time as unknown as string))
-                }
-              }}>
-                <FontAwesomeIcon className="iconosRedes" icon={faWhatsapp} />
-              </button>
-              <button style={{margin:'0.5rem'}} onClick={() => {
-                if (appointment._id && isPatient(appointment.pacient_id)) {
-                  handleDeleteClick(appointment._id, `${appointment.pacient_id.user_id?.firstname} ${appointment.pacient_id.user_id?.lastname}`)
-                }
-              }} className="delete-button">
-                <i className="fa-solid fa-trash"></i>
-              </button>
-              <button className='order_url' style={{margin:'0.5rem'}} onClick={() => {
-                if (typeof appointment.order_photo === 'string') {
-                  openPhotoOrder(appointment.order_photo);
-                }
-              }}>
-                <i className="fa-regular fa-image"></i>
-              </button>
-            </td>
+      <td>
+        <button className='btn-ico btn-warning' onClick={() => handleEdit(appointment)}>
+          <i className="fa-solid fa-edit"></i>
+        </button>
+        <button className='btn-ico btn-success' onClick={() => {
+          if (isPatient(appointment.pacient_id) && appointment.date_time) {
+            sendWhatsAppMessageConfirmAppointment(
+              appointment.pacient_id.user_id.phone,
+              appointment.date_time,
+              formatTime(appointment.schedule.time_slots.start_time as unknown as string)
+            )
+          }
+        }}>
+          <i className="fa-brands fa-whatsapp"></i>
+        </button>
+        <button className="btn-ico btn-danger" onClick={() => {
+          if (appointment._id && isPatient(appointment.pacient_id)) {
+            handleDeleteClick(appointment._id, `${appointment.pacient_id.user_id?.firstname} ${appointment.pacient_id.user_id?.lastname}`)
+          }
+        }}>
+          <i className="fa-solid fa-trash"></i>
+        </button>
+        <button className='btn-ico btn-primary' onClick={() => {
+          if (typeof appointment.order_photo === 'string') openPhotoOrder(appointment.order_photo);
+        }}>
+          <i className="fa-regular fa-image"></i>
+        </button>
+      </td>
           </>
         </tr>
       ))}
@@ -417,6 +418,7 @@ const isProfessional = (id: Professional | string | null): id is Professional =>
     </tbody>
   )}
 </table>
+</div>
       <div className="pagination">
         <button
           onClick={() => paginate(currentPage - 1)}

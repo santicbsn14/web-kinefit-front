@@ -1,383 +1,455 @@
-.professionalTableContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 5rem;
-    margin-left: 4rem !important;
-  }
-  
-  .actionsContainer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 900px;
-    margin-bottom: 20px;
-    /* Añadimos estas propiedades para hacerlo responsivo */
-    flex-direction: row;
-    gap: 15px;
-    padding: 0 15px;
-  }
-  
-  .addPatientContainer, .scheduleConfigContainer {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    padding: 10px;
-    background-color: #007bff;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-  }
-.scheduleConfigContainer span{
-    color: white;
-  }
-  .addPatientContainer span{
-    color: white;
-  }
-  .addPatientContainer:hover, .scheduleConfigContainer:hover {
-    background-color: #0056b3;
-  }
-  
-  .addPatientIcon, .addScheduleIcon {
-    font-size: 24px;
-    color: white;
-    margin-right: 8px;
-  }
-  
-  .professionalTable {
-    border-collapse: collapse;
-    width: 100%;
-    max-width: 900px; /* Ajusta el ancho máximo de la tabla */
-  }
-  
-  .professionalTable th, .professionalTable td {
-    border: 1px solid #ddd;
-    color: white;
-    padding: 8px;
-    text-align: center;
-  }
-  
-  .professionalTable th {
-    background-color: orange;
-    font-weight: bold;
-  }
-  
-  .professionalForm {
-    display: flex;
-    flex-direction: column;
-    width: 60%;
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 5px;
-    margin-top: 20px;
-  }
-  
-  .professionalForm select,
-  .professionalForm input,
-  .professionalForm button {
-    margin-bottom: 10px;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-  }
-  
-  .professionalForm button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .appointmentForm button:hover {
-    background-color: #0056b3;
-  }
-  
-  .delete-button{
-    background-color: red;
-    color: white;
-    border: none;
-    cursor: pointer;
-    padding: 5px 10px;
-    margin-left: 5px;
-    border-radius: 3px;
-  }
-  .delete-button:hover{
-    background-color: rgb(190, 1, 1);
-  }
-@media screen and (max-width: 768px) {
-  .professionalsContainer {
-    padding: 1rem;
-  }
-  
-  .addProfessionalText {
-    font-size: 16px;
-  }
-  
-  .professionalForm input,
-  .professionalForm button {
-    max-width: 100%;
-  }
-}
-.modal {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: fixed;
-  z-index: 1;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+/* ========== LAYOUT CON SIDEBAR FIJA ========== */
+:root { --sidebar-w: 280px; --gutter: 24px; }
+
+.professionalTableContainer{
+  display:flex; flex-direction:column; align-items:stretch;
+  margin-top:5rem;
+  padding-left: calc(var(--sidebar-w) + var(--gutter));
+  padding-right: var(--gutter);
+  min-width:0;
 }
 
-.modalContent {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 400px;
-  position: relative;
-  max-height: 35rem; /* Ajusta este valor según sea necesario */
-  overflow-y: auto; /* Activa el scroll vertical */
-}
-.closeModal {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  cursor: pointer;
-  font-size: 24px;
+@media (max-width: 992px){
+  .professionalTableContainer{ padding-left: var(--gutter); }
 }
 
-.scheduleForm label {
-  display: block;
-  margin-bottom: 10px;
-}
-.scheduleForm button {
-  background-color: #007bff;
-  width: 6rem;
-  border-radius: 3px;
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-.scheduleForm button:hover{
-  background-color:  #0056b3;
-}
-.scheduleForm input, .scheduleForm select {
-  width: 100%;
-  padding: 8px;
-  margin-top: 5px;
-}
-.scheduleDay {
-  margin-bottom: 15px;
+/* ========== ACCIONES SUPERIORES ========== */
+.actionsContainer{
+  display:flex; align-items:center; justify-content:space-between;
+  width:100%; max-width: 1200px; margin: 0 auto 20px; gap:15px; padding:0;
 }
 
-.scheduleDay h3 {
-  margin-bottom: 5px;
+.addPatientContainer, .scheduleConfigContainer{
+  display:flex; align-items:center; gap:8px; cursor:pointer;
+  padding:10px 14px; background:#007bff; border-radius:8px;
+  transition: background-color .2s ease;
+}
+.addPatientContainer:hover, .scheduleConfigContainer:hover{ background:#0056b3 }
+.addPatientContainer span, .scheduleConfigContainer span{ color:#fff }
+.addPatientIcon, .addScheduleIcon{ font-size:20px; color:#fff }
+
+/* ========== TABLA PROFESIONALES — ESTILO "USUARIOS" ========== */
+/* Wrapper tipo card */
+.table-wrap-professional{
+  width:100%;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid #333;                 /* adiós borde blanco */
+  border-radius:12px;
+  background: rgba(255,255,255,.04);
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+  margin-top:10px;
 }
 
-.schedule-button {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  cursor: pointer;
-  padding: 5px 10px;
-  margin-left: 5px;
-  border-radius: 3px;
-}
-.schedule-button:hover {
-  background-color: #218838;
-}
-.saveChange{
-  background-color: #007bff;
-  width: 8rem;
-  height: 3rem;
-  border-radius: 3px;
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  margin-top: 1rem;
-}
-.profesionalTimeSlotsTable {
+/* Tabla */
+.professionalTable{
   border-collapse: collapse;
-  width: 60%;
-  margin: auto;
-  margin-top: 3rem;
-}
-
-.profesionalTimeSlotsTable th, 
-.profesionalTimeSlotsTable td {
-  border: 1px solid #ddd;
-  color: white;
-  padding: 8px;
-  text-align: center;
-}
-
-.profesionalTimeSlotsTable th {
-  background-color: orange;
-  font-weight: bold;
-}
-
-.profesionalIdColumn {
-  background-color: orange;
-  font-weight: bold;
-  width: 100px;
-}
-
-.timeSlotCell {
-  height: 50px;
-}
-.modal-two {
-  position: fixed;
-  top: 0;
-  left: 0;
+  border-spacing: 0;
+  background: transparent;
+  table-layout: fixed;                    /* evita que una celda rompa el ancho */
   width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  font-size: 15px;
 }
 
-.modalContent-two {
-  background-color: white;
-  padding: 20px;
-  border-radius: 5px;
-  width: 300px;
+.professionalTable th,
+.professionalTable td{
+  padding:14px 16px !important;
+  border: none !important;                               /* mata borders heredados claros */
+  border-bottom:1px solid #2a2a2a !important;            /* línea inferior oscura */
+  color:#e5e7eb;
+  vertical-align: middle;
+  text-align:left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.modalButtons-two {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
+/* Cabecera */
+.professionalTable thead th{
+  background:orange; color:#111; font-weight:700;
+  border-bottom:1px solid #e29900 !important;
+}
+.professionalTable thead th:first-child{ border-top-left-radius:12px; }
+.professionalTable thead th:last-child { border-top-right-radius:12px; }
+
+/* Rayado y hover */
+.professionalTable tbody tr:nth-child(odd){ background: rgba(255,255,255,.02) !important; }
+.professionalTable tbody tr:hover{ background: rgba(255,255,255,.08) !important; }
+.professionalTable tbody tr:last-child td{ border-bottom: none !important; }
+
+/* Anchos/Comportamientos por columna:
+   1 Nombre | 2 Apellido | 3 Especialidades | 4 Email | 5 Teléfono | 6 Acciones */
+.professionalTable th:nth-child(1),
+.professionalTable td:nth-child(1){ width:14%; }
+
+.professionalTable th:nth-child(2),
+.professionalTable td:nth-child(2){ width:12%; }
+
+/* Especialidades: envolver texto y permitir varias líneas */
+.professionalTable th:nth-child(3),
+.professionalTable td:nth-child(3){
+  width:36%;
+  white-space: normal;                    /* permite salto de línea */
+  line-height: 1.35;
 }
 
-.modalButtons-two button {
-  background-color: #007bff;;
-  color: white;
-  border: none;
-  cursor: pointer;
-  padding: 5px 10px;
-  margin-left: 5px;
-  border-radius: 3px;
-}
-.modalButtons-two button:hover{
-    background-color:  #0056b3;
+/* Email: cortar en cualquier parte si es largo */
+.professionalTable th:nth-child(4),
+.professionalTable td:nth-child(4){
+  width:20%;
+  white-space: normal;
+  overflow-wrap: anywhere;                /* quiebra emails largos */
 }
 
-.editForm {
-  display: flex;
-  flex-direction: column;
-  width: 60%;
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 5px;
-  margin-top: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+/* Teléfono: angosto */
+.professionalTable th:nth-child(5),
+.professionalTable td:nth-child(5){ width:12%; }
+
+/* Acciones: a la derecha, ancho fijo */
+.professionalTable th:nth-child(6),
+.professionalTable td:nth-child(6){
+  width:130px;
+  text-align:right;
 }
 
-.editForm label {
-  font-size: 16px;
-  margin-bottom: 5px;
-  color: #333;
+/* Contenedor de botones de acción (si se usa) */
+.cell-actions{
+  display:flex; gap:8px; align-items:center; justify-content:flex-end;
+  position: static;
+  background: transparent;
+  box-shadow: none;
 }
+
+/* ========== BOTONES DE ACCIÓN EN CELDA ========== */
+.btn-ico{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:34px; height:34px; border-radius:8px; border:0; cursor:pointer;
+  background:#e5e7eb; color:#111; transition: transform .05s ease, opacity .2s;
+}
+.btn-ico:hover{ opacity:.9 }
+.btn-ico:active{ transform: translateY(1px) }
+
+.btn-danger{ background:#ef4444; color:#fff }
+.btn-success{ background:#22c55e; color:#fff }
+.btn-warning{ background:#f59e0b; color:#111 }
+
+/* ========== FORMULARIO AGREGAR (DARK + CHIPS) ========== */
+.professionalForm{
+  display:flex; flex-direction:column; gap:12px; width:min(100%, 760px);
+  background-color: rgba(255, 255, 255, .04) !important;
+  padding:20px; border-radius:12px; margin:20px auto 0;
+  border:1px solid #555;
+}
+.professionalForm label{
+  font-size:16px; margin-bottom:5px; color:#fff; display:block; font-weight:700;
+}
+.professionalForm select,
+.professionalForm input,
+.professionalForm button{
+  padding:10px; border:1px solid #555; border-radius:10px;
+  background: rgba(255,255,255,.06); color:#fff; outline:none;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+  margin-bottom:10px;
+}
+.professionalForm select:focus,
+.professionalForm input:focus{
+  border-color:#007bff;
+  box-shadow:0 0 0 3px rgba(0,123,255,.25);
+  background: rgba(255,255,255,.08);
+}
+.professionalForm select option{ background:#111; color:#fff }
+
+.professionalForm button{
+  background:#007bff; color:#fff; border:0; cursor:pointer;
+  transition: background-color .2s ease; align-self:flex-end;
+}
+.professionalForm button:hover{ background:#0056b3 }
+
+/* Chips de especialidades */
+.professionalForm input[type="checkbox"]{
+  position:absolute; opacity:0; pointer-events:none;
+}
+.professionalForm input[type="checkbox"] + label{
+  display:inline-block; cursor:pointer;
+  padding:.35rem .65rem; border-radius:999px;
+  border:1px solid #555; color:#fff; background:rgba(255,255,255,.06);
+  margin:4px 6px 0 0; user-select:none;
+  transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+  font-size:.92rem;
+}
+.professionalForm input[type="checkbox"] + label:hover{ background:rgba(255,255,255,.1) }
+.professionalForm input[type="checkbox"]:checked + label{
+  background:rgba(0,123,255,.18); border-color:#007bff;
+  box-shadow:0 0 0 3px rgba(0,123,255,.2);
+}
+.professionalForm > div{ display:flex; flex-wrap:wrap; align-items:center; gap:6px }
+.professionalForm > div > label:first-child{ flex-basis:100%; margin-bottom:2px }
+
+/* ========== FORMULARIO EDITAR (SE MANTIENE) ========== */
+.editForm{
+  display:flex; flex-direction:column; gap:10px; width:min(100%, 760px);
+  background:#f8f9fa; padding:20px; border-radius:8px; margin:20px auto 0;
+  border:1px solid #e5e7eb;
+}
+.professionalForm button:hover, .editForm button:hover{ background:#0056b3 }
+.editForm label{ font-size:16px; margin-bottom:5px; color:#333 }
+.editForm input[type="checkbox"]{ width:auto; margin-right:10px }
 
 .editForm input[type="text"],
-.editForm input[type="checkbox"] {
-  margin-bottom: 10px;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  width: 100%;
+.editForm input[type="checkbox"]{
+  margin-bottom:10px; padding:8px; border:1px solid #ddd; border-radius:4px; width:100%;
+}
+.editForm button{
+  background:#007bff; color:#fff; border:0; cursor:pointer;
+  padding:10px; border-radius:4px; transition: background-color .2s ease;
 }
 
-.editForm input[type="checkbox"] {
-  width: auto;
-  margin-right: 10px;
+/* ========== MODALES (HORARIOS) ========== */
+.modal{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.5); z-index:9999;
 }
 
-.editForm div {
-  margin-bottom: 10px;
+/* Panel */
+.modalContent{
+  background: rgba(20,20,20,.96) !important;
+  color:#fff;
+  border:1px solid #3a3a3a;
+  border-radius:12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  width:min(92vw, 560px);
+  max-height:80vh;
+  overflow:auto;
+  backdrop-filter: blur(2px);
 }
 
-.editForm div label {
-  display: inline-block;
-  margin-left: 5px;
+/* Cerrar */
+.closeModal{
+  position:absolute;
+  top:12px; right:12px;
+  width:40px; height:40px;
+  border-radius:50%;
+  display:inline-grid; place-items:center;
+  border:1px solid #3a3a3a;
+  background: rgba(255,255,255,.06);
+  color: transparent;           /* oculto la “×” textual */
+  cursor:pointer;
+  transition: background .2s, border-color .2s, transform .06s, box-shadow .2s;
+  z-index:3;
+}
+.closeModal::before,
+.closeModal::after{
+  content:"";
+  position:absolute;
+  width:18px; height:2px;
+  background:#e5e7eb;
+  border-radius:2px;
+}
+.closeModal::before{ transform: rotate(45deg); }
+.closeModal::after { transform: rotate(-45deg); }
+.closeModal:hover{
+  background: rgba(255,255,255,.12);
+  border-color:#555;
+  box-shadow: 0 6px 16px rgba(0,0,0,.35);
+}
+.closeModal:hover::before,
+.closeModal:hover::after{ background:#fff; }
+.closeModal:active{ transform: translateY(1px); }
+.closeModal:focus-visible{
+  outline: none; box-shadow: 0 0 0 3px rgba(0,123,255,.35);
 }
 
-.editForm button {
-  background-color: #007bff;
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+/* Form modal */
+.scheduleForm{ display:flex; flex-direction:column; gap:16px }
+.scheduleForm h2{
+  position: sticky; top: 0; z-index: 2;
+  margin:0; padding:14px 4px 12px;
+  text-align:center; color:#fff; font-size:26px; letter-spacing:-0.015em;
+  background: rgba(20,20,20,.96); border-bottom:1px solid #2d2d2d;
+}
+.scheduleForm label{
+  display:block; margin:0 0 6px; color:#cbd5e1; font-weight:600; font-size:14px;
+}
+.scheduleForm select,
+.scheduleForm input[type="time"],
+.scheduleForm input[type="text"]{
+  width:100%; height:44px; padding:10px 12px;
+  border:1px solid #555; border-radius:10px;
+  background: rgba(255,255,255,.06); color:#fff; font-size:15px; outline:none;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.scheduleForm input[type="time"]::-webkit-calendar-picker-indicator{ filter: invert(1) opacity(.85) }
+.scheduleForm select option{ background:#111; color:#fff }
+.scheduleForm select:focus, .scheduleForm input:focus{
+  border-color:#007bff; box-shadow:0 0 0 3px rgba(0,123,255,.25); background: rgba(255,255,255,.08);
 }
 
-.editForm button:hover {
-  background-color: #0056b3;
+/* Bloques de horario */
+.scheduleSlot{
+  display:grid;
+  grid-template-columns: 1.1fr 1fr 1fr auto;
+  gap:12px; align-items:end; padding:12px;
+  border:1px solid #444; border-radius:12px; background: rgba(255,255,255,.03);
+  transition: border-color .15s ease, background-color .15s ease;
+}
+.scheduleSlot:hover{ border-color:#555; background: rgba(255,255,255,.04) }
+.scheduleSlot label{ margin:0 }
+@media (max-width: 680px){ .scheduleSlot{ grid-template-columns: 1fr } }
+
+/* Botones del modal */
+.scheduleForm .deleteScheduleButton{
+  background:#ef4444; color:#fff; border:0; padding:.65rem .9rem; border-radius:10px; white-space:nowrap;
+}
+.scheduleForm .deleteScheduleButton:hover{ filter: brightness(.95) }
+.scheduleForm > button[type="button"]{
+  align-self:flex-start; background:#f59e0b; color:#111; border:0; padding:.65rem .9rem; border-radius:10px;
+  transition: filter .2s ease, transform .05s ease;
+}
+.scheduleForm > button[type="button"]:hover{ filter: brightness(.97) }
+.scheduleForm > button[type="button"]:active{ transform: translateY(1px) }
+.scheduleForm > button[type="submit"]{
+  position: sticky; bottom: -1px; align-self:flex-end;
+  background:#007bff; color:#fff; border:0; padding:.65rem 1rem; border-radius:10px;
+  box-shadow: 0 -6px 18px rgba(0,0,0,.35);
+}
+.scheduleForm > button[type="submit"]:hover{ background:#0056b3 }
+
+/* ========== TABLA DE HORARIOS (DETALLE) — LOOK “USUARIOS” ========== */
+.profesionalTimeSlotsTable{
+  border-collapse: collapse;
+  width: min(100%, 1100px);
+  margin: 2rem auto 0;
+  background: rgba(255,255,255,.04);
+  border:1px solid #333;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+}
+.profesionalTimeSlotsTable th, 
+.profesionalTimeSlotsTable td{
+  padding:12px 14px;
+  border-bottom:1px solid #2a2a2a;
+  text-align:center;
+  color:#e5e7eb;
+}
+.profesionalTimeSlotsTable thead th{
+  background:orange; color:#111; font-weight:700; border-bottom:1px solid #e29900;
+}
+.profesionalTimeSlotsTable tbody tr:nth-child(odd){ background: rgba(255,255,255,.02) }
+.profesionalTimeSlotsTable tbody tr:hover{ background: rgba(255,255,255,.06) }
+.profesionalIdColumn{ background:orange; font-weight:700; width:100px }
+.timeSlotCell{ height:50px }
+
+.professional-time-slots-container{ padding:20px }
+.header-container{ display:flex; justify-content:space-between; align-items:center; margin-bottom:20px }
+.close-button:hover{ background:#d32f2f }
+
+/* ========== BOTONES ANTIGUOS (COMPAT) ========== */
+.delete-button{
+  background:#ef4444; color:#fff; border:0; cursor:pointer;
+  padding:5px 10px; margin-left:5px; border-radius:6px;
+}
+.delete-button:hover{ background:#be2f2f }
+
+.schedule-button{
+  background:#28a745; color:#fff; border:0; cursor:pointer;
+  padding:5px 10px; margin-left:5px; border-radius:6px;
+}
+.schedule-button:hover{ background:#218838 }
+
+.saveChange{
+  background:#007bff; width:8rem; height:3rem; border-radius:6px;
+  color:#fff; border:0; cursor:pointer; transition: background-color .2s ease; margin-top:1rem;
 }
 
-.editForm div {
+/* ========== RESPONSIVE ========== */
+@media screen and (max-width: 768px){
+  .actionsContainer{ flex-direction:column; gap:10px }
+  .addPatientContainer, .scheduleConfigContainer{ width:100%; justify-content:center }
+  .cell-wrap{ max-width:220px }
+}
+
+@media screen and (max-width: 480px){
+  .actionsContainer{ padding:0 10px }
+  .addPatientIcon, .addScheduleIcon{ font-size:18px }
+}
+/* === Scroll horizontal + tabla ancha (sin cortar datos) === */
+.table-wrap-professional{
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* la tabla se estira tanto como necesite el contenido */
+.professionalTable{
+  width: max-content;   /* clave para que se ensanche */
+  min-width: 100%;      /* pero nunca menos que el contenedor */
+  table-layout: auto;
+}
+
+/* por defecto: permitir salto de línea correcto */
+.professionalTable th,
+.professionalTable td{
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;   /* evita desbordes feos */
+}
+
+/* ID */
+.professionalTable th:nth-child(1),
+.professionalTable td:nth-child(1){
+  white-space: nowrap;
+  min-width: 220px;
+}
+
+/* Nombre */
+.professionalTable th:nth-child(2),
+.professionalTable td:nth-child(2){
+  min-width: 160px;
+}
+
+/* Apellido */
+.professionalTable th:nth-child(3),
+.professionalTable td:nth-child(3){
+  min-width: 160px;
+}
+
+/* Especialidades (dejar que envuelva) */
+.professionalTable th:nth-child(4),
+.professionalTable td:nth-child(4){
+  min-width: 420px;
+  white-space: normal;
+}
+
+/* Email */
+.professionalTable th:nth-child(5),
+.professionalTable td:nth-child(5){
+  white-space: nowrap;
+  min-width: 260px;
+}
+
+/* Teléfono */
+.professionalTable th:nth-child(6),
+.professionalTable td:nth-child(6){
+  white-space: nowrap;
+  min-width: 160px;
+}
+
+/* Acciones = última columna (robusto si cambia el orden) */
+.professionalTable th:last-child,
+.professionalTable td:last-child{
+  white-space: nowrap;
+  min-width: 160px;
+  text-align: right;
+  padding-right: 12px;
+  overflow: visible !important;
   display: flex;
-  flex-direction: column;
-}
-
-.editForm div div {
-  display: flex;
+  justify-content: flex-end;
   align-items: center;
-  margin-bottom: 5px;
-}
-.professional-time-slots-container {
-  padding: 20px;
+  gap: 8px;
 }
 
-.header-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.close-button:hover {
-  background-color: #d32f2f;
-}
-/* Media query para pantallas menores a 768px */
-@media screen and (max-width: 768px) {
-  .actionsContainer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .addPatientContainer, .scheduleConfigContainer {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .addPatientText, .addScheduleText {
-    font-size: 14px;
-  }
-
-  .addPatientIcon, .addScheduleIcon {
-    font-size: 20px;
-  }
-}
-
-/* Media query para pantallas muy pequeñas */
-@media screen and (max-width: 480px) {
-  .actionsContainer {
-    padding: 0 10px;
-  }
-
-  .addPatientText, .addScheduleText {
-    font-size: 13px;
-  }
-
-  .addPatientIcon, .addScheduleIcon {
-    font-size: 18px;
-  }
-}
+/* scroll-bar visible (opcional, queda lindo en dark) */
+.table-wrap-professional::-webkit-scrollbar{ height: 10px; }
+.table-wrap-professional::-webkit-scrollbar-thumb{ background:#555; border-radius: 10px; }
+.table-wrap-professional{ scrollbar-color:#555 transparent; scrollbar-width: thin; }

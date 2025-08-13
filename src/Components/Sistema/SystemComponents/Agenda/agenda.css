@@ -1,154 +1,126 @@
-.mainAgenda {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  margin-top: 5rem;
-  margin-left: 5rem;
+/* ===== Sidebar-aware layout (mismo patrón que el resto) ===== */
+:root { --sidebar-w: 280px; --gutter: 24px; }
+
+.mainAgenda{
+  display:flex; flex-direction:column;
+  margin-top:5rem;
+  padding-left: calc(var(--sidebar-w) + var(--gutter));
+  padding-right: var(--gutter);
 }
 
-.agendaTable {
-  border-collapse: collapse;
-  width: 80%;
-  margin-left: 8rem;
-  overflow-x: auto; /* Permite desplazamiento horizontal en pantallas pequeñas */
+@media (max-width: 992px){
+  .mainAgenda{ padding-left: var(--gutter); }
 }
 
-.agendaTable th, .agendaTable td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
+/* ===== KPIs ===== */
+.agendaKpis{
+  display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between;
+  margin: 0 0 20px;
+}
+.kpiCard{
+  flex:1 1 340px;
+  background:#007bff; color:#fff;
+  padding:12px 18px;
+  border-radius:14px; font-weight:700;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+}
+.kpiCard i{ font-size:18px }
+
+/* ===== Frame con scroll (así la tabla stickea bien) ===== */
+.agendaFrame{
+  width:100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  border:1px solid #555;
+  border-radius:10px;
+  overflow:auto;                 /* scroll si hace falta */
+  background: transparent;
 }
 
-.agendaTable th {
-  background-color: orange;
-  font-weight: bold;
+/* ===== Tabla ===== */
+.agendaGrid{
+  width:100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent;
 }
 
-.hourColumn {
-  background-color: orange;
-  font-weight: bold;
-  width: 100px; /* Ancho fijo para la columna de horas */
+/* Header “sticky” */
+.agendaGrid thead th{
+  position: sticky; top: 0; z-index: 5;
+  background: orange; color:#111; font-weight:700;
+  border-bottom:1px solid #e29900;
+  text-align:center; padding:10px 12px; white-space:nowrap;
+}
+.dayTitle{ display:flex; flex-direction:column; align-items:center; gap:2px; }
+.dayTitle span{ font-size:12px; opacity:.85 }
+
+/* Primera columna sticky (hora) */
+.stickyCol{
+  position: sticky; left: 0; z-index: 6;
+  background:#1e1e1e;           /* fondo dark para celdas de hora */
+  color:#fff; font-weight:700;
 }
 
-.agendaCell {
+.stickyHead.stickyCol{ background: orange; color:#111; }
+
+/* Columna de hora */
+.hourCell{
+  width: 110px; text-align:center;
+  border-right:1px solid #555;
+}
+
+/* Celdas base */
+.agendaGrid td, .agendaGrid th{
+  border-top:1px solid #555;
+  border-left:1px solid #555;
+}
+.agendaGrid tr:nth-child(odd) td{ background: rgba(255,255,255,.03) }
+.agendaGrid tr:hover td{ background: rgba(255,255,255,.06) }
+
+/* Contenido de la celda (varios turnos) */
+.agendaCell{
+  min-height:56px;
+  padding:8px;
+  display:flex; flex-wrap:wrap; gap:6px; justify-content:center; align-items:flex-start;
+}
+
+/* Pill de turno */
+.turnoLabel{
   position: relative;
-  height: 50px;
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 10px;
+  border-radius:999px;
+  background: rgba(0,123,255,.12);
+  border:1px solid #007bff;
+  color:#eaf2ff;
+  font-size:12.5px; font-weight:600; line-height:1;
+  max-width: 100%;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  transition: background .2s ease, border-color .2s ease, transform .05s ease;
+}
+.turnoLabel:hover{ background: rgba(0,123,255,.22); border-color:#49a5ff }
+.turnoLabel:active{ transform: translateY(1px) }
+
+/* Tooltip (si el hijo lo muestra) */
+.turnoTooltip{
+  position:absolute; top:-40px; left:0;
+  background:rgba(0,0,0,.85); color:#fff; padding:6px 8px; border-radius:6px;
+  font-size:12px; white-space:nowrap; z-index:10; border:1px solid #333;
 }
 
-.turnoLabel {
-  background-color: #f0f0f0;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 4px;
-  display: inline-block;
-  text-align: left;
-  font-size: 12px;
+/* ===== Responsive ===== */
+@media (max-width: 1200px){
+  .hourCell{ width: 90px }
 }
-.mainAgenda > div {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  flex-wrap: wrap; /* Asegura que los cartelitos puedan apilarse en pantallas pequeñas */
+@media (max-width: 800px){
+  .agendaCell{ min-height:48px; padding:6px }
+  .turnoLabel{ font-size:12px; padding:3px 8px }
+  .hourCell{ width: 72px }
+  .kpiCard{ flex:1 1 100% }
 }
-
-.mainAgenda > div > div {
-  background: #007bff;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 15px;
-  font-weight: bold;
-  flex: 1 1 45%; /* Permite que los elementos se ajusten en pantallas pequeñas */
-  margin: 5px; /* Añade margen entre los cartelitos */
-  min-width: 150px; /* Asegura que los cartelitos no se vuelvan demasiado pequeños */
-  text-align: center;
-}
-
-.mainAgenda > div > div i {
-  margin-right: 5px;
-  font-size: 18px; /* Ajusta el tamaño de los iconos */
-}
-
-@media (max-width: 1200px) {
-  .agendaTable {
-    width: 100%;
-    margin-left: 0; /* Elimina el margen izquierdo en pantallas medianas */
-  }
-
-  .agendaTable th, .agendaTable td {
-    padding: 6px; /* Reducir el padding en pantallas medianas */
-  }
-
-  .hourColumn {
-    width: 80px; /* Reducir el ancho de la columna de horas */
-  }
-}
-
-@media (max-width: 800px) {
-  .mainAgenda {
-    margin-left: 2rem; /* Reducir margen en pantallas más pequeñas */
-  }
-
-  .agendaTable {
-    width: 100%;
-    margin-left: 0;
-  }
-
-  .agendaTable th, .agendaTable td {
-    padding: 4px; /* Reducir aún más el padding en pantallas pequeñas */
-  }
-
-  .hourColumn {
-    width: 60px; /* Reducir aún más el ancho de la columna de horas */
-  }
-
-  .agendaCell {
-    height: 40px; /* Ajustar la altura de las celdas */
-  }
-  .mainAgenda > div {
-    margin-left: 40px !important;
-    flex-direction: column; /* Los cartelitos se apilan en una columna */
-    align-items: center; /* Centra los cartelitos horizontalmente */
-  }
-
-  .mainAgenda > div > div {
-    font-size: 14px; /* Ajusta el tamaño de la fuente para pantallas medianas */
-    padding: 8px 15px; /* Reduce el padding para pantallas más pequeñas */
-    width: 90%; /* Asegura que los cartelitos ocupen el 90% del contenedor */
-  }
-
-  .mainAgenda > div > div i {
-    font-size: 16px; /* Hace los iconos más pequeños */
-  }
-}
-
-@media (max-width: 500px) {
-  .mainAgenda {
-    margin-left: 1rem; /* Ajustar margen para pantallas muy pequeñas */
-  }
-
-  .agendaTable th, .agendaTable td {
-    padding: 2px; /* Minimizar el padding en pantallas muy pequeñas */
-  }
-
-  .hourColumn {
-    width: 50px; /* Reducir aún más el ancho de la columna de horas */
-  }
-
-  .agendaCell {
-    height: 30px; /* Reducir altura de las celdas para pantallas pequeñas */
-  }
-
-  .turnoLabel {
-    font-size: 10px; /* Reducir el tamaño del texto en las etiquetas de los turnos */
-  }
-    /* Para pantallas más pequeñas aún */
-    .mainAgenda > div > div {
-      font-size: 12px; /* Reduce el tamaño de la fuente más para pantallas muy pequeñas */
-      padding: 6px 10px; /* Ajusta el padding */
-      width: 95%; /* Asegura que los cartelitos ocupen casi todo el contenedor */
-    }
-  
-    .mainAgenda > div > div i {
-      font-size: 14px; /* Ajusta el tamaño de los iconos */
-    }
+@media (max-width: 500px){
+  .agendaCell{ min-height:42px; padding:4px }
+  .turnoLabel{ font-size:11px; padding:3px 7px }
+  .hourCell{ width: 62px }
 }

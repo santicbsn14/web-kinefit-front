@@ -1,18 +1,63 @@
-import ruso from '../Imagenes/ruso.png'
-import joaquin from '../Imagenes/joaquin.png'
-import frenteKinefit from '../Imagenes/frenteKinefit.png'
+import './home.css';
+import ruso from '../Imagenes/ruso.png';
+import joaquin from '../Imagenes/joaquin.png';
+import frenteKinefit from '../Imagenes/frenteKinefit.png';
 
-const Home = () :JSX.Element =>{
-    return (
-    <div>
-        <h1 style={{marginTop:'10px', color:'#978f7f'}}> Bienvenidos a kinefit!</h1>
-        <div className="imagenes-home" style={{display:'flex', alignItems:'center', justifyContent:'center'}}>
-            <img src={ruso} alt="" style={{width:'300px', height:'300px', padding:'10px'}} />
-            <img src={frenteKinefit} alt="" style={{width:'300px', height:'300px', padding:'10px'}} />
-            <img src={joaquin} alt="" style={{width:'300px', height:'300px', padding:'10px'}} />
+const Home = (): JSX.Element => {
+  return (
+    <>
+      {/* HERO */}
+      <section className="home-hero">
+        <div className="hero-inner">
+          <div className="hero-copy">
+            <span className="eyebrow">kinesiología · rehabilitación</span>
+            <h1>Bienvenidos a <span>kinefit</span></h1>
+            <p>
+              Movimiento, ciencia y calidez humana. Evaluamos, planificamos y
+              acompañamos tu recuperación con objetivos claros y medibles.
+            </p>
+            <div className="hero-ctas">
+              {/* cambiá los href si querés */}
+              <a href="/contacto" className="btn btn-primary">
+                {/* <i className="fa-solid fa-calendar-check" /> */} Reservar turno
+              </a>
+              <a
+                href="https://wa.me/5490000000000"
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-ghost"
+              >
+                {/* <i className="fa-brands fa-whatsapp" /> */} WhatsApp
+              </a>
+            </div>
+          </div>
+
+          {/* Collage de imágenes */}
+          <div className="hero-media">
+            <img src={joaquin} alt="Frente de Kinefit" className="tile tile-a" />
+            <img src={ruso} alt="German Aseff" className="tile tile-b" />
+            <img src={frenteKinefit} alt="Joaquín Viale" className="tile tile-c" />
+          </div>
         </div>
-       
-    </div>
-    )
-}
-export default Home
+      </section>
+
+      {/* Highlights cortitos */}
+      <section className="home-feature-row">
+        <article className="feature-card">
+          <h3>Evaluación y objetivos</h3>
+          <p>Plan personalizado basado en evidencia y en tu contexto real.</p>
+        </article>
+        <article className="feature-card">
+          <h3>Seguimiento cercano</h3>
+          <p>Feedback, ajustes y educación del paciente en cada etapa.</p>
+        </article>
+        <article className="feature-card">
+          <h3>Equipo & tecnología</h3>
+          <p>MEP, plantillas, cupping y + herramientas para acelerar tu rehab.</p>
+        </article>
+      </section>
+    </>
+  );
+};
+
+export default Home;

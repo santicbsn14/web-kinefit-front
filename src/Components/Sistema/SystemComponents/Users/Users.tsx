@@ -191,6 +191,7 @@ const Users = () => {
         <i className="fa-solid fa-user-plus addUserIcon"></i>
         <span className="addUserText">Agregar usuario</span>
       </div>
+      <div className="table-wrap">
       <table className="userTable">
         <thead>
           <tr>
@@ -215,7 +216,7 @@ const Users = () => {
                 <span className={`statusIndicator ${user.status}`}></span>
               </td>
               <td>
-                <button onClick={() => toggleForm(user)} className="edit-button">
+                {/* <button onClick={() => toggleForm(user)} className="edit-button">
                   <i className="fa-solid fa-edit"></i> 
                 </button>
                 <button onClick={() => {
@@ -223,13 +224,20 @@ const Users = () => {
                   handleDeleteUser(user.id, `${user.firstname} ${user.lastname}`)}
                   } className="delete-button">
                   <i className="fa-solid fa-trash"></i> 
-                </button>
+                </button> */}
+                              
+              <button onClick={() => toggleForm(user)} className="btn-ico btn-warning"><i className="fa-solid fa-edit"/></button>
+              
+              <button onClick={() =>
+              //@ts-expect-error debo hostear!
+                 handleDeleteUser(user.id, `${user.firstname} ${user.lastname}`)} className="btn-ico btn-danger"><i className="fa-solid fa-trash"/></button>
+             
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-
+      </div>
       {/* Botones de paginación */}
       <div className="pagination">
         <button 

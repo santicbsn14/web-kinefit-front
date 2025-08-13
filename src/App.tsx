@@ -19,6 +19,7 @@ import PatientDashboard from './Components/Sistema/SystemComponents/PatientDashb
 import ResetPassword from './Components/Sistema/SystemComponents/ForgotPassword/ChangePassword'
 import ForgotPassword from './Components/Sistema/SystemComponents/ForgotPassword/ForgotPassword'
 import ContactForm from './Components/Contacto/Contact'
+import Footer from './Components/Footer/Footer'
 function App() {
   return (
     <AuthProvider>
@@ -46,6 +47,7 @@ function App() {
               </Route>
             </Route>
           </Routes>
+          <Footer></Footer>
         </BrowserRouter>
       </div>
     </AuthProvider>

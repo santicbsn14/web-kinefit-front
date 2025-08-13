@@ -1,258 +1,198 @@
-.userTableContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 5rem;
-  margin-left: 5rem;
-  margin-bottom: 5rem;
-  width: 95%; /* Ajustamos el ancho para dispositivos móviles */
-  overflow-x: auto; /* Permite scroll horizontal en pantallas pequeñas */
+/* ====== LAYOUT CON SIDEBAR FIJA ====== */
+:root { --sidebar-w: 280px; --gutter: 24px; }
+
+.userTableContainer{
+  display:flex; flex-direction:column; align-items:stretch;
+  margin-top:5rem; margin-bottom:5rem;
+  padding-left: calc(var(--sidebar-w) + var(--gutter));
+  padding-right: var(--gutter);
+  min-width:0;
+}
+@media (max-width: 992px){
+  .userTableContainer{ padding-left: var(--gutter) }
 }
 
-.addUserContainer {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-  margin-left: 0rem !important; 
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  padding: 10px;
-  background-color: #007bff;
-  border-radius: 5px;
-  transition: background-color 0.3s ease;
+/* ====== CTA superior ====== */
+.addUserContainer{
+  display:flex; align-items:center; gap:8px; cursor:pointer;
+  padding:10px 14px; background:#007bff; border-radius:8px;
+  transition: background-color .2s ease;
+  width:max-content; margin:0 0 16px;
 }
+.addUserContainer:hover{ background:#0056b3 }
+.addUserIcon{ font-size:20px; color:#fff }
+.addUserText{ font-size:16px; color:#fff }
 
-.addUserIcon {
-  font-size: 24px; /* Tamaño del ícono */
-  color: white; /* Color del ícono */
-  margin-right: 8px; /* Espacio entre el ícono y el texto */
+/* ====== TABLA (dark + scroll local) ====== */
+.table-wrap{
+  width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid rgba(255,165,0,.35);
+  border-radius:10px;
+  background: transparent;
 }
-
-.addUserText {
-  font-size: 18px; /* Tamaño del texto */
-  color: white; /* Color del texto */
-}
-
-.userTable {
+.userTable{
   border-collapse: collapse;
-  width: 100%;
-  max-width: 800px; /* Ajusta el ancho máximo de la tabla */
+  width:max-content; min-width:100%;
+  table-layout:auto;
+  font-size:14px;
+  background: transparent;
 }
+.userTable th, .userTable td{
+  padding:10px 12px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  text-align:left;
+  color:#fff;
+  white-space:nowrap;
+}
+.userTable thead th{
+  position:sticky; top:0; z-index:1;
+  background: orange; color:#111; font-weight:700;
+  border-bottom:1px solid #e29900;
+}
+.userTable tbody tr:nth-child(odd){ background: rgba(255,255,255,.03) }
+.userTable tbody tr:hover{ background: rgba(255,255,255,.06) }
+.userTable td:last-child{ white-space: nowrap }
 
-.userTable th, .userTable td {
-  border: 1px solid #ddd;
-  color: white;
-  padding: 8px;
-  text-align: center;
-}
+/* ====== ESTADO (semáforo) ====== */
+.statusIndicator{ display:inline-block; width:10px; height:10px; border-radius:50% }
+.statusIndicator.true{ background:#22c55e }
+.statusIndicator.false{ background:#ef4444 }
 
-.userTable th {
-  background-color: orange;
-  font-weight: bold;
+/* ====== BOTONES EN CELDA ====== */
+.btn-ico{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:34px; height:34px; border-radius:8px; border:0; cursor:pointer;
+  margin:0 .25rem; background:#e5e7eb; color:#111;
+  transition: transform .05s ease, opacity .2s;
 }
+.btn-ico:hover{ opacity:.9 }
+.btn-ico:active{ transform: translateY(1px) }
+.btn-warning{ background:#f59e0b; color:#111 }
+.btn-danger{ background:#ef4444; color:#fff }
 
-.statusIndicator {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+/* compat con tus clases existentes */
+.edit-button{
+  background:#f59e0b; color:#111; border:0; cursor:pointer;
+  padding:6px 10px; border-radius:6px; margin-right:6px;
 }
+.edit-button:hover{ filter:brightness(.95) }
+.delete-button{
+  background:#ef4444; color:#fff; border:0; cursor:pointer;
+  padding:6px 10px; border-radius:6px;
+}
+.delete-button:hover{ filter:brightness(.95) }
 
-.statusIndicator.true {
-  background-color: green;
+/* ====== PAGINACIÓN ====== */
+.pagination{
+  display:flex; gap:8px; align-items:center; justify-content:flex-end;
+  width:100%; max-width:1200px; margin: 8px 0 0;
 }
+.paginationButton{
+  padding:.45rem .75rem; border-radius:8px; border:1px solid #555;
+  background:transparent; color:#fff; cursor:pointer;
+  transition: background-color .15s ease, border-color .15s ease, opacity .15s ease;
+}
+.paginationButton:hover{ background: rgba(255,255,255,.06) }
+.paginationButton:disabled{ opacity:.5; cursor:not-allowed }
+.pageInfo{ color:#9ca3af }
 
-.statusIndicator.false {
-  background-color: red;
+/* ====== FORM (dark-friendly) ====== */
+.userForm{
+  display:flex; flex-direction:column; gap:10px;
+  width:min(100%, 760px);
+  background: rgba(255,255,255,.04);
+  padding:20px; border-radius:12px; margin:20px 0 3rem;
+  border:1px solid #555; color:#fff;
 }
-.userForm {
-  display: flex;
-  flex-direction: column;
-  width: 60%;
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 5px;
-  margin-top: 20px;
-  margin-bottom: 3rem;
-}
-
+.userForm label{ font-weight:700; margin-bottom:6px; display:block }
 .userForm select,
 .userForm input,
-.userForm button {
-  margin-bottom: 10px;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+.userForm button{
+  padding:10px; border:1px solid #555; border-radius:10px;
+  background: rgba(255,255,255,.06); color:#fff; outline:none;
+  transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+  margin-bottom:10px;
+}
+.userForm select:focus,
+.userForm input:focus{
+  border-color:#007bff; box-shadow:0 0 0 3px rgba(0,123,255,.25);
+  background: rgba(255,255,255,.08);
+}
+/* opciones del select legibles */
+.userForm select option{ background:#111; color:#fff }
+
+.userForm button{
+  background:#007bff; color:#fff; border:0; cursor:pointer;
+  transition: background-color .2s ease;
+}
+.userForm button:hover{ background:#0056b3 }
+
+/* ====== MODAL ====== */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,.5);
+  display:flex; align-items:center; justify-content:center; z-index:9999;
+}
+.modal-content{
+  background:#fff; padding:20px; border-radius:10px; width:min(92vw, 360px);
+}
+.modal-buttons{ display:flex; justify-content:space-between; gap:8px; margin-top:20px }
+.modal-buttons button{
+  background:#007bff; color:#fff; border:0; cursor:pointer;
+  padding:8px 12px; border-radius:8px; transition: background-color .2s ease;
+}
+.modal-buttons button:hover{ background:#0056b3 }
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 768px){
+  .addUserContainer{ width:100%; justify-content:center }
+  .userTable{ font-size:14px }
+  .userTable th, .userTable td{ padding:6px 8px }
+  /* Podés ocultar columnas si hace falta; dejo tu idea lista: */
+  /* .userTable th:nth-child(1), .userTable td:nth-child(1){ display:none } */
+}
+/* ===== Ajustes de aire/espaciado (Users) ===== */
+
+/* Más respiro bajo el CTA */
+.addUserContainer{ margin-bottom: 24px }
+
+/* Un poco de “padding” interno al marco de la tabla */
+.table-wrap{
+  padding: 8px 10px;           /* aire alrededor */
+  border-radius: 12px;
 }
 
-.userForm button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+/* Filas más cómodas */
+.userTable th, .userTable td{
+  padding: 14px 16px;          /* antes 10px 12px */
+  line-height: 1.55;           /* mejora legibilidad */
 }
 
-.userForm button:hover {
-  background-color: #0056b3;
-}
-.edit-button {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  cursor: pointer;
-  padding: 5px 10px;
-  margin-left: 5px;
-  border-radius: 3px;
-}
-.edit-button:hover {
-  background-color: #218838;
-}
-.delete-button {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  cursor: pointer;
-  padding: 5px 10px;
-  margin-left: 5px;
-  border-radius: 3px;
-}
-.delete-button:hover {
-  background-color: #218838;
-}
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+/* Zebra y hover un toque más marcados para separar visualmente */
+.userTable tbody tr:nth-child(odd){ background: rgba(255,255,255,.045) }
+.userTable tbody tr:hover{ background: rgba(255,255,255,.085) }
 
-.modal-content {
-  background-color: white;
-  padding: 20px;
-  border-radius: 5px;
-  width: 300px;
-}
-
-.modal-buttons {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-}
-
-.modal-buttons button {
-  background-color: #007bff;;
-  color: white;
-  border: none;
-  cursor: pointer;
-  padding: 5px 10px;
-  margin-left: 5px;
-  border-radius: 3px;
-}
-.modal-buttons button:hover{
-  background-color:  #0056b3;
-}
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 20px;
-}
-
-.paginationButton {
-  padding: 5px 10px;
-  margin: 0 5px;
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
-  cursor: pointer;
-}
-
-.paginationButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pageInfo {
-  margin: 0 10px;
-}
-@media screen and (max-width: 768px) {
-  .userTableContainer {
-    margin-left: 1rem;
-    margin-right: 1rem;
-    margin-top: 2rem;
-  }
-  
-  .userTable {
-    font-size: 14px; /* Reducir tamaño de fuente */
-  }
-
-  .userTable th, 
-  .userTable td {
-    padding: 6px 4px; /* Reducir padding */
-  }
-
-  /* Ocultar columnas menos importantes en móvil */
-  .userTable th:nth-child(1),
-  .userTable td:nth-child(1),
-  .userTable th:nth-child(5),
-  .userTable td:nth-child(5) {
-    display: none;
-  }
-
-  /* Ajustar botones de acción */
-  .edit-button,
-  .delete-button {
-    padding: 4px 8px;
-    margin-left: 2px;
-  }
-
-  /* Ajustar iconos en botones */
-  .edit-button i,
-  .delete-button i {
-    font-size: 12px;
-  }
-}
-
-/* Media query para pantallas muy pequeñas */
-@media screen and (max-width: 480px) {
-  .userTableContainer {
-    margin-left: 0.5rem;
-    margin-right: 0.5rem;
-  }
-
-  .userTable {
-    font-size: 12px;
-  }
-
-  /* Ocultar más columnas en pantallas muy pequeñas */
-  .userTable th:nth-child(6),
-  .userTable td:nth-child(6) {
-    display: none;
-  }
-
-  /* Ajustar la columna de acciones */
-  .userTable td:last-child {
-    padding: 4px 2px;
-  }
-
-  /* Ajustar la paginación */
-  .pagination {
-    flex-wrap: wrap;
-    gap: 5px;
-  }
-
-  .pageInfo {
-    width: 100%;
-    text-align: center;
-    margin: 5px 0;
-  }
-}
-.userTable td:last-child {
+/* Columna ID acotada para que no “estire” ni sature */
+.userTable td:first-child,
+.userTable th:first-child{
+  max-width: 280px;            /* tocá a gusto: 240–320px */
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Columna Acciones con un pelín de aire lateral en el contenedor */
+.userTable td:last-child{ padding-right: 18px }
+
+/* Paginación separada del bloque de tabla */
+.pagination{
+  margin-top: 14px;            /* aire con la tabla */
+  padding-bottom: 4px;
+}
+
+/* En pantallas angostas, mantené el aire sin romper */
+@media (max-width: 768px){
+  .userTable th, .userTable td{ padding: 12px 14px }
+  .table-wrap{ padding: 6px 8px }
 }

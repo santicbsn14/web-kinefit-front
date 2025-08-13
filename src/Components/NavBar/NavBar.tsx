@@ -1,130 +1,149 @@
-import { useState, useEffect } from 'react';
-import mainLog from '../Imagenes/logo_kinefit.webp';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { getAuth, signOut } from 'firebase/auth';
 import { toast, ToastContainer } from 'react-toastify';
+import mainLog from '../Imagenes/logo_kinefit.webp';
+import './navbar.css';
 
 const NavBar = (): JSX.Element => {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-    const location = useLocation();
-    const isSystemRoute = location.pathname.startsWith('/system');
-    const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
+  const [open, setOpen] = useState(false);
+  const location = useLocation();
+  const isSystemRoute = location.pathname.startsWith('/system');
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth < 768);
-        };
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 992);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
+  // Cierra el menú al navegar
+  useEffect(() => { setOpen(false); }, [location.pathname]);
 
-    const handleLogout = async () => {
-        const auth = getAuth();
-        try {
-            await signOut(auth);
-            navigate('/');
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            toast.error(errorMessage);
-        }
-    };
+  const handleLogout = async () => {
+    try {
+      await signOut(getAuth());
+      navigate('/');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(msg);
+    }
+  };
 
-    const toggleMenu = () => {
-        setIsMenuOpen(!isMenuOpen);
-    };
+  const navItem = (to: string, label: string) => (
+    <li>
+      <NavLink
+        to={to}
+        className={({ isActive }) => `navlink ${isActive ? 'active' : ''}`}
+      >
+        {label}
+      </NavLink>
+    </li>
+  );
 
-    const navStyle = {
-        marginTop: '0px',
-        backgroundColor: 'orange',
-        height: '50px',
-        fontSize: '14px',
-        width: '100%',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0 0 0 20px',
-    };
+  return (
+    <>
+      <header className="navbar">
+        <div className="nav-inner">
+          <Link to="/" className="brand" aria-label="Ir al inicio">
+            <img src={mainLog} alt="Kinefit" />
+            <span className="brand-text">kinefit</span>
+          </Link>
 
-    const menuStyle = {
-        listStyle: 'none',
-        display: isMobile ? (isMenuOpen ? 'flex' : 'none') : 'flex',
-        flexDirection: isMobile ? 'column' : 'row' as 'column' | 'row',
-        position: isMobile ? 'absolute' : 'static' as 'absolute' | 'static',
-        top: isMobile ? '50px' : 'auto',
-        right: isMobile ? '0' : 'auto',
-        backgroundColor: 'orange',
-        width: isMobile ? '100%' : 'auto',
-        margin: '0',
-        padding: isMobile ? '20px' : '0',
-        zIndex: 1000,
-    };
+          {/* Desktop links */}
+          {!isMobile && (
+            <nav className="links">
+              <ul>
+                {navItem('/', 'Inicio')}
+                {navItem('/tratamientos', 'Tratamientos')}
+                {navItem('/obrasSociales', 'Obras Sociales')}
+                {navItem('/quienesSomos', 'Quienes Somos')}
+                {navItem('/contact', 'Contacto')}
+              </ul>
+            </nav>
+          )}
 
-    const menuItemStyle = {
-        marginRight: isMobile ? '0' : '20px',
-        marginBottom: isMobile ? '10px' : '0',
-        textTransform: 'uppercase' as const,
-    };
-
-    return (
-        <nav style={navStyle}>
-            <img src={mainLog} alt="" style={{ height: '45px', borderRadius: '30px' }} />
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-                <ul style={menuStyle}>
-                    <li style={menuItemStyle}><Link to='/' className='nav-link'>Inicio</Link></li>
-                    <li style={menuItemStyle}><Link to='/tratamientos' className='nav-link'>Tratamientos</Link></li>
-                    <li style={menuItemStyle}><Link to='/obrasSociales' className='nav-link'>Obras Sociales</Link></li>
-                    <li style={menuItemStyle}><Link to='/quienesSomos' className='nav-link'>Quienes Somos</Link></li>
-                    <li style={menuItemStyle}><Link to='/contact' className='nav-link'>Contacto</Link></li>
-                    {/* Solo incluir el botón de Iniciar Sesión en el menú cuando está abierto */}
-                    {isMobile && isMenuOpen && (
-                        <li style={menuItemStyle}>
-                            {isSystemRoute ? (
-                                <button onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>
-                                    <i style={{ color: 'black' }} className="fa-solid fa-right-to-bracket">Cerrar sesión</i>
-                                </button>
-                            ) : (
-                                <Link to='/login' className='nav-link'>
-                                    <i style={{ color: 'black' }} className="fa-solid fa-right-to-bracket"></i>
-                                    <span>Iniciar Sesión</span>
-                                </Link>
-                            )}
-                        </li>
-                    )}
-                </ul>
-                {/* Mantener el botón de Iniciar Sesión fuera del menú en modo desktop */}
-                {!isMobile && (
-                    <div style={{ position: 'absolute', right: '20px', textTransform: 'uppercase' }}>
-                        {isSystemRoute ? (
-                            <button onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase' }}>
-                                <i style={{ color: 'black' }} className="fa-solid fa-right-to-bracket">Cerrar sesión</i>
-                            </button>
-                        ) : (
-                            <Link to='/login' className='nav-link'>
-                                <i style={{ color: 'black' }} className="fa-solid fa-right-to-bracket"></i>
-                                <span>Iniciar Sesión</span>
-                            </Link>
-                        )}
-                    </div>
-                )}
-                {isMobile && (
-                    <button onClick={toggleMenu} style={{ 
-                        background: 'none', 
-                        border: 'none', 
-                        fontSize: '24px', 
-                        position:'absolute',
-                        right:'20px',
-                        padding: '0 20px',
-                        height: '100%'
-                    }}>
-                        ☰
-                    </button>
-                )}
+          {/* CTA derecha (desktop) */}
+          {!isMobile && (
+            <div className="right-cta">
+              {isSystemRoute ? (
+                <button className="btn-ghost" onClick={handleLogout}>
+                  <i className="fa-solid fa-right-to-bracket" />
+                  <span>Cerrar sesión</span>
+                </button>
+              ) : (
+                <Link to="/login" className="btn-ghost">
+                  <i className="fa-solid fa-right-to-bracket" />
+                  <span>Iniciar sesión</span>
+                </Link>
+              )}
             </div>
-            <ToastContainer/>
-        </nav>
-    );
+          )}
+
+          {/* Hamburguesa (mobile) */}
+          {isMobile && (
+            <button
+              className="hamb"
+              aria-label="Abrir menú"
+              aria-expanded={open}
+              onClick={() => setOpen(true)}
+            >
+              <i className="fa-solid fa-bars" />
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Drawer mobile */}
+      {isMobile && (
+        <>
+          <div
+            className={`backdrop ${open ? 'show' : ''}`}
+            onClick={() => setOpen(false)}
+            aria-hidden={!open}
+          />
+          <aside className={`drawer ${open ? 'open' : ''}`} aria-hidden={!open}>
+            <div className="drawer-header">
+              <span>Menú</span>
+              <button
+                className="close"
+                aria-label="Cerrar menú"
+                onClick={() => setOpen(false)}
+              >
+                <i className="fa-solid fa-xmark" />
+              </button>
+            </div>
+            <nav className="drawer-links">
+              <ul>
+                {navItem('/', 'Inicio')}
+                {navItem('/tratamientos', 'Tratamientos')}
+                {navItem('/obrasSociales', 'Obras Sociales')}
+                {navItem('/quienesSomos', 'Quienes Somos')}
+                {navItem('/contact', 'Contacto')}
+                <li className="divider" />
+                <li>
+                  {isSystemRoute ? (
+                    <button className="btn-ghost w-full" onClick={handleLogout}>
+                      <i className="fa-solid fa-right-to-bracket" />
+                      <span>Cerrar sesión</span>
+                    </button>
+                  ) : (
+                    <Link to="/login" className="btn-ghost w-full">
+                      <i className="fa-solid fa-right-to-bracket" />
+                      <span>Iniciar sesión</span>
+                    </Link>
+                  )}
+                </li>
+              </ul>
+            </nav>
+          </aside>
+        </>
+      )}
+
+      <ToastContainer />
+    </>
+  );
 };
 
 export default NavBar;

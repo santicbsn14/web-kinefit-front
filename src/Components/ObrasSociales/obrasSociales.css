@@ -1,0 +1,129 @@
+/* ====== Layout base ====== */
+.os{
+  margin-top: 4rem;
+  padding-inline: clamp(16px, 5vw, 56px);
+  display: grid;
+  gap: 28px;
+}
+
+/* ====== Hero ====== */
+.os__hero{
+  background: linear-gradient(180deg, rgba(255,153,0,.10), rgba(255,153,0,0) 80%);
+  border: 1px solid #333;
+  border-radius: 16px;
+  padding: clamp(16px, 4vw, 28px);
+  color: #e5e7eb;
+  backdrop-filter: blur(2px);
+}
+.os__hero h1{
+  margin: 0 0 10px;
+  font-size: clamp(28px, 4.6vw, 40px);
+  letter-spacing: -.02em;
+  color: #fff;
+}
+.os__hero h1 span{ color: orange; }
+.os__hero p{ margin: 0; line-height: 1.6; }
+
+/* ====== Grid ====== */
+.os__grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: clamp(14px, 2.4vw, 20px);
+}
+
+/* ====== Card/logo ====== */
+.os__card{
+  background: rgba(255,255,255,.05);
+  border: 1px solid #333;
+  border-radius: 14px;
+  padding: 18px 16px;
+  display: grid;
+  gap: 12px;
+  transition: transform .08s ease, box-shadow .25s ease, border-color .2s ease, background .2s ease;
+}
+.os__card:hover{
+  transform: translateY(-2px);
+  background: rgba(255,255,255,.07);
+  border-color: #444;
+  box-shadow: 0 10px 26px rgba(0,0,0,.35);
+}
+
+.os__logoWrap{
+  height: 90px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(0,0,0,.25);
+  border: 1px solid #2a2a2a;
+}
+.os__logoWrap img{
+  max-width: 80%;
+  max-height: 70px;
+  object-fit: contain;
+  filter: none;             /* logo nítido en dark */
+}
+
+.os__info{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.os__name{
+  margin: 0;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+.os__tag{
+  align-self: center;
+  font-size: 12px;
+  color: #111;
+  background: orange;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.15);
+  white-space: nowrap;
+}
+
+/* ====== CTA ====== */
+.os__cta{
+  margin-top: 6px;
+}
+.os__ctaCard{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: clamp(14px, 3.6vw, 18px);
+  border-radius: 14px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid #333;
+  color: #e5e7eb;
+}
+.os__ctaCard h2{
+  margin: 0 0 4px;
+  color: #fff;
+  font-size: clamp(18px, 2.8vw, 22px);
+}
+.os__ctaCard p{ margin: 0; opacity: .9 }
+
+.os__btn{
+  background: #007bff;
+  color: #fff;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .2s ease, transform .06s ease;
+}
+.os__btn:hover{ background: #005fd4 }
+.os__btn:active{ transform: translateY(1px) }
+
+/* ====== Responsive ====== */
+@media (max-width: 720px){
+  .os__ctaCard{ flex-direction: column; align-items: stretch }
+  .os__btn{ text-align: center }
+}

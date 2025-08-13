@@ -359,27 +359,25 @@ const Professionals: React.FC = () => {
   const renderProfessionalRows = useMemo(
     () =>
       state.professionals.map(professional => (
-        <tr key={professional._id}>
-          <td>{professional._id}</td>
-          <td>{professional.user_id?.firstname || 'N/A'}</td>
-          <td>{professional.user_id?.lastname || 'N/A'}</td>
-          <td>{professional.specialties?.join(', ') || 'No especificado'}</td>
-          <td>{professional.user_id?.email || 'No email'}</td>
-          <td>{professional.user_id?.phone || 'No teléfono'}</td>
-          <td>
-            <button style={{margin:'2px'}} onClick={() => handleDeleteClick(professional._id, `${professional.user_id?.firstname} ${professional.user_id?.lastname}`)} className="delete-button">
-              <i className="fa-solid fa-trash"></i>
-            </button>
-            <button style={{margin:'2px'}} onClick={() =>{ openScheduleModal(professional._id)
-
-            }} className="schedule-button">
-              <i className="fa-solid fa-calendar-check "></i>
-            </button>
-            <button style={{margin:'2px'}} onClick={() => handleEditClick(professional as unknown as Professional)} className="edit-button">
-              <i className="fa-solid fa-edit"></i>
-            </button>
-          </td>
-        </tr>
+          <tr key={professional._id}>
+            <td className="cell-id">{professional._id}</td>
+            <td>{professional.user_id?.firstname || 'N/A'}</td>
+            <td>{professional.user_id?.lastname || 'N/A'}</td>
+            <td className="cell-wrap">{professional.specialties?.join(', ') || 'No especificado'}</td>
+            <td className="cell-wrap">{professional.user_id?.email || 'No email'}</td>
+            <td>{professional.user_id?.phone || 'No teléfono'}</td>
+            <td className="cell-actions">
+              <button onClick={() => handleDeleteClick(professional._id, `${professional.user_id?.firstname} ${professional.user_id?.lastname}`)} className="btn-ico btn-danger">
+                <i className="fa-solid fa-trash"></i>
+              </button>
+              <button onClick={() => openScheduleModal(professional._id)} className="btn-ico btn-success">
+                <i className="fa-solid fa-calendar-check"></i>
+              </button>
+              <button onClick={() => handleEditClick(professional as unknown as Professional)} className="btn-ico btn-warning">
+                <i className="fa-solid fa-edit"></i>
+              </button>
+            </td>
+          </tr>
       )),
     [state.professionals, handleDeleteClick, openScheduleModal, handleEditClick]
   );
@@ -412,7 +410,7 @@ const Professionals: React.FC = () => {
           <span className="addScheduleText">Configurar disponibilidad horaria</span>
         </div>
       </div>
-
+      <div className="table-wrap-professional">
       <table className="professionalTable">
         <thead>
           <tr>
@@ -427,7 +425,7 @@ const Professionals: React.FC = () => {
         </thead>
         <tbody>{renderProfessionalRows}</tbody>
       </table>
-
+      </div>
       {state.showForm && (
         <form onSubmit={handleSubmit} className="professionalForm">
           <label>
@@ -446,7 +444,7 @@ const Professionals: React.FC = () => {
               ))}
             </select>
           </label>
-          <div>
+          <div className="specialtiesGrid">
             <label>Especialidad(es):</label>
             {specialties.map(especialidad => (
               <div key={especialidad}>

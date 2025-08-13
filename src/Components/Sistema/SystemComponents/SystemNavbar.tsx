@@ -1,55 +1,60 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "../../../Contexts/authContext";
-import '../mainSystem.css';
+import "../mainSystem.css";
+
+const items = [
+  { to: "agenda",        icon: "fa-solid fa-calendar-days", label: "AGENDA" },
+  { to: "users",         icon: "fa-solid fa-user",          label: "USUARIOS" },
+  { to: "professionals", icon: "fa-solid fa-user-tie",      label: "PROFESIONALES" },
+  { to: "appointments",  icon: "fa-solid fa-clock",         label: "TURNOS" },
+  { to: "patients",      icon: "fa-solid fa-hospital-user", label: "PACIENTES" },
+];
 
 const SystemNavbar = (): JSX.Element => {
   const { role } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); 
+  const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
+
   useEffect(() => {
-    // Una vez que role tenga un valor (no sea null o undefined), desactivamos el estado de carga
-    if (role !== undefined) {
-      setIsLoading(false);
-    }
+    if (role !== undefined) setIsLoading(false);
   }, [role]);
 
-  
-  if (isLoading) {
-    return <div></div>; 
-  }
+  const toggleNavbar = () => setIsOpen(v => !v);
+  const isActive = (to: string) => location.pathname.includes(`/${to}`);
 
-   //@ts-expect-error debo hostear!
-  if (role?.name === 'patient') {
-    return <div></div>; 
-  }
-  const toggleNavbar = () => {
-    setIsOpen(!isOpen); // Cambiar el estado de la navbar (abrir/cerrar)
-  };
+  if (isLoading) return <div />;
+
+  // @ts-expect-error debo hostear!
+  if (role?.name === "patient") return <div />;
 
   return (
     <div>
-      <button className="toggle-button" onClick={toggleNavbar}>
-        <i className="fa-solid fa-bars"></i> {/* Ícono para el botón */}
+      <button
+        className="toggle-button"
+        onClick={toggleNavbar}
+        aria-label="Abrir menú"
+        aria-expanded={isOpen}
+        aria-controls="system-sidebar"
+      >
+        <i className="fa-solid fa-bars" />
       </button>
-      
-      <div className={`mosaic ${isOpen ? 'open' : 'collapsed'}`}> {/* Añadir clases para manejar colapso */}
-        <Link to='agenda' style={{ color: 'black', textDecoration: 'none' }}>
-          <div className="mosaic-item"><i className="fa-solid fa-calendar-days"></i><span>AGENDA</span></div>
-        </Link>
-        <Link to='users' style={{ color: 'black', textDecoration: 'none' }}>
-          <div className="mosaic-item"><i className="fa-solid fa-user"></i><span>USUARIOS</span></div>
-        </Link>
-        <Link to='professionals' style={{ color: 'black', textDecoration: 'none' }}>
-          <div className="mosaic-item"><i className="fa-solid fa-user-tie"></i><span>PROFESIONALES</span></div>
-        </Link>
-        <Link to='appointments' style={{ color: 'black', textDecoration: 'none' }}>
-          <div className="mosaic-item"><i className="fa-solid fa-clock"></i><span>TURNOS</span></div>
-        </Link>
-        <Link to='patients' style={{ color: 'black', textDecoration: 'none' }}>
-          <div className="mosaic-item"><i className="fa-solid fa-hospital-user"></i><span>PACIENTES</span></div>
-        </Link>
-      </div>
+
+      <nav
+        id="system-sidebar"
+        className={`mosaic ${isOpen ? "open" : "collapsed"}`}
+        aria-hidden={!isOpen}
+      >
+        {items.map(item => (
+          <Link key={item.to} to={item.to} className="mosaic-link">
+            <div className={`mosaic-item ${isActive(item.to) ? "active" : ""}`}>
+              <i className={item.icon} aria-hidden="true" />
+              <span>{item.label}</span>
+            </div>
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 };

@@ -1,72 +1,183 @@
-.imgMain {
-    height: 20rem; /* 25rem - 20% */
-    width: 22.4rem; /* 28rem - 20% */
-    padding: 1.6rem; /* 2rem - 20% */
-    transition: transform 0.3s ease;
-  }
-  .mainSports{
-    margin-top: 10rem;
-  }
-
-
-  @media(max-width:978px){
-    .imgMain {
-      height: 15rem; 
-      width: 20rem; 
-      padding-right:10px;
-      padding-left:10px;
-      padding-top:1rem;
-      transition: transform 0.3s ease;
-    }
-    .imgMain:hover {
-      transform: scale(1.1);
-    }
-    .filasPhotos {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .items-list {
-      position: static !important; /* Cambia la posición a estática en pantallas pequeñas */
-      text-align: center !important; /* Centra el texto en pantallas pequeñas */
-      margin-top: 1rem !important; /* Añade un margen superior para separación */
-  }
-  }
-  .imgMain:hover {
-    transform: scale(1.1);
-  }
-  
-  .filasPhotos {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .container-fluid {
-    position: relative;
-  }
-  
-  .container-fluid .row {
-    display: flex;
-    flex-wrap: wrap;
-  }
-  
-  .container-fluid .filasPhotos {
-    flex: 0 0 40%; /* 50% - 20% */
-    position: relative;
-    padding: 8px; /* 10px - 20% */
-  }
-  .items-list {
-    position: absolute;
-    bottom: -5rem; /* Coloca la lista justo debajo de la imagen */
-    left: 6.2rem; /* Alinea la lista a la izquierda de la imagen */
-    color: #978f7f;
-    list-style-type: none; /* Quita los puntos de la lista */
-    padding: 0; /* Quita el padding de la lista */
-    margin: 0; /* Quita el margin de la lista */
-    text-align: left; /* Alinea el texto a la izquierda */
+/* === Tokens (mantiene el look & feel del sitio) === */
+:root{
+  --accent: orange;
+  --card-bg: rgba(255,255,255,.04);
+  --card-bd: #333;
+  --text: #e5e7eb;
+  --text-dim: #cbd5e1;
 }
 
-.items-list li {
-    margin-bottom: 0.5rem; /* Espacio entre los ítems */
+/* === Layout base === */
+.tr{
+  margin-top: 5rem;
+  padding: 0 clamp(16px, 5vw, 48px);
+}
+
+/* === Hero === */
+.tr__hero{
+  max-width: 900px;
+  margin: 0 auto 28px;
+  text-align: center;
+}
+.tr__hero h1{
+  margin: 0 0 6px;
+  font-size: clamp(28px, 5vw, 40px);
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+.tr__hero p{
+  margin: 0 auto;
+  color: var(--text-dim);
+  line-height: 1.6;
+  font-size: 15.5px;
+  max-width: 62ch;
+}
+
+/* === Grid de tarjetas === */
+.tr__grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto 60px;
+}
+
+/* === Card === */
+.tr__card{
+  border: 1px solid var(--card-bd);
+  border-radius: 14px;
+  background: var(--card-bg);
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  display: flex;
+  flex-direction: column;
+}
+.tr__card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(0,0,0,.35);
+  border-color: #444;
+}
+
+/* Media */
+.tr__media{
+  position: relative;
+  aspect-ratio: 16/10;
+  overflow: hidden;
+}
+.tr__media img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.02);
+  transition: transform .35s ease;
+  display: block;
+}
+.tr__card:hover .tr__media img{ transform: scale(1.06); }
+.tr__mediaShade{
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,.0) 40%, rgba(0,0,0,.12) 100%);
+  pointer-events: none;
+}
+
+/* Body */
+.tr__body{
+  padding: 14px 14px 16px;
+  display: grid;
+  gap: 10px;
+}
+.tr__body h3{
+  margin: 0;
+  color: #fff;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+/* Listas con bullets personalizados */
+.tr__list{
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+.tr__list li{
+  position: relative;
+  padding-left: 18px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.tr__list li::before{
+  content: '';
+  position: absolute; left: 0; top: .6em;
+  width: 8px; height: 8px; border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255,165,0,.18);
+}
+
+/* CTA */
+.tr__actions{
+  margin-top: 2px;
+  display: flex; justify-content: flex-end;
+}
+.tr__btn{
+  appearance: none; -webkit-appearance: none;
+  background: var(--accent);
+  color: #111;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: none;
+  transition: filter .15s ease, transform .06s ease, box-shadow .15s ease;
+  box-shadow: 0 6px 16px rgba(255,165,0,.25);
+}
+.tr__btn:hover{ filter: brightness(.98); }
+.tr__btn:active{ transform: translateY(1px); }
+.tr__btn:focus-visible{ outline: 2px solid #fff2; outline-offset: 2px; }
+
+/* === Responsivo suave === */
+@media (max-width: 520px){
+  .tr{ margin-top: 4rem; }
+  .tr__body{ padding: 12px }
+  .tr__actions{ justify-content: stretch }
+  .tr__btn{ width: 100%; text-align: center }
+}
+/* ====== Header unificado de secciones ====== */
+.section-title{
+  width:100%;
+  max-width:1100px;
+  margin: 0 auto 28px;
+  padding: 0 16px;
+  text-align:center;
+}
+.section-title .eyebrow{
+  display:inline-block;
+  margin-bottom:.4rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  color:#fbbf24;            /* mismo acento que las otras páginas */
+  font-size:.8rem;
+}
+.section-title .page-title{
+  margin:0 0 .6rem;
+  line-height:1.1;
+  color:#fff;
+  font-weight:800;
+  font-size: clamp(2rem, 3.4vw, 3rem); /* responsive */
+}
+.section-title .subtitle{
+  color:#cbd5e1;
+  max-width:880px;
+  margin:0 auto;
+  font-size: clamp(.95rem, 1.6vw, 1.05rem);
+}
+
+/* opcional: un pelín menos de margen arriba del grid,
+   ya que ahora tenemos el header arriba */
+.mainSports{
+  margin-top: 2.5rem;
 }

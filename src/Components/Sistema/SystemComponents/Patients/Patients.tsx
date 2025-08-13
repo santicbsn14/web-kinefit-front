@@ -15,6 +15,9 @@ const Patients = () => {
     clinical_data: [''], // Cambiado a un array vacío
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [userQuery, setUserQuery] = useState("");
+const [showUserList, setShowUserList] = useState(false);
+
   const [currentPatientId, setCurrentPatientId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = React.useState(1);
   const patientsPerPage = 6;
@@ -110,6 +113,7 @@ const Patients = () => {
         <i className="fa-solid fa-user-plus addPatientIcon"></i>
         <span className="addPatientText">Agregar paciente</span>
       </div>
+      <div className="table-wrap">
       <table className="patientTable">
         <thead>
           <tr>
@@ -143,6 +147,7 @@ const Patients = () => {
           ))}
         </tbody>
       </table>
+      </div>
       <div className="pagination">
         <button 
           onClick={() => paginate(currentPage - 1)} 
@@ -164,19 +169,65 @@ const Patients = () => {
         <form onSubmit={handleSubmit} className="patientForm">
           <label>
             Nombre Usuario:
-            <select
-              name="user_id"
-              value={formData.user_id}
-              onChange={handleInputChange}
-              required
+
+  <div
+    className="combo"
+    role="combobox"
+    aria-expanded={showUserList}
+    aria-owns="user-listbox"
+    aria-haspopup="listbox"
+  >
+    <input
+      className="combo-input"
+      type="text"
+      placeholder="Buscá por nombre o apellido"
+      value={userQuery}
+      onChange={(e) => {
+        setUserQuery(e.target.value);
+        setShowUserList(true);
+      }}
+      onFocus={() => setShowUserList(true)}
+      onBlur={() => setTimeout(() => setShowUserList(false), 120)} /* deja hacer click en opciones */
+      aria-autocomplete="list"
+      aria-controls="user-listbox"
+    />
+
+    {showUserList && (
+      <ul className="combo-list" role="listbox" id="user-listbox">
+        {users
+          .filter(u => {
+            const q = userQuery.trim().toLowerCase();
+            if (!q) return true;
+            return (
+              u.firstname.toLowerCase().includes(q) ||
+              u.lastname.toLowerCase().includes(q)
+            );
+          })
+          .slice(0, 12) /* límite para no hacerla eterna */
+          .map(u => (
+            <li
+              key={u.id}
+              role="option"
+              className="combo-option"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                setFormData(prev => ({ ...prev, user_id: u.id }));
+                setUserQuery(`${u.firstname} ${u.lastname}`);
+                setShowUserList(false);
+              }}
+              aria-selected={formData.user_id === u.id}
             >
-              <option value="">Seleccione un usuario</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.firstname} {user.lastname}
-                </option>
-              ))}
-            </select>
+              <span className="combo-primary">{u.firstname} {u.lastname}</span>
+              {u.mutual && <span className="combo-meta">• {u.mutual}</span>}
+            </li>
+          ))}
+        {users.length === 0 && (
+          <li className="combo-empty">No hay usuarios</li>
+        )}
+      </ul>
+    )}
+  </div>
+
           </label>
           <input
             type="text"
