@@ -1,6 +1,6 @@
 import './Home.css';
 import ruso from '../Imagenes/ruso.png';
-import joaquin from '../Imagenes/joaquin.png';
+import joaquin from '../Imagenes/Mariana-Home.webp';
 import frenteKinefit from '../Imagenes/frenteKinefit.png';
 
 const Home = (): JSX.Element => {
