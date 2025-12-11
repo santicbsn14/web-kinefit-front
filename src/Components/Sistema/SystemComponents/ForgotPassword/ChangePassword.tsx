@@ -80,6 +80,7 @@ const ResetPassword = () => {
         navigate('/login');
       }, 2000);
     } catch (error) {
+      console.error(error)
     const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
     toast.error(errorMessage)
     //@ts-expect-error error verificado

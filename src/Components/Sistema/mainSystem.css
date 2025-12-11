@@ -1,25 +1,32 @@
-/* === Sidebar moderna (mantiene naranja/negro) === */
+/* === Sidebar moderna - OCULTA POR DEFECTO === */
 :root{
-  /* si ya definiste --sidebar-w en otro archivo, se respeta; si no, usa 200px */
-  --sidebar-w: var(--sidebar-w, 200px);
+  --sidebar-w: 250px; /* Ancho cuando está visible */
 }
 
 .mosaic{
   background: linear-gradient(180deg, #ffa500 0%, #ff9a00 100%);
   width: var(--sidebar-w);
-  height: calc(100vh - 80px);     /* debajo del header */
+  height: calc(100vh - 80px);
   position: fixed;
-  left: 3px;
+  left: 0;
   top: 80px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 10px;
-  border-radius: 12px;
+  border-radius: 0 12px 12px 0;
   border: 1px solid rgba(0,0,0,.08);
   box-shadow: 0 6px 18px rgba(0,0,0,.12);
-  overflow: hidden;
   z-index: 99;
+  
+  /* OCULTA POR DEFECTO - desliza hacia la izquierda */
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+/* Cuando está abierta - desliza hacia adentro */
+.mosaic.open{
+  transform: translateX(0);
 }
 
 .mosaic a,
@@ -28,11 +35,15 @@
   text-decoration: none;
 }
 
-.mosaic span{ text-decoration: none }
+.mosaic span{ 
+  text-decoration: none;
+}
 
 /* Item */
 .mosaic-item{
-  display: flex; align-items: center; gap: 10px;
+  display: flex; 
+  align-items: center; 
+  gap: 10px;
   width: 100%;
   padding: 10px 12px;
   border-radius: 10px;
@@ -43,7 +54,11 @@
   transition: background-color .15s ease, transform .04s ease, box-shadow .15s ease;
   box-sizing: border-box;
 }
-.mosaic-item i{ margin: 0 2px 0 2px; font-size: 16px }
+
+.mosaic-item i{ 
+  margin: 0 2px 0 2px; 
+  font-size: 18px;
+}
 
 /* Hover/active */
 .mosaic-item:hover{
@@ -60,11 +75,13 @@
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
 }
 
-/* Botón hamburguesa */
+/* Botón hamburguesa - SIEMPRE VISIBLE en esquina superior izquierda */
 .toggle-button{
-  display: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   position: fixed;
-  top: 3.3rem;
+  top: 5.3rem;
   left: 10px;
   background-color: #111;
   color: #fff;
@@ -74,30 +91,54 @@
   cursor: pointer;
   z-index: 100;
   box-shadow: 0 6px 16px rgba(0,0,0,.25);
+  transition: background-color 0.2s ease;
 }
-.toggle-button i{ font-size: 16px }
 
-/* Mobile: sidebar deslizable */
+.toggle-button:hover{
+  background-color: #222;
+}
+
+.toggle-button i{ 
+  font-size: 18px;
+  transition: transform 0.2s ease;
+}
+
+/* Rotar icono cuando está abierto */
+body.sidebar-open .toggle-button i{
+  transform: rotate(90deg);
+}
+
+/* Overlay oscuro cuando sidebar está abierta (opcional pero recomendado) */
+.sidebar-overlay{
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 98;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+body.sidebar-open .sidebar-overlay{
+  display: block;
+  opacity: 1;
+}
+
+/* Mobile: mismo comportamiento */
 @media (max-width: 768px){
-  .toggle-button{ display: inline-flex; align-items:center; gap:8px }
-
   .mosaic{
-    left: 0;
     top: 3.1rem;
-    width: min(82vw, 260px);
+    width: min(85vw, 280px);
     height: calc(100vh - 3.1rem);
     padding: 16px;
-    border-radius: 0 12px 12px 0;
-    transform: translateX(-100%);
-    transition: transform .28s ease;
   }
-  .mosaic.open{ transform: translateX(0) }
-  .mosaic.collapsed{ transform: translateX(-100%) }
-
-  .mosaic-item{ padding: 12px 14px; margin: 4px 0 }
+  
+  .toggle-button{
+    top: 3.3rem;
+  }
 }
 
-/* Desktop: siempre visible (sin anim) */
-@media (min-width: 769px){
-  .mosaic{ transform: none !important }
-}
+/* Desktop: mismo comportamiento deslizable */

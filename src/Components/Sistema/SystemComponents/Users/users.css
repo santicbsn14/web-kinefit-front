@@ -1,10 +1,10 @@
 /* ====== LAYOUT CON SIDEBAR FIJA ====== */
-:root { --sidebar-w: 280px; --gutter: 24px; }
+:root { --gutter: 24px; }
 
 .userTableContainer{
   display:flex; flex-direction:column; align-items:stretch;
   margin-top:5rem; margin-bottom:5rem;
-  padding-left: calc(var(--sidebar-w) + var(--gutter));
+  padding-left: calc(80px + var(--gutter));
   padding-right: var(--gutter);
   min-width:0;
 }

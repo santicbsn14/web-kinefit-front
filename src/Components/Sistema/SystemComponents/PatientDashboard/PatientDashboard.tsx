@@ -61,24 +61,32 @@ const PatientDashboard = () => {
     session_type: ''
   });
   const email = getAuth().currentUser?.email;
-  const appointmentUser = async () => {
+const appointmentUser = async () => {
     try {
-
         const user = await getUserByEmail(email as unknown as string);
         const appointment = await getAppointments();
        
-
         // Obtener la fecha actual
         const currentDate = new Date();
 
+        
         // Filtrar y buscar el turno correspondiente al user.id que sea futuro
         const userAppointment = appointment.appointments.find(
-            (appt: CreateAppointment) =>
-              //@ts-expect-error s
-                appt.pacient_id.user_id._id === user.id &&
-                new Date(appt.date_time as unknown as Date) >= currentDate
+            (appt: CreateAppointment) => {
+                // Verificar que pacient_id no sea null antes de acceder a sus propiedades
+                //@ts-expect-error s
+                if (!appt.pacient_id || !appt.pacient_id.user_id) {
+                    return false;
+                }
+                
+                return (
+                  //@ts-expect-error s
+                    appt.pacient_id.user_id._id === user.id &&
+                    new Date(appt.date_time as unknown as Date) >= currentDate
+                );
+            }
         );
-
+        
         if (userAppointment) {
             setUserAppointment(userAppointment.date_time);
         } else {
@@ -86,8 +94,8 @@ const PatientDashboard = () => {
         }
         
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error(errorMessage);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        toast.error(errorMessage);
     }
 }
 const sessionTypes = [
@@ -155,6 +163,7 @@ const uploadImageToCloudinary = async (file: File) => {
       }
     }
   };
+
   //@ts-expect-error
   const filteredPatient = patients.filter(patient => patient.user_id.email === email);
 
@@ -245,7 +254,6 @@ const uploadImageToCloudinary = async (file: File) => {
 
         const appointmentEndTime = new Date(appointmentDate);
         appointmentEndTime.setHours(Number(endTimeParts[0]), Number(endTimeParts[1]));
-
         const appointmentData: CreateAppointment = {
           pacient_id,
           professional_id,
@@ -311,31 +319,31 @@ const uploadImageToCloudinary = async (file: File) => {
     [professionals]
   );
   
-  const formattedDate = userAppointment 
-    ? dayjs.utc(userAppointment).format('dddd, D [de] MMMM [de] YYYY') 
-    : 'No tienes turnos asignados';
+const formattedDate = userAppointment && userAppointment !== 'No tienes turnos futuros asignados'
+  ? dayjs.utc(userAppointment).format('dddd, D [de] MMMM [de] YYYY') 
+  : null;
     
   return (
     <div style={{ padding: '20px' }}>
       <h1 style={{ marginBottom: '20px', color:'rgb(151, 143, 127)' }}>Panel de Paciente</h1>
-      <div style={{
-        width: '80%',
-        marginLeft: '8rem',
-        marginBottom: '20px',
-        display: 'flex',
-        justifyContent: 'center'
-      }}>
-        <div style={{
-          background: '#007bff',
-          color: 'white',
-          padding: '10px 20px',
-          borderRadius: '15px',
-          fontWeight: 'bold'
-        }} className='appointmentMessage'>
-          <i style={{ marginRight: '5px' }} className="fa-solid fa-hospital-user"></i>
-          Tenes un turno asignado para el dia:{formattedDate}
-        </div>
-      </div>
+<div className="appointmentMessage-container" style={{
+  width: '80%',
+  marginLeft: '8rem',
+  marginBottom: '20px',
+  display: 'flex',
+  justifyContent: 'center'
+}}>
+  <div style={{
+    background: formattedDate ? '#007bff' : '#6c757d',
+    color: 'white',
+    padding: '10px 20px',
+    borderRadius: '15px',
+    fontWeight: 'bold'
+  }} className='appointmentMessage'>
+    <i style={{ marginRight: '5px' }} className={formattedDate ? "fa-solid fa-hospital-user" : "fa-solid fa-calendar-xmark"}></i>
+    {formattedDate ? `Tenés un turno asignado para el día: ${formattedDate}` : 'No tenés turnos asignados próximamente'}
+  </div>
+</div>
       <button
         onClick={toggleForm}
         style={{
@@ -525,8 +533,14 @@ const uploadImageToCloudinary = async (file: File) => {
         </form>
       </div>)}
       {showProfessionals && (
-        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-          <table className="professionalTable">
+  <div style={{ 
+    display: 'flex', 
+    justifyContent: 'center', 
+    width: '100%',
+    padding: '0 20px',
+    overflowX: 'auto'
+  }}>
+    <table className="professionalTable">
             <thead>
               <tr>
                 <th>Nombre</th>

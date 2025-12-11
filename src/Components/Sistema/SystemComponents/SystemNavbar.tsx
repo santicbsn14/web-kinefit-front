@@ -13,13 +13,27 @@ const items = [
 
 const SystemNavbar = (): JSX.Element => {
   const { role } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // ⭐ YA está en false, pero asegurémonos
   const [isLoading, setIsLoading] = useState(true);
   const location = useLocation();
 
   useEffect(() => {
     if (role !== undefined) setIsLoading(false);
   }, [role]);
+
+  useEffect(() => {
+    // Agregar/quitar clase al body cuando cambia el estado
+    if (isOpen) {
+      document.body.classList.add('sidebar-open');
+    } else {
+      document.body.classList.remove('sidebar-open');
+    }
+    
+    // Cleanup al desmontar
+    return () => {
+      document.body.classList.remove('sidebar-open');
+    };
+  }, [isOpen]);
 
   const toggleNavbar = () => setIsOpen(v => !v);
   const isActive = (to: string) => location.pathname.includes(`/${to}`);
@@ -34,16 +48,16 @@ const SystemNavbar = (): JSX.Element => {
       <button
         className="toggle-button"
         onClick={toggleNavbar}
-        aria-label="Abrir menú"
+        aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
         aria-expanded={isOpen}
         aria-controls="system-sidebar"
       >
-        <i className="fa-solid fa-bars" />
+        <i className={`fa-solid ${isOpen ? 'fa-times' : 'fa-bars'}`} />
       </button>
 
       <nav
         id="system-sidebar"
-        className={`mosaic ${isOpen ? "open" : "collapsed"}`}
+        className={`mosaic ${isOpen ? "open" : ""}`}
         aria-hidden={!isOpen}
       >
         {items.map(item => (

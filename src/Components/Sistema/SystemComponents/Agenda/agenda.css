@@ -1,11 +1,15 @@
 /* ===== Sidebar-aware layout (mismo patrón que el resto) ===== */
-:root { --sidebar-w: 280px; --gutter: 24px; }
+:root { --gutter: 24px; }
 
-.mainAgenda{
-  display:flex; flex-direction:column;
-  margin-top:5rem;
-  padding-left: calc(var(--sidebar-w) + var(--gutter));
+.mainAgenda {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-top: 5rem;
+  padding-left: calc(80px + var(--gutter));
   padding-right: var(--gutter);
+  min-width: 0;
+  transition: padding-left 0.3s ease; /* ⭐ IMPORTANTE: transición suave */
 }
 
 @media (max-width: 992px){

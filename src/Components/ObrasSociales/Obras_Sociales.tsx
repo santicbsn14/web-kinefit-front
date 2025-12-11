@@ -53,7 +53,7 @@ const ObrasSociales = (): JSX.Element => {
             <h2>¿No encontrás tu obra social?</h2>
             <p>Consultanos por reintegros y convenios vigentes.</p>
           </div>
-          <a className="os__btn" href="/contacto">
+          <a className="os__btn" href="/contact">
             Consultar cobertura
           </a>
         </div>
