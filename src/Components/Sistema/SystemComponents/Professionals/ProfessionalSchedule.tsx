@@ -39,8 +39,27 @@ const ProfesionalTimeSlots: React.FC<ProfesionalTimeSlotsProps> = ({ data, profe
   React.useEffect(() => {
     fetchData();
   }, [fetchData]);
-  
+ 
   if (!isOpen) {
+      // CONSOLE LOG PRINCIPAL - cuando recibe la data
+  console.log('===== PROFESSIONAL TIME SLOTS - DATA RECIBIDA =====');
+  console.log('Data completa:', data);
+  if (data) {
+    console.log('Schedule array:', data.schedule);
+    data.schedule.forEach((slot, index) => {
+      console.log(`--- Slot ${index} ---`);
+      console.log('Día:', slot.week_day);
+      console.log('Start time RAW:', slot.time_slots.start_time);
+      console.log('Start time TYPE:', typeof slot.time_slots.start_time);
+      console.log('End time RAW:', slot.time_slots.end_time);
+      console.log('End time TYPE:', typeof slot.time_slots.end_time);
+      
+      // Ver qué devuelve formatDate
+      console.log('Start time FORMATEADO:', formatDate(slot.time_slots.start_time));
+      console.log('End time FORMATEADO:', formatDate(slot.time_slots.end_time));
+    });
+  }
+  console.log('================================================');
     return null; 
   }
   const toggleModal = () =>{

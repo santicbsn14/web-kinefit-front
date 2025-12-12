@@ -169,18 +169,28 @@ const uploadImageToCloudinary = async (file: File) => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    if (name === 'date_time') {
-      const date = new Date(value);
-      const weekDay = date.getDay() === 0 ? 7 : date.getDay();
-      setFormData((prevData) => ({
-        ...prevData,
-        [name]: value,
-        schedule: {
-          ...prevData.schedule,
-          week_day: weekDay
-        },
-      }));
-    } else if (name === 'start_time') {
+if (name === 'date_time') {
+  // En lugar de new Date(value), usar esto:
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(year, month - 1, day); // Crea la fecha en hora local
+  const weekDay = date.getDay();
+  
+  console.log('===== DEBUG WEEK DAY =====');
+  console.log('Fecha seleccionada:', value);
+  console.log('Date object:', date);
+  console.log('date.getDay():', date.getDay());
+  console.log('weekDay final:', weekDay);
+  console.log('==========================');
+  
+  setFormData((prevData) => ({
+    ...prevData,
+    [name]: value,
+    schedule: {
+      ...prevData.schedule,
+      week_day: weekDay
+    },
+  }));
+}else if (name === 'start_time') {
       setFormData((prevData) => ({
         ...prevData,
         schedule: {
@@ -259,7 +269,7 @@ const uploadImageToCloudinary = async (file: File) => {
           professional_id,
           date_time: appointmentDate.toISOString() as unknown as Date,
           schedule: {
-            week_day: schedule.week_day + 1,
+            week_day: schedule.week_day ,
             time_slots: {
               start_time: appointmentStartTime.toISOString() as unknown as Dayjs,
               end_time: appointmentEndTime.toISOString()as unknown as Dayjs,
