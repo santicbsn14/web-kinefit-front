@@ -18,7 +18,7 @@ const Home = (): JSX.Element => {
             </p>
             <div className="hero-ctas">
               {/* cambiá los href si querés */}
-              <a href="/contacto" className="btn btn-primary">
+              <a href="/contact" className="btn btn-primary">
                 {/* <i className="fa-solid fa-calendar-check" /> */} Reservar turno
               </a>
               <a
