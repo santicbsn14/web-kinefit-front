@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
-import { getAuth, signOut } from 'firebase/auth';
 import { toast, ToastContainer } from 'react-toastify';
 import mainLog from '../Imagenes/logo_kinefit.webp';
 import './navbar.css';
+import { useAuth } from '../../Contexts/authContext';
 
 const NavBar = (): JSX.Element => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
@@ -11,6 +11,7 @@ const NavBar = (): JSX.Element => {
   const location = useLocation();
   const isSystemRoute = location.pathname.startsWith('/system');
   const navigate = useNavigate();
+  const { logout } = useAuth()
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 992);
@@ -18,13 +19,12 @@ const NavBar = (): JSX.Element => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Cierra el menú al navegar
   useEffect(() => { setOpen(false); }, [location.pathname]);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     try {
-      await signOut(getAuth());
-      navigate('/');
+      logout()
+      navigate('/')
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error(msg);
@@ -51,7 +51,6 @@ const NavBar = (): JSX.Element => {
             <span className="brand-text">kinefit</span>
           </Link>
 
-          {/* Desktop links */}
           {!isMobile && (
             <nav className="links">
               <ul>
@@ -64,7 +63,6 @@ const NavBar = (): JSX.Element => {
             </nav>
           )}
 
-          {/* CTA derecha (desktop) */}
           {!isMobile && (
             <div className="right-cta">
               {isSystemRoute ? (
@@ -81,7 +79,6 @@ const NavBar = (): JSX.Element => {
             </div>
           )}
 
-          {/* Hamburguesa (mobile) */}
           {isMobile && (
             <button
               className="hamb"
@@ -95,7 +92,6 @@ const NavBar = (): JSX.Element => {
         </div>
       </header>
 
-      {/* Drawer mobile */}
       {isMobile && (
         <>
           <div

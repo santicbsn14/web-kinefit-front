@@ -1,31 +1,50 @@
-import { useState } from 'react';
+import { useState } from 'react'
+import { IAppointment } from '../../../../Utils/Types/appointmentTypes'
 
-// @ts-expect-error simplificado
-const AppointmentCell = ({ appointment }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
+interface Props {
+  appointment: IAppointment
+}
 
-  if (!appointment || !appointment.pacient_id || !appointment.professional_id) {
-    return <div className="turnoLabel">Cargando…</div>;
-  }
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'Pendiente',
+  approved: 'Aprobado',
+  rejected: 'Rechazado',
+  cancelled: 'Cancelado',
+}
 
-  const patient = `${appointment.pacient_id.user_id.firstname} ${appointment.pacient_id.user_id.lastname}`;
-  const pro = `${appointment.professional_id.user_id.firstname} ${appointment.professional_id.user_id.lastname}`;
-  const detail = `${appointment.session_type} (${appointment.state})`;
+const AppointmentCell = ({ appointment }: Props) => {
+  const [showTooltip, setShowTooltip] = useState(false)
+
+  const patientName = typeof appointment.patientId === 'object' && appointment.patientId !== null
+    ? (appointment.patientId as any).userId?.name || (appointment.patientId as any).name || 'Paciente'
+    : 'Paciente'
+
+  const professionalName = typeof appointment.professionalId === 'object' && appointment.professionalId !== null
+    ? appointment.professionalId.userId?.name || 'Profesional'
+    : 'Profesional'
+
+  const specialtyName = typeof appointment.specialtyId === 'object' && appointment.specialtyId !== null
+    ? appointment.specialtyId.name
+    : 'Especialidad'
+
+  const statusLabel = STATUS_LABELS[appointment.status] || appointment.status
 
   return (
     <div
-      className="turnoLabel"
+      className={`turnoLabel turnoLabel--${appointment.status}`}
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
     >
-      {patient}
+      {patientName}
       {showTooltip && (
         <div className="turnoTooltip">
-          {pro}: {detail}
+          <strong>{professionalName}</strong> — {specialtyName} ({statusLabel})
+          <br />
+          {appointment.timeFrom} - {appointment.timeTo}
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default AppointmentCell;
+export default AppointmentCell

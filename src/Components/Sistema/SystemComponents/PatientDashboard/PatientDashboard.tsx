@@ -1,583 +1,338 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-import React, { useState, useEffect, useMemo } from 'react';
-import { getProfessionals, getProfessionalTimeSlots, Professional } from '../../../../MockService/professionals';
-import { getPatients, Patient } from '../../../../MockService/patients';
-import { getAppointments, makeAppointmentByPatient } from '../../../../MockService/appointments';
-import { CreateAppointment } from '../../../../Utils/Types/appointmentTypes';
-import { toast, ToastContainer } from 'react-toastify';
+import { useState, useEffect, useCallback } from 'react'
+import { toast } from 'react-toastify'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import 'dayjs/locale/es'
 import './patientDashboard.css'
-import { ProfessionalTimeSlotsBBDD } from '../../../../Utils/Types/professionalTypes';
-import ProfesionalTimeSlots from '../Professionals/ProfessionalSchedule';
-import { getAuth } from 'firebase/auth';
-import { getUserByEmail } from '../../../../MockService/users';
-import dayjs, { Dayjs } from 'dayjs';
-import localizedFormat from 'dayjs/plugin/localizedFormat';
-import timezone from 'dayjs/plugin/timezone';
+import { useAuth } from '../../../../Contexts/authContext'
+import { getProfessionals } from '../../../../Services/professionalService'
+import { getMyAppointments, createAppointment, cancelAppointmentByPatient } from '../../../../Services/appointmentService'
+import { getSpecialties } from '../../../../Services/specialtyService'
+import { IProfessional, ISpecialty } from '../../../../Utils/Types/professionalTypes'
+import { IAppointment } from '../../../../Utils/Types/appointmentTypes'
 
-import 'dayjs/locale/es'; // Carga la localización para español
-import axios from 'axios';
-dayjs.extend(localizedFormat);
-dayjs.extend(timezone);
-dayjs.locale('es');
+dayjs.extend(utc)
+dayjs.locale('es')
 
-type TreatmentRestriction = {
-  allowedDays: number[];
-  timeRange: { start: string; end: string };
-  message: string;
-};
-
-const TREATMENT_RESTRICTIONS: Record<string, TreatmentRestriction> = {
-  'Osteopatia': {
-    allowedDays: [2, 4, 6], // Martes, Jueves, Sábados
-    timeRange: { start: '08:00', end: '12:00' },
-    message: 'Los turnos de Osteopatia se atienden solo los martes, jueves y sábados por la mañana.'
-  },
-  'Puncion seca': {
-    allowedDays: [1, 3, 5], 
-    timeRange: { start: '14:00', end: '18:00' },
-    message: 'Los turnos de Punción Seca están disponibles lunes, miércoles y viernes por la tarde.'
-  }
-};
-const PatientDashboard = () => {
-  const [patients, setPatients] = useState([]);
-  const [professionals, setProfessionals] = useState<Professional[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [userAppointment, setUserAppointment] = useState<Date | string | null>(null)
-  const [showProfessionals, setShowProfessionals] = useState(false);
-  const [showProfessionalSchedules, setShowProfessionalSchedules] = useState(false);
-  const [showDataPTS, setShowDataPTS] = useState<ProfessionalTimeSlotsBBDD | null>(null);
-  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(null);
-  const [selectedProfessionalName, setSelectedProfessionalName] = useState<string>('');
-  const [file, setFile] = useState<File | null>(null);
- 
-  const [, setLoading] = useState(false);
-  const [filePreview, setFilePreview] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    pacient_id: '',
-    professional_id: '',
-    date_time: '',
-    schedule: { week_day: 0, time_slots: { start_time: '' } },
-    state: '',
-    session_type: ''
-  });
-  const email = getAuth().currentUser?.email;
-const appointmentUser = async () => {
-    try {
-        const user = await getUserByEmail(email as unknown as string);
-        const appointment = await getAppointments();
-       
-        // Obtener la fecha actual
-        const currentDate = new Date();
-
-        
-        // Filtrar y buscar el turno correspondiente al user.id que sea futuro
-        const userAppointment = appointment.appointments.find(
-            (appt: CreateAppointment) => {
-                // Verificar que pacient_id no sea null antes de acceder a sus propiedades
-                //@ts-expect-error s
-                if (!appt.pacient_id || !appt.pacient_id.user_id) {
-                    return false;
-                }
-                
-                return (
-                  //@ts-expect-error s
-                    appt.pacient_id.user_id._id === user.id &&
-                    new Date(appt.date_time as unknown as Date) >= currentDate
-                );
-            }
-        );
-        
-        if (userAppointment) {
-            setUserAppointment(userAppointment.date_time);
-        } else {
-            setUserAppointment('No tienes turnos futuros asignados');
-        }
-        
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        toast.error(errorMessage);
-    }
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'Pendiente',
+  approved: 'Aprobado',
+  rejected: 'Rechazado',
+  cancelled: 'Cancelado',
 }
-const sessionTypes = [
-  'Terapia de manos',
-  'Kinesiologia adulto/pediatrico',
-  'Terapia manual',
-  'Osteopatia',
-  'Cupping',
-  'Neuromodulacion',
-  'Electroterapia',
-  'Readaptacion deportiva',
-  'Puncion seca'
-];
-const uploadImageToCloudinary = async (file: File) => {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', 'upload_test');
-  formData.append('cloud_name', 'ds8ilvysp');
-  
-  try {
-    const response = await axios.post('https://api.cloudinary.com/v1_1/ds8ilvysp/image/upload', formData);
-    return response.data.secure_url;
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error(error);
-    toast.error(errorMessage);
-  }
-};
+
+const PatientDashboard = () => {
+  const { user } = useAuth()
+  const [professionals, setProfessionals] = useState<IProfessional[]>([])
+  const [specialties, setSpecialties] = useState<ISpecialty[]>([])
+  const [appointments, setAppointments] = useState<IAppointment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [showProfessionals, setShowProfessionals] = useState(false)
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState('')
+  const [filteredSpecialties, setFilteredSpecialties] = useState<ISpecialty[]>([])
+  const [formData, setFormData] = useState({
+    professionalId: '',
+    specialtyId: '',
+    date: '',
+    timeFrom: '',
+    notes: '',
+  })
+
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [profs, specs, appts] = await Promise.all([
+        getProfessionals(),
+        getSpecialties(),
+        getMyAppointments(),
+      ])
+      setProfessionals(profs)
+      setSpecialties(specs)
+      setAppointments(appts.docs)
+    } catch {
+      toast.error('Error al cargar los datos')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { fetchData() }, [fetchData])
+
+  // Cuando cambia el profesional seleccionado, filtrar sus especialidades
   useEffect(() => {
-    const fetchProfessionals = async () => {
-      const professionalsData = await getProfessionals();
-      setProfessionals(professionalsData.professionals);
-    };
+    if (!selectedProfessionalId) {
+      setFilteredSpecialties([])
+      return
+    }
+    const prof = professionals.find(p => p._id === selectedProfessionalId)
+    if (prof) {
+      setFilteredSpecialties(prof.specialties as ISpecialty[])
+    }
+  }, [selectedProfessionalId, professionals])
 
-    const fetchPatients = async () => {
-      const patientsData = await getPatients();
-      setPatients(patientsData.patients);
-    };
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
 
-    fetchProfessionals();
-    fetchPatients();
-    appointmentUser()
-  }, []);
-  const openScheduleModal = async (idP: string) => {
+    if (name === 'professionalId') {
+      setSelectedProfessionalId(value)
+      setFormData(prev => ({ ...prev, professionalId: value, specialtyId: '' }))
+    }
 
-    if (selectedProfessionalId === idP && showProfessionalSchedules) {
-      setShowProfessionalSchedules(false);
-      setShowDataPTS(null);
-      setSelectedProfessionalId(null);
-      setSelectedProfessionalName('');
-    } else {
-     
-      try {
-        const data: ProfessionalTimeSlotsBBDD = await getProfessionalTimeSlots(idP);
-        const professional = professionals.find(p => p._id === idP);
-        if (professional) {
-          setSelectedProfessionalName(`${professional.user_id.firstname} ${professional.user_id.lastname}`);
-        }
-        setShowProfessionalSchedules(prevState => !prevState);
-        setShowDataPTS(data);
-        setSelectedProfessionalId(idP);
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        toast.error(errorMessage);
+    // Avisar si la especialidad tiene restricciones
+    if (name === 'specialtyId') {
+      const spec = specialties.find(s => s._id === value)
+      if (spec?.restriction.hasRestriction) {
+        const days = spec.restriction.days.join(', ')
+        toast.info(
+          `"${spec.name}" solo se atiende los días: ${days}, de ${spec.restriction.timeFrom} a ${spec.restriction.timeTo}`,
+          { autoClose: 6000 }
+        )
       }
     }
-  };
+  }
 
-  //@ts-expect-error
-  const filteredPatient = patients.filter(patient => patient.user_id.email === email);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  try {
+    await createAppointment({
+      professionalId: formData.professionalId,
+      specialtyId: formData.specialtyId,
+      date: formData.date,
+      timeFrom: formData.timeFrom,
+      notes: formData.notes,
+    })
+    toast.success('¡Turno solicitado exitosamente! Quedará pendiente de aprobación.')
+    fetchData()
+    setTimeout(() => {
+      setShowForm(false)
+      setFormData({ professionalId: '', specialtyId: '', date: '', timeFrom: '', notes: '' })
+    }, 1500)
+  } catch (error: any) {
+    toast.error(error?.response?.data?.error || 'Error al solicitar el turno')
+  }
+}
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-if (name === 'date_time') {
-  // En lugar de new Date(value), usar esto:
-  const [year, month, day] = value.split('-').map(Number);
-  const date = new Date(year, month - 1, day); // Crea la fecha en hora local
-  const weekDay = date.getDay();
-  
-  console.log('===== DEBUG WEEK DAY =====');
-  console.log('Fecha seleccionada:', value);
-  console.log('Date object:', date);
-  console.log('date.getDay():', date.getDay());
-  console.log('weekDay final:', weekDay);
-  console.log('==========================');
-  
-  setFormData((prevData) => ({
-    ...prevData,
-    [name]: value,
-    schedule: {
-      ...prevData.schedule,
-      week_day: weekDay
-    },
-  }));
-}else if (name === 'start_time') {
-      setFormData((prevData) => ({
-        ...prevData,
-        schedule: {
-          ...prevData.schedule,
-          time_slots: { start_time: value },
-        },
-      }));
-    } else if (name === 'session_type') {
-      setFormData((prevData) => ({ ...prevData, [name]: value }));
-      if (name === 'session_type') {
-        setFormData((prevData) => ({ ...prevData, [name]: value }));
-        
-        // Verificar y mostrar mensaje para tratamientos con restricciones
-        const restriction = TREATMENT_RESTRICTIONS[value];
-        if (restriction) {
-          toast.info(restriction.message, {
-            position: "top-right",
-            autoClose: 5000,
-          });
-        }}
-    } else {
-      setFormData((prevData) => ({ ...prevData, [name]: value }));
+  const handleCancel = async (id: string) => {
+    try {
+      await cancelAppointmentByPatient(id)
+      toast.success('Turno cancelado')
+      fetchData()
+    } catch {
+      toast.error('Error al cancelar el turno')
     }
-  };
-  const toggleProfessionals = () => {
-    setShowProfessionals(!showProfessionals);
-  };
+  }
 
-  const calculateEndTime = (startTime: string, idP?: string): string => {
-    const [hours, minutes] = startTime.split(':').map(Number);
-    const endDate = new Date(2000, 0, 1, hours, minutes);
+  // Próximo turno aprobado
+  const nextAppointment = appointments
+    .filter(a => a.status === 'approved' && dayjs(a.date).isAfter(dayjs()))
+    .sort((a, b) => dayjs(a.date).diff(dayjs(b.date)))[0]
 
-    if (idP && idP === '67165c64b2049e188f8f1a37') {
-      endDate.setMinutes(endDate.getMinutes() + 45);
-    } else {
-      endDate.setHours(endDate.getHours() + 1);
-    }
-  
-    return endDate.toTimeString().slice(0, 5);
-  };
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0] || null;
-    setFile(selectedFile);
-    if (selectedFile) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFilePreview(reader.result as string);
-      };
-      reader.readAsDataURL(selectedFile);
-    }
-  };
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const { date_time, schedule, pacient_id, professional_id, state, session_type } = formData;
+  const getSpecialtyName = (a: IAppointment) =>
+    typeof a.specialtyId === 'object' ? a.specialtyId.name : 'N/A'
 
-    if (date_time && schedule.time_slots.start_time) {
-      setLoading(true);
-      try {
-        let uploadedImageUrl = '';
-        if (file) {
-          uploadedImageUrl = await uploadImageToCloudinary(file);
-        }
+  const getProfessionalName = (a: IAppointment) =>
+    typeof a.professionalId === 'object' ? a.professionalId.userId?.name : 'N/A'
 
-        const startTimeParts = schedule.time_slots.start_time.split(':');
-        const endTime = calculateEndTime(schedule.time_slots.start_time, professional_id);
-        const endTimeParts = endTime.split(':');
+  if (loading) return <div>Cargando...</div>
 
-        const appointmentDate = new Date(date_time);
-        const appointmentStartTime = new Date(appointmentDate);
-        appointmentStartTime.setHours(Number(startTimeParts[0]), Number(startTimeParts[1]));
-
-        const appointmentEndTime = new Date(appointmentDate);
-        appointmentEndTime.setHours(Number(endTimeParts[0]), Number(endTimeParts[1]));
-        const appointmentData: CreateAppointment = {
-          pacient_id,
-          professional_id,
-          date_time: appointmentDate.toISOString() as unknown as Date,
-          schedule: {
-            week_day: schedule.week_day ,
-            time_slots: {
-              start_time: appointmentStartTime.toISOString() as unknown as Dayjs,
-              end_time: appointmentEndTime.toISOString()as unknown as Dayjs,
-            }
-          },
-          state,
-          session_type,
-          order_photo: uploadedImageUrl, // Agregamos la URL de la imagen si se subió una
-        };
-        await makeAppointmentByPatient(appointmentData);
-        toast.success('El turno ha sido creado con éxito');
-        setShowForm(false);
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        toast.error(errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      toast.error('Por favor completa todos los campos requeridos.');
-    }
-  };
-
-  const toggleForm = () => {
-    setShowForm(!showForm);
-  };
-
-  const renderProfessionalRows = useMemo(
-    () =>
-        
-      professionals.map(professional => (
-          <tr key={professional._id}>
-              <td>{professional.user_id?.firstname || 'N/A'}</td>
-              <td>{professional.user_id?.lastname || 'N/A'}</td>
-              <td>{professional.specialties?.join(', ') || 'No especificado'}</td>
-              <td>{professional.user_id?.email || 'No email'}</td>
-              <td>{professional.user_id?.phone || 'No teléfono'}</td>
-              <td>
-                  <button
-                      onClick={() => openScheduleModal(professional._id as unknown as string)}
-                      className="schedule-button"
-                      style={{
-                          backgroundColor: selectedProfessionalId === professional._id && showProfessionalSchedules ? '#dc3545' : '#28a745',
-                          color: 'white',
-                          border: 'none',
-                          padding: '5px 10px',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
-                      }}
-                  >
-                      <i className="fa-solid fa-calendar-check"></i>
-
-                  </button>
-              </td>
-          </tr>
-      )),
-    [professionals]
-  );
-  
-const formattedDate = userAppointment && userAppointment !== 'No tienes turnos futuros asignados'
-  ? dayjs.utc(userAppointment).format('dddd, D [de] MMMM [de] YYYY') 
-  : null;
-    
   return (
-    <div style={{ padding: '20px' }}>
-      <h1 style={{ marginBottom: '20px', color:'rgb(151, 143, 127)' }}>Panel de Paciente</h1>
-<div className="appointmentMessage-container" style={{
-  width: '80%',
-  marginLeft: '8rem',
-  marginBottom: '20px',
-  display: 'flex',
-  justifyContent: 'center'
-}}>
-  <div style={{
-    background: formattedDate ? '#007bff' : '#6c757d',
-    color: 'white',
-    padding: '10px 20px',
-    borderRadius: '15px',
-    fontWeight: 'bold'
-  }} className='appointmentMessage'>
-    <i style={{ marginRight: '5px' }} className={formattedDate ? "fa-solid fa-hospital-user" : "fa-solid fa-calendar-xmark"}></i>
-    {formattedDate ? `Tenés un turno asignado para el día: ${formattedDate}` : 'No tenés turnos asignados próximamente'}
-  </div>
-</div>
-      <button
-        onClick={toggleForm}
-        style={{
-          backgroundColor: showForm ? '#dc3545' : '#28a745',
-          color: 'white',
-          padding: '10px 15px',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          marginBottom: '20px',
-          margin:'1rem'
-        }}
-      >
-        {showForm ? 'Ocultar Formulario' : 'Solicitar turno'}
-      </button>
-      <button
-          onClick={toggleProfessionals}
-          style={{
-            backgroundColor: showProfessionals ? '#dc3545' : '#007bff',
-            color: 'white',
-            padding: '10px 15px',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            margin:'1rem'
-          }}
+    <div className="patientDashboardContainer">
+      <h1 className="dashboardTitle">Panel del Paciente</h1>
+      <p className="dashboardSubtitle">Bienvenido, <strong>{user?.name}</strong></p>
+
+      {/* Próximo turno */}
+      <div className={`nextAppointmentCard ${nextAppointment ? 'has-appointment' : 'no-appointment'}`}>
+        <i className={`fa-solid ${nextAppointment ? 'fa-hospital-user' : 'fa-calendar-xmark'}`}></i>
+        {nextAppointment
+          ? <>
+              Próximo turno: <strong>{dayjs(nextAppointment.date).utc().format('dddd D [de] MMMM')}</strong> a las <strong>{nextAppointment.timeFrom}</strong> — {getSpecialtyName(nextAppointment)}
+            </>
+          : 'No tenés turnos aprobados próximamente'
+        }
+      </div>
+
+      {/* Acciones */}
+      <div className="dashboardActions">
+        <button
+          className={`dashboardBtn ${showForm ? 'btn-cancel' : 'btn-primary'}`}
+          onClick={() => setShowForm(!showForm)}
         >
-          {showProfessionals ? 'Ocultar Profesionales' : 'Ver horarios de los Profesionales'}
+          <i className={`fa-solid ${showForm ? 'fa-xmark' : 'fa-calendar-plus'}`}></i>
+          {showForm ? 'Cancelar' : 'Solicitar turno'}
         </button>
+        <button
+          className={`dashboardBtn ${showProfessionals ? 'btn-cancel' : 'btn-secondary'}`}
+          onClick={() => setShowProfessionals(!showProfessionals)}
+        >
+          <i className="fa-solid fa-user-tie"></i>
+          {showProfessionals ? 'Ocultar profesionales' : 'Ver profesionales'}
+        </button>
+      </div>
+
+      {/* Formulario solicitar turno */}
       {showForm && (
-        <div style={{
-          width: '80%',
-          margin: '20px auto',
-          backgroundColor: '#fff3cd',
-          border: '1px solid #ffeeba',
-          color: '#856404',
-          padding: '15px',
-          borderRadius: '8px',
-          textAlign: 'center',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '10px'
-        }}>
-          <i className="fa-solid fa-clock" style={{ fontSize: '1.2em' }}></i>
-          <span>Algunos tratamientos tienen días y horarios específicos de atención</span>
-        </div>
-      )}
-      {showForm && (
-      <div style={{ maxWidth: '500px', margin: '0 auto', border: '1px solid #ccc', padding: '20px', borderRadius: '8px' }}>
-        <h2 style={{ marginBottom: '20px' }}>Solicitar Turno</h2>
-        <form onSubmit={handleSubmit}>
-          {/* Paciente */}
-          <div style={{ marginBottom: '15px' }}>
-            <label htmlFor="pacient_id" style={{ display: 'block', marginBottom: '5px' }}>Paciente:</label>
-            <select
-              name="pacient_id"
-              value={formData.pacient_id}
-              onChange={handleInputChange}
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-              required
-            >
-              <option value="">Seleccione un paciente</option>
-              {filteredPatient.map((patient: Patient) => (
-                <option key={patient._id} value={patient._id}>
-                  {patient.user_id.firstname} {patient.user_id.lastname}
-                </option>
-              ))}
-            </select>
+        <div className="dashboardForm">
+          <h2>Solicitar turno</h2>
+          <div className="restrictionNotice">
+            <i className="fa-solid fa-clock"></i>
+            Algunas especialidades tienen días y horarios específicos de atención.
           </div>
+          <form onSubmit={handleSubmit}>
+            <label>Profesional:
+              <select name="professionalId" value={formData.professionalId} onChange={handleInputChange} required>
+                <option value="">Seleccioná un profesional</option>
+                {professionals.map(p => (
+                  <option key={p._id} value={p._id}>{p.userId?.name}</option>
+                ))}
+              </select>
+            </label>
 
-          {/* Profesional */}
-          <div style={{ marginBottom: '15px' }}>
-            <label htmlFor="professional_id" style={{ display: 'block', marginBottom: '5px', color:'rgb(151, 143, 127)' }}>Profesional:</label>
-            <select
-              name="professional_id"
-              value={formData.professional_id}
-              onChange={handleInputChange}
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-              required
-            >
-              <option value="">Seleccione un profesional</option>
-              {professionals.map((professional) => (
-                <option key={professional._id} value={professional._id}>
-                  {professional.user_id.firstname} {professional.user_id.lastname}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Fecha */}
-          <div style={{ marginBottom: '15px' }}>
-            <label htmlFor="date_time" style={{ display: 'block', marginBottom: '5px', color:'rgb(151, 143, 127)' }}>Fecha:</label>
-            <input
-              type="date"
-              name="date_time"
-              value={formData.date_time}
-              onChange={handleInputChange}
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-              required
-            />
-          </div>
-
-          {/* Hora de inicio */}
-          <div style={{ marginBottom: '15px' }}>
-            <label htmlFor="start_time" style={{ display: 'block', marginBottom: '5px', color:'rgb(151, 143, 127)' }}>Hora de inicio:</label>
-            <input
-              type="time"
-              name="start_time"
-              value={formData.schedule.time_slots.start_time}
-              onChange={handleInputChange}
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-              required
-            />
-          </div>
-            <div style={{ marginBottom: '15px' }}>
-              <label htmlFor="session_type" style={{ display: 'block', marginBottom: '5px', color: 'rgb(151, 143, 127)' }}>Tipo de sesión:</label>
+            <label>Especialidad:
               <select
-                name="session_type"
-                value={formData.session_type}
+                name="specialtyId"
+                value={formData.specialtyId}
                 onChange={handleInputChange}
-                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
                 required
+                disabled={!formData.professionalId}
               >
-                <option value="">Seleccione un tipo de sesión</option>
-                {sessionTypes.map((type) => (
-                  <option
-                    key={type}
-                    value={type}
-                    style={{
-                      backgroundColor: TREATMENT_RESTRICTIONS[type] ? '#fff3cd' : 'white',
-                      fontWeight: TREATMENT_RESTRICTIONS[type] ? 'bold' : 'normal'
-                    }}
-                  >
-                    {type} {TREATMENT_RESTRICTIONS[type] ? '⏰' : ''}
+                <option value="">Seleccioná una especialidad</option>
+                {filteredSpecialties.map(s => (
+                  <option key={s._id} value={s._id}>
+                    {s.name} {s.restriction.hasRestriction ? '⏰' : ''}
                   </option>
                 ))}
               </select>
+            </label>
+
+            <label>Fecha:
+              <input
+                type="date"
+                name="date"
+                value={formData.date}
+                onChange={handleInputChange}
+                required
+                min={dayjs().format('YYYY-MM-DD')}
+              />
+            </label>
+
+            <label>Hora:
+              <input
+                type="time"
+                name="timeFrom"
+                value={formData.timeFrom}
+                onChange={handleInputChange}
+                required
+              />
+            </label>
+
+            <label>Notas (opcional):
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleInputChange}
+                placeholder="Alguna observación para el profesional..."
+                rows={3}
+              />
+            </label>
+
+            <div className="formActions">
+              <button type="submit">Solicitar turno</button>
+              <button type="button" onClick={() => setShowForm(false)}>Cancelar</button>
             </div>
-          <label style={{color:'rgb(151, 143, 127)'}} htmlFor="">  Ingrese la imagen de la orden (opcional):
-          <input 
-            type="file"
-            style={{margin:'1rem'}}
-            onChange={handleFileChange} 
-            accept="image/*"
-          />
-          {filePreview && <img src={filePreview} alt="Vista previa" style={{maxWidth: '200px'}} />}
-          </label>
-          {/* Botones */}
-          <div style={{ textAlign: 'center' }}>
-            <button
-              type="submit"
-              style={{
-                backgroundColor: '#007bff',
-                color: 'white',
-                padding: '10px 15px',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                marginRight: '10px',
-              }}
-            >
-              Crear Turno
-            </button>
-            <button
-              type="button"
-              onClick={() => setFormData({
-                pacient_id: '',
-                professional_id: '',
-                date_time: '',
-                schedule: { week_day: 0, time_slots: { start_time: '' } },
-                state: '',
-                session_type: ''
-              })}
-              style={{
-                backgroundColor: '#dc3545',
-                color: 'white',
-                padding: '10px 15px',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </div>)}
-      {showProfessionals && (
-  <div style={{ 
-    display: 'flex', 
-    justifyContent: 'center', 
-    width: '100%',
-    padding: '0 20px',
-    overflowX: 'auto'
-  }}>
-    <table className="professionalTable">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Apellido</th>
-                <th>Especialidades</th>
-                <th>Email</th>
-                <th>Teléfono</th>
-                <th>Horarios</th>
-              </tr>
-            </thead>
-            <tbody>{renderProfessionalRows}</tbody>
-          </table>
+          </form>
         </div>
       )}
-      
-      {showProfessionalSchedules && showDataPTS && (
-        <ProfesionalTimeSlots
-        professionals={professionals}
-        professionalName={selectedProfessionalName} 
-        data={showDataPTS} 
-        onClose={() => setShowProfessionalSchedules(false) as unknown as boolean}
-        isOpen={showProfessionalSchedules} 
-        />
-      )}
-      <ToastContainer />
-    </div>
-  );
-};
 
-export default PatientDashboard;
+      {/* Tabla profesionales */}
+      {showProfessionals && (
+        <div className="professionalsSection">
+          <h2>Profesionales disponibles</h2>
+          <div className="table-wrap">
+            <table className="dashboardTable">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Especialidades</th>
+                  <th>Horarios</th>
+                </tr>
+              </thead>
+              <tbody>
+                {professionals.map(p => (
+                  <tr key={p._id}>
+                    <td>{p.userId?.name}</td>
+                    <td>
+                      {(p.specialties as ISpecialty[]).map(s =>
+                        typeof s === 'object' ? s.name : s
+                      ).join(', ')}
+                    </td>
+                    <td>
+                      {p.scheduleId?.weeklySlots?.map((slot, i) => (
+                        <span key={i} className="scheduleChip">
+                          {slot.day}: {slot.timeFrom}-{slot.timeTo}
+                        </span>
+                      )) || 'No configurado'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Mis turnos */}
+      <div className="myAppointmentsSection">
+        <h2>Mis turnos</h2>
+        {appointments.length === 0 ? (
+          <p className="no-data">No tenés turnos registrados.</p>
+        ) : (
+          <div className="table-wrap">
+            <table className="dashboardTable">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Hora</th>
+                  <th>Profesional</th>
+                  <th>Especialidad</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {appointments.map(a => (
+                  <tr key={a._id}>
+                    <td>{dayjs(a.date).utc().format('DD/MM/YYYY')}</td>
+                    <td>{a.timeFrom}</td>
+                    <td>{getProfessionalName(a)}</td>
+                    <td>{getSpecialtyName(a)}</td>
+                    <td>
+                      <span className={`statusBadge statusBadge--${a.status}`}>
+                        {STATUS_LABELS[a.status]}
+                      </span>
+                    </td>
+                    <td>
+                      {['pending', 'approved'].includes(a.status) && (
+                        <button
+                          className="btn-ico btn-danger"
+                          title="Cancelar turno"
+                          onClick={() => handleCancel(a._id!)}
+                        >
+                          <i className="fa-solid fa-xmark"></i>
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+    </div>
+  )
+}
+
+export default PatientDashboard

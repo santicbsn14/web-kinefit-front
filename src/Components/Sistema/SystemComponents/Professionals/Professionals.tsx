@@ -1,634 +1,489 @@
-import React, { useCallback, useEffect, useMemo, useReducer} from 'react';
-import './professionals.css';
+import React, { useCallback, useEffect, useReducer } from 'react'
+import './professionals.css'
+import { toast } from 'react-toastify'
+import { useAuth } from '../../../../Contexts/authContext'
 import {
-  createProfessional,
-  createProfessionalTimeSlots,
-  deleteProfessional,
   getProfessionals,
-  getProfessionalTimeSlots,
-  Professional,
-  updateProfessional
-} from '../../../../MockService/professionals';
-import { getUsers } from '../../../../MockService/users';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import ProfesionalTimeSlots from './ProfessionalSchedule';
-import { ProfessionalTimeSlots, ProfessionalTimeSlotsBBDD } from '../../../../Utils/Types/professionalTypes';
-import { useAuth } from '../../../../Contexts/authContext';
+  createProfessional,
+  deleteProfessional,
+  setProfessionalSchedule,
+  addSpecialtyToProfessional,
+  removeSpecialtyFromProfessional,
+} from '../../../../Services/professionalService'
+import { getSpecialties } from '../../../../Services/specialtyService'
+import { IProfessional, IWeeklySlot, DayOfWeek, ISpecialty } from '../../../../Utils/Types/professionalTypes'
 
-interface FormData {
-  user_id: string;
-  specialties: string[];
-}
-
-interface ConfirmDeleteModalProps {
-  onClose: () => void;
-  onConfirm: () => void;
-  professionalName: string;
-}
+// ─── State ────────────────────────────────────────────────────────────────────
 
 interface State {
-  professionals: {
-    _id: string;
-    user_id: { firstname: string; lastname: string; email: string; phone: string };
-    specialties: string[];
-  }[];
-  users: { id: string; firstname: string; lastname: string, email: string }[];
-  showForm: boolean;
-  showDeleteModal: boolean;
-  professionalToDelete: { id: string; name: string } | null;
-  showModal: boolean;
-  professionalToEdit: Professional | null;
-  showEditForm: boolean;
-  showProfessionalSchedules: boolean;
-  showDataPTS: ProfessionalTimeSlotsBBDD | null;
-  selectedProfessionalName: string;
-  loggedInProfessional: {_id: string, firstname: string, lastname: string} | null;
-  formData: FormData;
-  scheduleData: {
-    professional_id: string;
-    schedule: { week_day: number; time_slots: { start_time: string; end_time: string } }[];
-    state: string;
-  };
+  professionals: IProfessional[]
+  specialties: ISpecialty[]
+  loading: boolean
+  showCreateForm: boolean
+  showScheduleModal: boolean
+  showDeleteModal: boolean
+  showEditModal: boolean
+  professionalToDelete: { id: string; name: string } | null
+  professionalToEdit: IProfessional | null
+  selectedProfessionalId: string
+  createForm: {
+    name: string
+    email: string
+    password: string
+    confirmPassword: string
+    specialties: string[]
+  }
+  scheduleSlots: IWeeklySlot[]
 }
 
 type Action =
-  | { type: 'SET_PROFESSIONALS'; payload: State['professionals'] }
-  | { type: 'SET_USERS'; payload: State['users'] }
-  | { type: 'TOGGLE_FORM' }
-  | { type: 'SET_DELETE_MODAL'; payload: { show: boolean; professional?: { id: string; name: string } } }
-  | { type: 'TOGGLE_MODAL' }
-  | { type: 'SET_PROFESSIONAL_TO_EDIT'; payload: Professional | null }
-  | { type: 'TOGGLE_EDIT_FORM' }
-  | { type: 'SET_PROFESSIONAL_SCHEDULES'; payload: { show: boolean; data?: ProfessionalTimeSlotsBBDD; name?: string } }
-  | { type: 'SET_LOGGED_IN_PROFESSIONAL'; payload: State['loggedInProfessional'] }
-  | { type: 'UPDATE_FORM_DATA'; payload: Partial<FormData> }
-  | { type: 'UPDATE_SCHEDULE_DATA'; payload: Partial<State['scheduleData']> }
+  | { type: 'SET_PROFESSIONALS'; payload: IProfessional[] }
+  | { type: 'SET_SPECIALTIES'; payload: ISpecialty[] }
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'TOGGLE_CREATE_FORM' }
+  | { type: 'TOGGLE_SCHEDULE_MODAL' }
+  | { type: 'TOGGLE_DELETE_MODAL'; payload?: { id: string; name: string } }
+  | { type: 'TOGGLE_EDIT_MODAL'; payload?: IProfessional }
+  | { type: 'SET_SELECTED_PROFESSIONAL'; payload: string }
+  | { type: 'UPDATE_CREATE_FORM'; payload: Partial<State['createForm']> }
+  | { type: 'TOGGLE_CREATE_SPECIALTY'; payload: string }
+  | { type: 'TOGGLE_EDIT_SPECIALTY'; payload: string }
+  | { type: 'SET_SCHEDULE_SLOTS'; payload: IWeeklySlot[] }
   | { type: 'ADD_SCHEDULE_SLOT' }
   | { type: 'DELETE_SCHEDULE_SLOT'; payload: number }
-  | { type: 'UPDATE_SCHEDULE_SLOT'; payload: { index: number; field: string; value: any } };
+  | { type: 'UPDATE_SCHEDULE_SLOT'; payload: { index: number; field: string; value: string } }
 
 const initialState: State = {
   professionals: [],
-  users: [],
-  showForm: false,
+  specialties: [],
+  loading: true,
+  showCreateForm: false,
+  showScheduleModal: false,
   showDeleteModal: false,
+  showEditModal: false,
   professionalToDelete: null,
-  showModal: false,
   professionalToEdit: null,
-  showEditForm: false,
-  showProfessionalSchedules: false,
-  showDataPTS: null,
-  selectedProfessionalName: '',
-  loggedInProfessional: null,
-  formData: {
-    user_id: '',
-    specialties: [],
-  },
-  scheduleData: {
-    professional_id: '',
-    schedule: [{ week_day: 1, time_slots: { start_time: '', end_time: '' } }],
-    state: 'Disponible',
-  },
-};
+  selectedProfessionalId: '',
+  createForm: { name: '', email: '', password: '', confirmPassword: '', specialties: [] },
+  scheduleSlots: [{ day: 'monday', timeFrom: '', timeTo: '', isAvailable: true }],
+}
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case 'SET_PROFESSIONALS':
-      return { ...state, professionals: action.payload };
-    case 'SET_USERS':
-      return { ...state, users: action.payload };
-    case 'TOGGLE_FORM':
-      return { ...state, showForm: !state.showForm };
-    case 'SET_DELETE_MODAL':
+    case 'SET_PROFESSIONALS': return { ...state, professionals: action.payload }
+    case 'SET_SPECIALTIES': return { ...state, specialties: action.payload }
+    case 'SET_LOADING': return { ...state, loading: action.payload }
+    case 'TOGGLE_CREATE_FORM': return {
+      ...state,
+      showCreateForm: !state.showCreateForm,
+      createForm: { name: '', email: '', password: '', confirmPassword: '', specialties: [] },
+    }
+    case 'TOGGLE_SCHEDULE_MODAL': return { ...state, showScheduleModal: !state.showScheduleModal }
+    case 'TOGGLE_DELETE_MODAL': return {
+      ...state,
+      showDeleteModal: !state.showDeleteModal,
+      professionalToDelete: action.payload || null,
+    }
+    case 'TOGGLE_EDIT_MODAL': return {
+      ...state,
+      showEditModal: !state.showEditModal,
+      professionalToEdit: action.payload || null,
+    }
+    case 'SET_SELECTED_PROFESSIONAL': return { ...state, selectedProfessionalId: action.payload }
+    case 'UPDATE_CREATE_FORM': return { ...state, createForm: { ...state.createForm, ...action.payload } }
+    case 'TOGGLE_CREATE_SPECIALTY': {
+      const specialties = state.createForm.specialties.includes(action.payload)
+        ? state.createForm.specialties.filter(s => s !== action.payload)
+        : [...state.createForm.specialties, action.payload]
+      return { ...state, createForm: { ...state.createForm, specialties } }
+    }
+    case 'TOGGLE_EDIT_SPECIALTY': {
+      if (!state.professionalToEdit) return state
+      const current = (state.professionalToEdit.specialties as ISpecialty[]).map(s => s._id)
+      const updated = current.includes(action.payload)
+        ? current.filter(id => id !== action.payload)
+        : [...current, action.payload]
       return {
         ...state,
-        showDeleteModal: action.payload.show,
-        professionalToDelete: action.payload.professional || null,
-      };
-    case 'TOGGLE_MODAL':
-      return { ...state, showModal: !state.showModal };
-    case 'SET_PROFESSIONAL_TO_EDIT':
-      return { ...state, professionalToEdit: action.payload };
-    case 'TOGGLE_EDIT_FORM':
-      return { ...state, showEditForm: !state.showEditForm };
-    case 'SET_PROFESSIONAL_SCHEDULES':
-      return {
-        ...state,
-        showProfessionalSchedules: action.payload.show,
-        showDataPTS: action.payload.data || null,
-        selectedProfessionalName: action.payload.name || '',
-      };
-    case 'SET_LOGGED_IN_PROFESSIONAL':
-      return { ...state, loggedInProfessional: action.payload };
-    case 'UPDATE_FORM_DATA':
-      return { ...state, formData: { ...state.formData, ...action.payload } };
-    case 'UPDATE_SCHEDULE_DATA':
-      return { ...state, scheduleData: { ...state.scheduleData, ...action.payload } };
-    case 'ADD_SCHEDULE_SLOT':
-      return {
-        ...state,
-        scheduleData: {
-          ...state.scheduleData,
-          schedule: [
-            ...state.scheduleData.schedule,
-            { week_day: 1, time_slots: { start_time: '', end_time: '' } },
-          ],
-        },
-      };
-    case 'DELETE_SCHEDULE_SLOT':
-      return {
-        ...state,
-        scheduleData: {
-          ...state.scheduleData,
-          schedule: state.scheduleData.schedule.filter((_, i) => i !== action.payload),
-        },
-      };
-    case 'UPDATE_SCHEDULE_SLOT':
-      return {
-        ...state,
-        scheduleData: {
-          ...state.scheduleData,
-          schedule: state.scheduleData.schedule.map((slot, i) =>
-            i === action.payload.index
-              ? {
-                  ...slot,
-                  ...(action.payload.field === 'week_day'
-                    ? { week_day: action.payload.value }
-                    : {
-                        time_slots: {
-                          ...slot.time_slots,
-                          [action.payload.field]: action.payload.value,
-                        },
-                      }),
-                }
-              : slot
-          ),
-        },
-      };
-    default:
-      return state;
+        professionalToEdit: { ...state.professionalToEdit, specialties: updated as any },
+      }
+    }
+    case 'SET_SCHEDULE_SLOTS': return { ...state, scheduleSlots: action.payload }
+    case 'ADD_SCHEDULE_SLOT': return {
+      ...state,
+      scheduleSlots: [...state.scheduleSlots, { day: 'monday', timeFrom: '', timeTo: '', isAvailable: true }],
+    }
+    case 'DELETE_SCHEDULE_SLOT': return {
+      ...state,
+      scheduleSlots: state.scheduleSlots.filter((_, i) => i !== action.payload),
+    }
+    case 'UPDATE_SCHEDULE_SLOT': return {
+      ...state,
+      scheduleSlots: state.scheduleSlots.map((slot, i) =>
+        i === action.payload.index ? { ...slot, [action.payload.field]: action.payload.value } : slot
+      ),
+    }
+    default: return state
   }
 }
 
-const Professionals: React.FC = () => {
-  const { user } = useAuth();
-  const [state, dispatch] = useReducer(reducer, initialState);
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-  const specialties = useMemo(() => [
-    'Terapia de manos',
-    'Kinesiologia adulto/pediatrico',
-    'Terapia manual',
-    'Osteopatia',
-    'Cupping',
-    'Neuromodulacion',
-    'Electroterapia',
-    'Readaptacion deportiva',
-    'Puncion seca',
-  ], []);
+const DAY_OPTIONS: { value: DayOfWeek; label: string }[] = [
+  { value: 'monday',    label: 'Lunes' },
+  { value: 'tuesday',   label: 'Martes' },
+  { value: 'wednesday', label: 'Miércoles' },
+  { value: 'thursday',  label: 'Jueves' },
+  { value: 'friday',    label: 'Viernes' },
+  { value: 'saturday',  label: 'Sábado' },
+  { value: 'sunday',    label: 'Domingo' },
+]
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+const Professionals: React.FC = () => {
+  const { user } = useAuth()
+  const [state, dispatch] = useReducer(reducer, initialState)
 
   const fetchData = useCallback(async () => {
+    dispatch({ type: 'SET_LOADING', payload: true })
     try {
-      const [professionalsData, usersData] = await Promise.all([getProfessionals(), getUsers()]);
-      dispatch({ type: 'SET_PROFESSIONALS', payload: professionalsData.professionals });
-      dispatch({ type: 'SET_USERS', payload: usersData.users });
-      const loggedProfessional = professionalsData.professionals.find(
-        //@ts-expect-error debo hostear!
-        p => p.user_id.email === user?.email
-      );
-      if (loggedProfessional) {
-        dispatch({
-          type: 'SET_LOGGED_IN_PROFESSIONAL',
-          payload: {
-            _id: loggedProfessional._id,
-            firstname: loggedProfessional.user_id.firstname,
-            lastname: loggedProfessional.user_id.lastname,
-          },
-        });
+      const [professionals, specialties] = await Promise.all([
+        getProfessionals(),
+        getSpecialties(),
+      ])
+      dispatch({ type: 'SET_PROFESSIONALS', payload: professionals })
+      dispatch({ type: 'SET_SPECIALTIES', payload: specialties })
+
+      if (user?.role === 'professional') {
+        const myProfile = professionals.find(p => p.userId?._id === user._id)
+        if (myProfile) dispatch({ type: 'SET_SELECTED_PROFESSIONAL', payload: myProfile._id })
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error(errorMessage);
+    } catch {
+      toast.error('Error al cargar los datos')
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
     }
-  }, [user?.email]);
+  }, [user])
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData() }, [fetchData])
 
-  useEffect(() => {
-    if (state.loggedInProfessional) {
-      dispatch({
-        type: 'UPDATE_SCHEDULE_DATA',
-        payload: { professional_id: state.loggedInProfessional._id },
-      });
+  const handleOpenScheduleModal = useCallback((professionalId?: string) => {
+    const targetId = professionalId || state.selectedProfessionalId
+    const professional = state.professionals.find(p => p._id === targetId)
+
+    if (professional?.scheduleId?.weeklySlots?.length) {
+      dispatch({ type: 'SET_SCHEDULE_SLOTS', payload: professional.scheduleId.weeklySlots })
+    } else {
+      dispatch({ type: 'SET_SCHEDULE_SLOTS', payload: [{ day: 'monday', timeFrom: '', timeTo: '', isAvailable: true }] })
     }
-  }, [state.loggedInProfessional]);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    dispatch({ type: 'UPDATE_FORM_DATA', payload: { [name]: value } });
-  }, []);
+    if (targetId) dispatch({ type: 'SET_SELECTED_PROFESSIONAL', payload: targetId })
+    dispatch({ type: 'TOGGLE_SCHEDULE_MODAL' })
+  }, [state.professionals, state.selectedProfessionalId])
 
-  const handleCheckboxChange = useCallback((especialidad: string) => {
-    dispatch({
-      type: 'UPDATE_FORM_DATA',
-      payload: {
-        specialties: state.formData.specialties.includes(especialidad)
-          ? state.formData.specialties.filter(item => item !== especialidad)
-          : [...state.formData.specialties, especialidad],
-      },
-    });
-  }, [state.formData.specialties]);
+  const handleCreateSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
 
-  const toggleForm = useCallback(() => dispatch({ type: 'TOGGLE_FORM' }), []);
-  const toggleModal = useCallback(() => dispatch({ type: 'TOGGLE_MODAL' }), []);
-
-  const handleScheduleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const convertTime = (timeString: string) => {
-      const [hours, minutes] = timeString.replace('hs', '').trim().split(':');
-      const date = new Date();
-      date.setHours(parseInt(hours, 10));
-      date.setMinutes(parseInt(minutes, 10));
-      date.setSeconds(0);
-      date.setMilliseconds(0);
-      const offset = date.getTimezoneOffset() * 60000;
-      const localDate = new Date(date.getTime() - offset);
-      return localDate.toISOString().slice(0, 19);
-    };
-
-    const convertedScheduleData = {
-      ...state.scheduleData,
-      schedule: state.scheduleData.schedule.map(slot => ({
-        ...slot,
-        professional_id: state.scheduleData.professional_id,
-        time_slots: {
-          start_time: convertTime(slot.time_slots.start_time),
-          end_time: convertTime(slot.time_slots.end_time),
-        },
-      })),
-    };
-
-    const professional = state.professionals.find(p => p._id === state.scheduleData.professional_id);
+    if (state.createForm.password !== state.createForm.confirmPassword) {
+      toast.error('Las contraseñas no coinciden')
+      return
+    }
 
     try {
-      await createProfessionalTimeSlots(convertedScheduleData as unknown as ProfessionalTimeSlots);
-      toast.success(
-        `Se configuró el horario de ${professional?.user_id.firstname} ${professional?.user_id.lastname} con éxito`
-      );
-      toggleModal();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error(errorMessage);
+      await createProfessional({
+        name: state.createForm.name,
+        email: state.createForm.email,
+        password: state.createForm.password,
+        specialties: state.createForm.specialties,
+      })
+      toast.success('Profesional creado exitosamente')
+      fetchData()
+      setTimeout(() => dispatch({ type: 'TOGGLE_CREATE_FORM' }), 1500)
+    } catch {
+      toast.error('Error al crear el profesional')
     }
-  }, [state.scheduleData, state.professionals, toggleModal]);
-
-  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    try {
-      await createProfessional(state.formData as unknown as Professional);
-      toast.success('¡Creación de profesional exitosa!');
-      fetchData();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error(errorMessage);
-    }
-  }, [state.formData, fetchData]);
-
-  const handleEditSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    try {
-      if (state.professionalToEdit?._id)
-        await updateProfessional(state.professionalToEdit._id, state.professionalToEdit);
-      toast.success('¡Actualización de profesional exitosa!');
-      fetchData();
-      dispatch({ type: 'TOGGLE_EDIT_FORM' });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error(errorMessage);
-    }
-  }, [state.professionalToEdit, fetchData]);
-
-  const handleEditClick = useCallback((professional: Professional) => {
-    dispatch({ type: 'SET_PROFESSIONAL_TO_EDIT', payload: professional });
-    dispatch({ type: 'TOGGLE_EDIT_FORM' });
-  }, []);
-
-  const handleDeleteClick = useCallback((professionalId: string, professionalName: string) => {
-    dispatch({
-      type: 'SET_DELETE_MODAL',
-      payload: { show: true, professional: { id: professionalId, name: professionalName } },
-    });
-  }, []);
+  }, [state.createForm, fetchData])
 
   const handleDeleteConfirm = useCallback(async () => {
-    if (state.professionalToDelete) {
-      try {
-        await deleteProfessional(state.professionalToDelete.id);
-        toast.success('¡Profesional eliminado exitosamente!');
-        fetchData();
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(error);
-        toast.error(errorMessage);
-      }
-    }
-    dispatch({ type: 'SET_DELETE_MODAL', payload: { show: false } });
-  }, [state.professionalToDelete, fetchData]);
-
-  const openScheduleModal = useCallback(async (idP: string) => {
+    if (!state.professionalToDelete) return
     try {
-      const data: ProfessionalTimeSlotsBBDD = await getProfessionalTimeSlots(idP);
-      const professional = state.professionals.find(p => p._id === idP);
-      if (professional) {
-        dispatch({
-          type: 'SET_PROFESSIONAL_SCHEDULES',
-          payload: {
-            show: true,
-            data,
-            name: `${professional.user_id.firstname} ${professional.user_id.lastname}`,
-          },
-        });
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error(errorMessage);
+      await deleteProfessional(state.professionalToDelete.id)
+      toast.success('Profesional eliminado')
+      fetchData()
+    } catch {
+      toast.error('Error al eliminar el profesional')
+    } finally {
+      dispatch({ type: 'TOGGLE_DELETE_MODAL' })
     }
-  }, [state.professionals]);
-  const renderProfessionalRows = useMemo(
-    () =>
-      state.professionals.map(professional => (
-          <tr key={professional._id}>
-            <td className="cell-id">{professional._id}</td>
-            <td>{professional.user_id?.firstname || 'N/A'}</td>
-            <td>{professional.user_id?.lastname || 'N/A'}</td>
-            <td className="cell-wrap">{professional.specialties?.join(', ') || 'No especificado'}</td>
-            <td className="cell-wrap">{professional.user_id?.email || 'No email'}</td>
-            <td>{professional.user_id?.phone || 'No teléfono'}</td>
-            <td className="cell-actions">
-              <button onClick={() => handleDeleteClick(professional._id, `${professional.user_id?.firstname} ${professional.user_id?.lastname}`)} className="btn-ico btn-danger">
-                <i className="fa-solid fa-trash"></i>
-              </button>
-              <button onClick={() => openScheduleModal(professional._id)} className="btn-ico btn-success">
-                <i className="fa-solid fa-calendar-check"></i>
-              </button>
-              <button onClick={() => handleEditClick(professional as unknown as Professional)} className="btn-ico btn-warning">
-                <i className="fa-solid fa-edit"></i>
-              </button>
-            </td>
-          </tr>
-      )),
-    [state.professionals, handleDeleteClick, openScheduleModal, handleEditClick]
-  );
+  }, [state.professionalToDelete, fetchData])
 
-  const ConfirmDeleteModal = React.memo<ConfirmDeleteModalProps>(({ onClose, onConfirm, professionalName }) => {
-    if (!state.showDeleteModal) return null;
-    return (
-      <div className="modal-two">
-        <div className="modalContent-two">
-          <h2>Confirmar eliminación</h2>
-          <p>¿Estás seguro que quieres eliminar al profesional {professionalName}?</p>
-          <div className="modalButtons-two">
-            <button onClick={onClose}>Cancelar</button>
-            <button onClick={onConfirm}>Confirmar</button>
-          </div>
-        </div>
-      </div>
-    );
-  });
+  const handleScheduleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!state.selectedProfessionalId) {
+      toast.error('Seleccioná un profesional')
+      return
+    }
+    try {
+      await setProfessionalSchedule(state.selectedProfessionalId, state.scheduleSlots)
+          console.log('=== ANTES DEL TOAST ===')
+    toast.success('Horario configurado exitosamente')
+    console.log('=== DESPUES DEL TOAST ===')
+      fetchData()
+      setTimeout(() => dispatch({ type: 'TOGGLE_SCHEDULE_MODAL' }), 1500)
+    } catch {
+      toast.error('Error al configurar el horario')
+    }
+  }, [state.selectedProfessionalId, state.scheduleSlots, fetchData])
+
+  const handleEditSave = useCallback(async () => {
+    if (!state.professionalToEdit) return
+    try {
+      const specialtyIds = (state.professionalToEdit.specialties as any[]).map(s =>
+        typeof s === 'string' ? s : s._id
+      )
+      const original = state.professionals.find(p => p._id === state.professionalToEdit!._id)
+      const originalIds = (original?.specialties as ISpecialty[]).map(s => s._id)
+
+      const toAdd = specialtyIds.filter((id: string) => !originalIds.includes(id))
+      const toRemove = originalIds.filter((id: string) => !specialtyIds.includes(id))
+
+      await Promise.all([
+        ...toAdd.map((id: string) => addSpecialtyToProfessional(state.professionalToEdit!._id, id)),
+        ...toRemove.map((id: string) => removeSpecialtyFromProfessional(state.professionalToEdit!._id, id)),
+      ])
+
+      toast.success('Especialidades actualizadas')
+      fetchData()
+      dispatch({ type: 'TOGGLE_EDIT_MODAL' })
+    } catch {
+      toast.error('Error al actualizar las especialidades')
+    }
+  }, [state.professionalToEdit, state.professionals, fetchData])
+
+  const getSpecialtyNames = (professional: IProfessional): string => {
+    if (!professional.specialties?.length) return 'Sin especialidades'
+    return (professional.specialties as ISpecialty[])
+      .map(s => (typeof s === 'object' ? s.name : s))
+      .join(', ')
+  }
+
+  const isAdmin = user?.role === 'admin' || user?.role === 'secretary'
+
+  if (state.loading) return <div>Cargando...</div>
 
   return (
     <div className="professionalTableContainer">
+
+      {/* Acciones */}
       <div className="actionsContainer">
-        <div className="addPatientContainer" onClick={toggleForm}>
-          <i className="fa-solid fa-user-plus addPatientIcon"></i>
-          <span className="addPatientText">Agregar Profesionales</span>
-        </div>
-        <div className="scheduleConfigContainer" onClick={toggleModal}>
+        {isAdmin && (
+          <div className="addPatientContainer" onClick={() => dispatch({ type: 'TOGGLE_CREATE_FORM' })}>
+            <i className="fa-solid fa-user-plus addPatientIcon"></i>
+            <span className="addPatientText">Agregar Profesional</span>
+          </div>
+        )}
+        <div className="scheduleConfigContainer" onClick={() => handleOpenScheduleModal()}>
           <i className="fa-solid fa-calendar-check addScheduleIcon"></i>
-          <span className="addScheduleText">Configurar disponibilidad horaria</span>
+          <span className="addScheduleText">Configurar horarios</span>
         </div>
       </div>
+
+      {/* Tabla */}
       <div className="table-wrap-professional">
-      <table className="professionalTable">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Apellido</th>
-            <th>Especialidades</th>
-            <th>Email</th>
-            <th>Teléfono</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>{renderProfessionalRows}</tbody>
-      </table>
+        <table className="professionalTable">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Especialidades</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {state.professionals.length === 0 ? (
+              <tr><td colSpan={4}>No hay profesionales registrados</td></tr>
+            ) : (
+              state.professionals.map(professional => (
+                <tr key={professional._id}>
+                  <td>{professional.userId?.name || 'N/A'}</td>
+                  <td>{professional.userId?.email || 'N/A'}</td>
+                  <td className="cell-wrap">{getSpecialtyNames(professional)}</td>
+                  <td className="cell-actions">
+                    <button
+                      className="btn-ico btn-success"
+                      title="Configurar horarios"
+                      onClick={() => handleOpenScheduleModal(professional._id)}
+                    >
+                      <i className="fa-solid fa-calendar-check"></i>
+                    </button>
+                    <button
+                      className="btn-ico btn-warning"
+                      title="Editar especialidades"
+                      onClick={() => dispatch({ type: 'TOGGLE_EDIT_MODAL', payload: professional })}
+                    >
+                      <i className="fa-solid fa-edit"></i>
+                    </button>
+                    {isAdmin && (
+                      <button
+                        className="btn-ico btn-danger"
+                        title="Eliminar"
+                        onClick={() => dispatch({
+                          type: 'TOGGLE_DELETE_MODAL',
+                          payload: { id: professional._id, name: professional.userId?.name || '' },
+                        })}
+                      >
+                        <i className="fa-solid fa-trash"></i>
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
-      {state.showForm && (
-        <form onSubmit={handleSubmit} className="professionalForm">
-          <label>
-            Nombre Usuario:
-            <select
-              name="user_id"
-              value={state.formData.user_id}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="">Seleccione un usuario</option>
-              {state.users.map(user => (
-                <option key={user.id} value={user.id}>
-                  {user.firstname} {user.lastname}
-                </option>
-              ))}
-            </select>
+
+      {/* Form crear profesional */}
+      {state.showCreateForm && (
+        <form onSubmit={handleCreateSubmit} className="professionalForm">
+          <h3>Nuevo Profesional</h3>
+          <label>Nombre:
+            <input type="text" value={state.createForm.name} required
+              onChange={e => dispatch({ type: 'UPDATE_CREATE_FORM', payload: { name: e.target.value } })} />
+          </label>
+          <label>Email:
+            <input type="email" value={state.createForm.email} required
+              onChange={e => dispatch({ type: 'UPDATE_CREATE_FORM', payload: { email: e.target.value } })} />
+          </label>
+          <label>Contraseña:
+            <input type="password" value={state.createForm.password} required minLength={6}
+              onChange={e => dispatch({ type: 'UPDATE_CREATE_FORM', payload: { password: e.target.value } })} />
+          </label>
+          <label>Repetir contraseña:
+            <input type="password" value={state.createForm.confirmPassword} required minLength={6}
+              onChange={e => dispatch({ type: 'UPDATE_CREATE_FORM', payload: { confirmPassword: e.target.value } })} />
           </label>
           <div className="specialtiesGrid">
-            <label>Especialidad(es):</label>
-            {specialties.map(especialidad => (
-              <div key={especialidad}>
-                <input
-                  type="checkbox"
-                  id={especialidad}
-                  name="specialties"
-                  value={especialidad}
-                  checked={state.formData.specialties.includes(especialidad)}
-                  onChange={() => handleCheckboxChange(especialidad)}
-                />
-                <label htmlFor={especialidad}>{especialidad}</label>
-              </div>
-            ))}
+            <label>Especialidades:</label>
+            {state.specialties.length === 0
+              ? <p style={{ color: '#9ca3af', fontSize: '13px' }}>Primero creá especialidades desde el panel de Especialidades.</p>
+              : state.specialties.map(s => (
+                <div key={s._id} className="dayChip">
+                  <input type="checkbox" id={`cs-${s._id}`}
+                    checked={state.createForm.specialties.includes(s._id)}
+                    onChange={() => dispatch({ type: 'TOGGLE_CREATE_SPECIALTY', payload: s._id })} />
+                  <label htmlFor={`cs-${s._id}`}>{s.name}</label>
+                </div>
+              ))
+            }
           </div>
-          <button type="submit">Agregar Profesional</button>
+          <div className="formActions">
+            <button type="submit">Crear</button>
+            <button type="button" onClick={() => dispatch({ type: 'TOGGLE_CREATE_FORM' })}>Cancelar</button>
+          </div>
         </form>
       )}
 
-      {state.showModal && (
+      {/* Modal horarios */}
+      {state.showScheduleModal && (
         <div className="modal">
           <div className="modalContent">
-            <span className="closeModal" onClick={toggleModal}>
-              &times;
-            </span>
+            <span className="closeModal" onClick={() => dispatch({ type: 'TOGGLE_SCHEDULE_MODAL' })}></span>
             <form onSubmit={handleScheduleSubmit} className="scheduleForm">
-              <h2>Configurar Disponibilidad Horaria</h2>
-              <label>
-                Nombre Profesional:
+              <h2>Configurar Horarios</h2>
+              <label>Profesional:
                 <select
-                  name="professional_id"
-                  value={state.scheduleData.professional_id}
-                  onChange={(e) => {
-                    dispatch({
-                      type: 'UPDATE_SCHEDULE_DATA',
-                      payload: { professional_id: e.target.value },
-                    });
-                  }}
+                  value={state.selectedProfessionalId}
+                  onChange={e => handleOpenScheduleModal(e.target.value)}
                   required
+                  disabled={user?.role === 'professional'}
                 >
-                  {state.loggedInProfessional ? (
-                    <option value={state.loggedInProfessional._id}>
-                      {`${state.loggedInProfessional.firstname} ${state.loggedInProfessional.lastname}`}
-                    </option>
-                  ) : (
-                    <option value="">No hay profesional logueado</option>
-                  )}
+                  <option value="">Seleccioná un profesional</option>
+                  {state.professionals.map(p => (
+                    <option key={p._id} value={p._id}>{p.userId?.name}</option>
+                  ))}
                 </select>
               </label>
 
-              {state.scheduleData.schedule.map((slot, index) => (
+              {state.scheduleSlots.map((slot, index) => (
                 <div key={index} className="scheduleSlot">
-                  <label>
-                    Día de la Semana:
-                    <select
-                      value={slot.week_day}
-                      onChange={e => dispatch({
-                        type: 'UPDATE_SCHEDULE_SLOT',
-                        payload: { index, field: 'week_day', value: Number(e.target.value) },
-                      })}
-                    >
-                      <option value={1}>Lunes</option>
-                      <option value={2}>Martes</option>
-                      <option value={3}>Miércoles</option>
-                      <option value={4}>Jueves</option>
-                      <option value={5}>Viernes</option>
-                      <option value={6}>Sábado</option>
-                      <option value={0}>Domingo</option>
+                  <label>Día:
+                    <select value={slot.day}
+                      onChange={e => dispatch({ type: 'UPDATE_SCHEDULE_SLOT', payload: { index, field: 'day', value: e.target.value } })}>
+                      {DAY_OPTIONS.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
                     </select>
                   </label>
-                  <label>
-                    Hora de Inicio:
-                    <input
-                      type="time"
-                      value={slot.time_slots.start_time}
-                      onChange={e => dispatch({
-                        type: 'UPDATE_SCHEDULE_SLOT',
-                        payload: { index, field: 'start_time', value: e.target.value },
-                      })}
-                      required
-                    />
+                  <label>Desde:
+                    <input type="time" value={slot.timeFrom} required
+                      onChange={e => dispatch({ type: 'UPDATE_SCHEDULE_SLOT', payload: { index, field: 'timeFrom', value: e.target.value } })} />
                   </label>
-                  <label>
-                    Hora de Fin:
-                    <input
-                      type="time"
-                      value={slot.time_slots.end_time}
-                      onChange={e => dispatch({
-                        type: 'UPDATE_SCHEDULE_SLOT',
-                        payload: { index, field: 'end_time', value: e.target.value },
-                      })}
-                      required
-                    />
+                  <label>Hasta:
+                    <input type="time" value={slot.timeTo} required
+                      onChange={e => dispatch({ type: 'UPDATE_SCHEDULE_SLOT', payload: { index, field: 'timeTo', value: e.target.value } })} />
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => dispatch({ type: 'DELETE_SCHEDULE_SLOT', payload: index })}
-                    className="deleteScheduleButton"
-                    style={{ margin: '1rem' }}
-                  >
-                    Eliminar Horario
+                  <button type="button" className="deleteScheduleButton"
+                    onClick={() => dispatch({ type: 'DELETE_SCHEDULE_SLOT', payload: index })}>
+                    Eliminar
                   </button>
                 </div>
               ))}
 
               <button type="button" onClick={() => dispatch({ type: 'ADD_SCHEDULE_SLOT' })}>
-                Agregar Horario
+                + Agregar horario
               </button>
-
-              <label>
-                Estado:
-                <select
-                  value={state.scheduleData.state}
-                  onChange={e => dispatch({
-                    type: 'UPDATE_SCHEDULE_DATA',
-                    payload: { state: e.target.value },
-                  })}
-                >
-                  <option value="Disponible">Disponible</option>
-                  <option value="No disponible">No disponible</option>
-                  <option value="Vacaciones">Vacaciones</option>
-                  <option value="Feriado">Feriado</option>
-                  <option value="Licencia">Licencia</option>
-                </select>
-              </label>
-              <button type="submit">Guardar</button>
+              <div className="formActions">
+                <button type="submit">Guardar</button>
+              </div>
             </form>
           </div>
         </div>
       )}
 
-      {state.showProfessionalSchedules && state.showDataPTS && (
-        //@ts-expect-error debo hostear!
-        <ProfesionalTimeSlots 
-          professionalName={state.selectedProfessionalName} 
-          data={state.showDataPTS} 
-          onClose={() => {
-            dispatch({ type: 'SET_PROFESSIONAL_SCHEDULES', payload: { show: false } });
-            return false; 
-          }}
-          isOpen={state.showProfessionalSchedules} 
-        />
-      )}
-
-      {state.showEditForm && state.professionalToEdit && (
-        <form onSubmit={handleEditSubmit} className="editForm">
-          <div>
-            <label>Especialidad(es):</label>
-            {specialties.map(especialidad => (
-              <div key={especialidad}>
-                <input
-                  type="checkbox"
-                  id={`specialty-${especialidad}`}
-                  name="specialties"
-                  value={especialidad}
-                  checked={state.professionalToEdit?.specialties.includes(especialidad) || false}
-                  onChange={() => {
-                    if (state.professionalToEdit) {
-                      const updatedSpecialties = state.professionalToEdit.specialties.includes(especialidad)
-                        ? state.professionalToEdit.specialties.filter(item => item !== especialidad)
-                        : [...state.professionalToEdit.specialties, especialidad];
-                      dispatch({
-                        type: 'SET_PROFESSIONAL_TO_EDIT',
-                        payload: { ...state.professionalToEdit, specialties: updatedSpecialties },
-                      });
-                    }
-                  }}
-                />
-                <label htmlFor={`specialty-${especialidad}`}>{especialidad}</label>
-              </div>
-            ))}
+      {/* Modal editar especialidades */}
+      {state.showEditModal && state.professionalToEdit && (
+        <div className="modal">
+          <div className="modalContent">
+            <span className="closeModal" onClick={() => dispatch({ type: 'TOGGLE_EDIT_MODAL' })}></span>
+            <h2>Editar especialidades — {state.professionalToEdit.userId?.name}</h2>
+            <div className="specialtiesGrid">
+              {state.specialties.map(s => {
+                const currentIds = (state.professionalToEdit!.specialties as any[]).map(sp =>
+                  typeof sp === 'string' ? sp : sp._id
+                )
+                return (
+                  <div key={s._id} className="dayChip">
+                    <input type="checkbox" id={`edit-${s._id}`}
+                      checked={currentIds.includes(s._id)}
+                      onChange={() => dispatch({ type: 'TOGGLE_EDIT_SPECIALTY', payload: s._id })} />
+                    <label htmlFor={`edit-${s._id}`}>{s.name}</label>
+                  </div>
+                )
+              })}
+            </div>
+            <div className="formActions" style={{ marginTop: '1rem' }}>
+              <button onClick={handleEditSave}>Guardar</button>
+              <button onClick={() => dispatch({ type: 'TOGGLE_EDIT_MODAL' })}>Cancelar</button>
+            </div>
           </div>
-          <button type="submit">Guardar cambios</button>
-        </form>
+        </div>
       )}
 
-      <ConfirmDeleteModal
-        onClose={() => dispatch({ type: 'SET_DELETE_MODAL', payload: { show: false } })}
-        onConfirm={handleDeleteConfirm}
-        professionalName={state.professionalToDelete?.name || ''}
-      />
-      <ToastContainer />
+      {/* Modal eliminar */}
+      {state.showDeleteModal && (
+        <div className="modal-two">
+          <div className="modalContent-two">
+            <h2>Confirmar eliminación</h2>
+            <p>¿Estás seguro que querés eliminar a <strong>{state.professionalToDelete?.name}</strong>?</p>
+            <div className="modalButtons-two">
+              <button onClick={() => dispatch({ type: 'TOGGLE_DELETE_MODAL' })}>Cancelar</button>
+              <button onClick={handleDeleteConfirm}>Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  );
-};
+  )
+}
 
-export default React.memo(Professionals);
+export default React.memo(Professionals)

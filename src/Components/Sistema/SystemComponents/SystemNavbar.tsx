@@ -3,45 +3,43 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../../Contexts/authContext";
 import "../mainSystem.css";
 
-const items = [
-  { to: "agenda",        icon: "fa-solid fa-calendar-days", label: "AGENDA" },
-  { to: "users",         icon: "fa-solid fa-user",          label: "USUARIOS" },
-  { to: "professionals", icon: "fa-solid fa-user-tie",      label: "PROFESIONALES" },
-  { to: "appointments",  icon: "fa-solid fa-clock",         label: "TURNOS" },
-  { to: "patients",      icon: "fa-solid fa-hospital-user", label: "PACIENTES" },
-];
+const ALL_ITEMS = [
+  { to: "agenda",        icon: "fa-solid fa-calendar-days", label: "AGENDA",         roles: ['admin', 'secretary', 'professional'] },
+  { to: "users",         icon: "fa-solid fa-user",          label: "USUARIOS",        roles: ['admin', 'secretary'] },
+  { to: "professionals", icon: "fa-solid fa-user-tie",      label: "PROFESIONALES",   roles: ['admin', 'secretary'] },
+  { to: "appointments",  icon: "fa-solid fa-clock",         label: "TURNOS",          roles: ['admin', 'secretary', 'professional'] },
+  { to: "patients",      icon: "fa-solid fa-hospital-user", label: "PACIENTES",       roles: ['admin', 'secretary'] },
+  { to: "specialties",   icon: "fa-solid fa-stethoscope",   label: "ESPECIALIDADES",  roles: ['admin', 'secretary'] },
+]
 
 const SystemNavbar = (): JSX.Element => {
-  const { role } = useAuth();
-  const [isOpen, setIsOpen] = useState(false); // ⭐ YA está en false, pero asegurémonos
-  const [isLoading, setIsLoading] = useState(true);
-  const location = useLocation();
+  const { user } = useAuth()
+  const [isOpen, setIsOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const location = useLocation()
 
   useEffect(() => {
-    if (role !== undefined) setIsLoading(false);
-  }, [role]);
+    if (user !== undefined) setIsLoading(false)
+  }, [user])
 
   useEffect(() => {
-    // Agregar/quitar clase al body cuando cambia el estado
     if (isOpen) {
-      document.body.classList.add('sidebar-open');
+      document.body.classList.add('sidebar-open')
     } else {
-      document.body.classList.remove('sidebar-open');
+      document.body.classList.remove('sidebar-open')
     }
-    
-    // Cleanup al desmontar
     return () => {
-      document.body.classList.remove('sidebar-open');
-    };
-  }, [isOpen]);
+      document.body.classList.remove('sidebar-open')
+    }
+  }, [isOpen])
 
-  const toggleNavbar = () => setIsOpen(v => !v);
-  const isActive = (to: string) => location.pathname.includes(`/${to}`);
+  const toggleNavbar = () => setIsOpen(v => !v)
+  const isActive = (to: string) => location.pathname.includes(`/${to}`)
 
-  if (isLoading) return <div />;
+  if (isLoading) return <div />
+  if (user?.role === 'patient') return <div />
 
-  // @ts-expect-error debo hostear!
-  if (role?.name === "patient") return <div />;
+  const items = ALL_ITEMS.filter(item => user?.role && item.roles.includes(user.role))
 
   return (
     <div>
@@ -70,7 +68,7 @@ const SystemNavbar = (): JSX.Element => {
         ))}
       </nav>
     </div>
-  );
-};
+  )
+}
 
-export default SystemNavbar;
+export default SystemNavbar

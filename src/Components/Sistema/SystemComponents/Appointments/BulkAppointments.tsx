@@ -1,162 +1,139 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-import React, { useState } from 'react';
-import { toast } from 'react-toastify';
-import dayjs from 'dayjs';
-import './bulkAppointments.css';
-import { Professional } from '../../../../MockService/professionals';
-import { Patient } from '../../../../MockService/patients';
-import { bulkAppointments } from '../../../../MockService/appointments';
-import { CreateAppointmentDto } from '../../../../Utils/Types/appointmentTypes';
+import React, { useState } from 'react'
+import { toast } from 'react-toastify'
+import dayjs from 'dayjs'
+import './bulkAppointments.css'
+import { IProfessional, ISpecialty } from '../../../../Utils/Types/professionalTypes'
+import { createAppointment } from '../../../../Services/appointmentService'
 
 interface AppointmentInput {
-  date: string;
-  start_time: string;
+  date: string
+  timeFrom: string
 }
 
 interface BulkAppointmentsProps {
-  patients: Patient[];
-  professionals: Professional[];
-  onClose: () => void;
-  onSuccess: () => void;
+  professionals: IProfessional[]
+  onClose: () => void
+  onSuccess: () => void
 }
 
 const BulkAppointments: React.FC<BulkAppointmentsProps> = ({
-  patients,
   professionals,
   onClose,
   onSuccess,
 }) => {
-  const [selectedPatient, setSelectedPatient] = useState('');
-  const [selectedProfessional, setSelectedProfessional] = useState('');
-  const [sessionType, setSessionType] = useState('');
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState('')
+  const [selectedSpecialtyId, setSelectedSpecialtyId] = useState('')
   const [appointments, setAppointments] = useState<AppointmentInput[]>([
-    { date: '', start_time: '' },
-  ]);
+    { date: '', timeFrom: '' },
+  ])
+  const [loading, setLoading] = useState(false)
 
-  const handleInputChange = (
-    index: number,
-    field: keyof AppointmentInput,
-    value: string
-  ) => {
-    const newAppointments = [...appointments];
-    newAppointments[index][field] = value;
-    setAppointments(newAppointments);
-  };
+  const selectedProfessional = professionals.find(p => p._id === selectedProfessionalId)
+  const availableSpecialties = (selectedProfessional?.specialties || []) as ISpecialty[]
 
-  const addAppointmentField = () => {
-    setAppointments([...appointments, { date: '', start_time: '' }]);
-  };
+  const handleAppointmentChange = (index: number, field: keyof AppointmentInput, value: string) => {
+    const updated = [...appointments]
+    updated[index][field] = value
+    setAppointments(updated)
+  }
 
-  const removeAppointmentField = (index: number) => {
-    const newAppointments = appointments.filter((_, i) => i !== index);
-    setAppointments(newAppointments);
-  };
+  const addRow = () => setAppointments([...appointments, { date: '', timeFrom: '' }])
+
+  const removeRow = (index: number) =>
+    setAppointments(appointments.filter((_, i) => i !== index))
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    if (!selectedPatient || !selectedProfessional || !sessionType) {
-      toast.error('Por favor, complete todos los campos antes de enviar.');
-      return;
+    if (!selectedProfessionalId || !selectedSpecialtyId) {
+      toast.error('Seleccioná un profesional y una especialidad.')
+      return
     }
 
-    if (appointments.some((appointment) => !appointment.date || !appointment.start_time)) {
-      toast.error('Asegúrese de completar todas las fechas y horas de inicio.');
-      return;
+    if (appointments.some(a => !a.date || !a.timeFrom)) {
+      toast.error('Completá todas las fechas y horarios.')
+      return
     }
 
-    try {
-      const appointmentData = appointments.map((appointment) => {
-        const startDateTime = dayjs(`${appointment.date}T${appointment.start_time}`);
-        const endDateTime = startDateTime.add(45, 'minute');
-        const weekDay = startDateTime.day() === 0 ? 7 : startDateTime.day();
+    setLoading(true)
+    const results = await Promise.allSettled(
+      appointments.map(a =>
+        createAppointment({
+          professionalId: selectedProfessionalId,
+          specialtyId: selectedSpecialtyId,
+          date: a.date,
+          timeFrom: a.timeFrom,
+        })
+      )
+    )
 
-        return {
-          pacient_id: selectedPatient,
-          professional_id: selectedProfessional,
-          date_time: startDateTime.toDate(),
-          schedule: {
-            week_day: weekDay,
-            time_slots: {
-              start_time: startDateTime.toDate(),
-              end_time: endDateTime.toDate(),
-            },
-          },
-          session_type: sessionType,
-        };
-      });
-      
-      await bulkAppointments(appointmentData as unknown as CreateAppointmentDto[])
+    const succeeded = results.filter(r => r.status === 'fulfilled').length
+    const failed = results.filter(r => r.status === 'rejected').length
 
-      // Simular llamada al servicio
-      toast.success('Turnos creados con éxito');
-      onSuccess();
-      onClose();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error(`Error al crear los turnos: ${errorMessage}`);
-    }
-  };
+    if (succeeded > 0) toast.success(`${succeeded} turno(s) creados exitosamente.`)
+    if (failed > 0) toast.error(`${failed} turno(s) no pudieron crearse.`)
+
+    setLoading(false)
+    onSuccess()
+    onClose()
+  }
 
   return (
     <div className="bulkAppointmentsContainer">
       <h2 className="bulkAppointmentsTitle">Carga Masiva de Turnos</h2>
       <form onSubmit={handleSubmit} className="bulkAppointmentsForm">
+
         <div className="formGroup">
           <select
-            value={selectedPatient}
-            onChange={(e) => setSelectedPatient(e.target.value)}
+            value={selectedProfessionalId}
+            onChange={e => {
+              setSelectedProfessionalId(e.target.value)
+              setSelectedSpecialtyId('')
+            }}
             required
           >
-            <option value="">Seleccione un paciente</option>
-            {patients.map((patient) => (
-              <option key={patient._id} value={patient._id}>
-                {patient.user_id.firstname} {patient.user_id.lastname}
+            <option value="">Seleccioná un profesional</option>
+            {professionals.map(p => (
+              <option key={p._id} value={p._id}>{p.userId?.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="formGroup">
+          <select
+            value={selectedSpecialtyId}
+            onChange={e => setSelectedSpecialtyId(e.target.value)}
+            required
+            disabled={!selectedProfessionalId}
+          >
+            <option value="">Seleccioná una especialidad</option>
+            {availableSpecialties.map(s => (
+              <option key={s._id} value={s._id}>
+                {s.name} {s.restriction?.hasRestriction ? '⏰' : ''}
               </option>
             ))}
           </select>
         </div>
-        <div className="formGroup">
-          <select
-            value={selectedProfessional}
-            onChange={(e) => setSelectedProfessional(e.target.value)}
-            required
-          >
-            <option value="">Seleccione un profesional</option>
-            {professionals.map((professional) => (
-              <option key={professional._id} value={professional._id}>
-                {professional.user_id.firstname} {professional.user_id.lastname}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="formGroup">
-          <input
-            type="text"
-            placeholder="Tipo de sesión"
-            value={sessionType}
-            onChange={(e) => setSessionType(e.target.value)}
-            required
-          />
-        </div>
+
         {appointments.map((appointment, index) => (
           <div key={index} className="appointmentField">
             <input
               type="date"
               value={appointment.date}
-              onChange={(e) => handleInputChange(index, 'date', e.target.value)}
+              min={dayjs().format('YYYY-MM-DD')}
+              onChange={e => handleAppointmentChange(index, 'date', e.target.value)}
               required
             />
             <input
               type="time"
-              value={appointment.start_time}
-              onChange={(e) => handleInputChange(index, 'start_time', e.target.value)}
+              value={appointment.timeFrom}
+              onChange={e => handleAppointmentChange(index, 'timeFrom', e.target.value)}
               required
             />
             {appointments.length > 1 && (
               <button
                 type="button"
-                onClick={() => removeAppointmentField(index)}
+                onClick={() => removeRow(index)}
                 className="removeButton"
               >
                 Eliminar
@@ -164,16 +141,13 @@ const BulkAppointments: React.FC<BulkAppointmentsProps> = ({
             )}
           </div>
         ))}
+
         <div className="formActions">
-          <button
-            type="button"
-            onClick={addAppointmentField}
-            className="addButton"
-          >
-            Agregar turno
+          <button type="button" onClick={addRow} className="addButton">
+            + Agregar turno
           </button>
-          <button type="submit" className="submitButton">
-            Crear Turnos
+          <button type="submit" className="submitButton" disabled={loading}>
+            {loading ? 'Creando...' : 'Crear Turnos'}
           </button>
           <button type="button" onClick={onClose} className="cancelButton">
             Cancelar
@@ -181,7 +155,7 @@ const BulkAppointments: React.FC<BulkAppointmentsProps> = ({
         </div>
       </form>
     </div>
-  );
-};
+  )
+}
 
-export default BulkAppointments;
+export default BulkAppointments

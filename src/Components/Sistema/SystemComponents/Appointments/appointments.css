@@ -1,159 +1,226 @@
-/* ====== LAYOUT CON SIDEBAR FIJA ====== */
 :root { --gutter: 24px; }
 
-body{ overflow-x:hidden }
+body { overflow-x: hidden; }
 
-.appointmentsContainer{
-  display:flex; flex-direction:column; align-items:stretch;
-  margin-top:5rem;
+.appointmentsContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-top: 5rem;
   padding-left: calc(80px + var(--gutter));
   padding-right: var(--gutter);
-  min-width:0;
+  min-width: 0;
 }
 
-/* en mobile, la sidebar suele no ser fija: */
-@media (max-width: 992px){
-  .appointmentsContainer{ padding-left: var(--gutter); }
+@media (max-width: 992px) {
+  .appointmentsContainer { padding-left: var(--gutter); }
 }
 
-/* ====== ACCIONES SUPERIORES ====== */
-.actionsContainer{
-  display:flex; align-items:center; justify-content:space-between;
-  width:100%; max-width: 1200px; margin: 0 auto 20px; gap:15px;
+/* ====== ACCIONES ====== */
+.actionsContainer {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.addAppointmentContainer,.addBulkAppointments{
-  display:flex; align-items:center; gap:8px; cursor:pointer;
-  padding:10px 14px; background:#007bff; border-radius:8px;
+.form-select {
+  padding: 9px 12px;
+  border: 1px solid #555;
+  border-radius: 8px;
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  outline: none;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.form-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0,123,255,.25);
+}
+.form-select option { background: #111; color: #fff; }
+
+.addBulkAppointments {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 10px 14px;
+  background: #007bff;
+  border-radius: 8px;
+  margin-left: auto;
   transition: background-color .2s ease;
 }
-.addAppointmentContainer:hover,.addBulkAppointments:hover{ background:#0056b3 }
-.addAppointmentIcon{ font-size:20px; color:#fff }
-.addAppointmentText{ font-size:16px; color:#fff }
+.addBulkAppointments:hover { background: #0056b3; }
+.addAppointmentIcon { font-size: 18px; color: #fff; }
+.addAppointmentText { font-size: 15px; color: #fff; font-weight: 600; }
 
-/* ====== TABLA RESPONSIVE (DARK) ====== */
-.table-wrap{
-  width:100%;
-  overflow-x:auto;
-  -webkit-overflow-scrolling:touch;
-  border:1px solid rgba(255,165,0,.35); /* naranja suave */
-  border-radius:10px;
+/* ====== TABLA ====== */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid rgba(255,165,0,.35);
+  border-radius: 10px;
   background: transparent;
+  scrollbar-color: #555 transparent;
+  scrollbar-width: thin;
 }
+.table-wrap::-webkit-scrollbar { height: 10px; }
+.table-wrap::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
 
-.appointmentsTable{
+.appointmentsTable {
   border-collapse: collapse;
-  width: max-content;   /* crece por contenido */
-  min-width: 100%;      /* pero al menos ocupa el contenedor */
+  width: max-content;
+  min-width: 100%;
   table-layout: auto;
-  font-size:14px;
+  font-size: 14px;
   background: transparent;
 }
-
-.appointmentsTable th, .appointmentsTable td{
-  padding:10px 12px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-  text-align:left;
-  color:#fff; 
-  white-space:nowrap;
+.appointmentsTable th,
+.appointmentsTable td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  text-align: left;
+  color: #fff;
+  white-space: nowrap;
+  vertical-align: middle;
 }
-
-.appointmentsTable thead th{
-  position:sticky; top:0; z-index:1;
-  background: orange; color:#111; font-weight:700;
-  border-bottom:1px solid #e29900;
+.appointmentsTable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: orange;
+  color: #111;
+  font-weight: 700;
+  border-bottom: 1px solid #e29900;
 }
+.appointmentsTable thead th:first-child { border-top-left-radius: 10px; }
+.appointmentsTable thead th:last-child  { border-top-right-radius: 10px; }
+.appointmentsTable tbody tr:nth-child(odd) { background: rgba(255,255,255,.03); }
+.appointmentsTable tbody tr:hover          { background: rgba(255,255,255,.06); }
+.appointmentsTable tbody tr:last-child td  { border-bottom: none; }
 
-.appointmentsTable tbody tr:nth-child(odd){ background: rgba(255,255,255,0.03) }
-.appointmentsTable tbody tr:hover{ background: rgba(255,255,255,0.06) }
-
-/* ====== ESTADO (semáforo) ====== */
-.statusIndicator{
-  display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px;
+/* ====== ESTADO ====== */
+.statusIndicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
 }
-.statusIndicator.confirmado{ background-color:#22c55e }     /* verde */
-.statusIndicator.pendiente{ background-color:#facc15 }      /* amarillo */
-.statusIndicator.cancelado{ background-color:#ef4444 }      /* rojo */
+.statusIndicator.pending   { background-color: #f0ad4e; }
+.statusIndicator.approved  { background-color: #5cb85c; }
+.statusIndicator.rejected  { background-color: #d9534f; }
+.statusIndicator.cancelled { background-color: #aaa; }
 
-/* ====== BOTONES EN LA CELDA ====== */
-.btn-ico{
-  display:inline-flex; align-items:center; justify-content:center;
-  width:34px; height:34px; border-radius:8px; border:0; cursor:pointer;
-  margin: 0 .25rem;
-  background:#e5e7eb; color:#111;
+/* ====== BOTONES ====== */
+.btn-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 0;
+  cursor: pointer;
+  margin: 0 .2rem;
   transition: transform .05s ease, opacity .2s;
 }
-.btn-ico:hover{ opacity:.9 }
-.btn-ico:active{ transform: translateY(1px) }
-
-.btn-primary{ background:#007bff; color:#fff }
-.btn-warning{ background:#f59e0b; color:#111 }
-.btn-success{ background:#22c55e; color:#111 }
-.btn-danger{ background:#ef4444; color:#fff }
+.btn-ico:hover  { opacity: .9; }
+.btn-ico:active { transform: translateY(1px); }
+.btn-primary  { background: #007bff; color: #fff; }
+.btn-warning  { background: #f59e0b; color: #111; }
+.btn-success  { background: #22c55e; color: #111; }
+.btn-danger   { background: #ef4444; color: #fff; }
+.btn-whatsapp { background: #25d366; color: #fff; }
+.btn-whatsapp:hover { background: #1da851; }
 
 /* ====== PAGINACIÓN ====== */
-.pagination{
-  display:flex; gap:8px; align-items:center; justify-content:flex-end;
-  width:100%; max-width:1200px; margin: 6px auto 0;
+.pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 1200px;
+  margin: 8px auto 0;
 }
-.paginationButton{
-  padding:.45rem .75rem; border-radius:8px; border:1px solid #555;
-  background:transparent; color:#fff; cursor:pointer;
-  transition: background-color .15s ease, border-color .15s ease, opacity .15s ease;
-}
-.paginationButton:hover{ background: rgba(255,255,255,.06) }
-.paginationButton:disabled{ opacity:.5; cursor:not-allowed }
-
-/* ====== FORMULARIO (DARK-FRIENDLY) ====== */
-.appointmentForm{
-  display:flex; flex-direction:column; gap:10px;
-  width:min(100%, 760px);
-  background: rgba(255,255,255,.04);
-  padding:20px; border-radius:8px; margin:20px auto 0;
-  border:1px solid #555; color:#fff;
-}
-
-.appointmentForm label{ font-weight:700; margin-bottom:4px }
-.appointmentForm select,
-.appointmentForm input{
-  margin-bottom:10px; padding:10px;
-  border:1px solid #555; border-radius:8px;
-  background: rgba(255,255,255,.06); color:#fff; outline:none;
-}
-.appointmentForm select {
-  background-color: rgba(255,255,255,.06);
+.paginationButton {
+  padding: .45rem .75rem;
+  border-radius: 8px;
+  border: 1px solid #555;
+  background: transparent;
   color: #fff;
+  cursor: pointer;
+  transition: background-color .15s ease, opacity .15s ease;
 }
+.paginationButton:hover    { background: rgba(255,255,255,.06); }
+.paginationButton:disabled { opacity: .5; cursor: not-allowed; }
 
-.appointmentForm select option {
-  background-color: #111;
+/* ====== MODAL CONFIRMACIÓN ====== */
+.modal-two {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.55);
+  z-index: 9999;
+}
+.modalContent-two {
+  background: rgba(20,20,20,.97);
   color: #fff;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  padding: 24px;
+  width: min(92vw, 460px);
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
 }
-.appointmentForm input::file-selector-button{
-  padding:.45rem .75rem; border:1px solid #555; border-radius:8px; background:#111; color:#fff; cursor:pointer;
+.modalContent-two h2 { margin: 0 0 10px; font-size: 18px; }
+.modalContent-two p  { color: #d1d5db; margin: 0 0 14px; }
+.modalContent-two textarea {
+  width: 100%;
+  background: rgba(255,255,255,.06);
+  border: 1px solid #555;
+  border-radius: 8px;
+  color: #fff;
+  padding: 10px;
+  resize: vertical;
+  outline: none;
+  font-size: 14px;
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
-.appointmentForm input:focus,
-.appointmentForm select:focus{
-  border-color:#007bff; box-shadow:0 0 0 3px rgba(0,123,255,.25);
+.modalContent-two textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0,123,255,.25);
 }
-
-.formActions{
-  display:flex; gap:10px; justify-content:flex-end; margin-top:8px;
+.modalButtons-two {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  justify-content: flex-end;
 }
-.formActions button{
-  padding:.6rem 1rem; border-radius:8px; border:0; cursor:pointer;
-  background:#007bff; color:#fff; transition: background-color .2s ease;
+.modalButtons-two button {
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background-color .2s ease;
 }
-.formActions button:hover{ background:#0056b3 }
-
-/* ====== WHATSAPP ICON (por si usás el de FontAwesomeIcon) ====== */
-.iconosRedes{ font-size:16px }
-
-/* ====== OCULTAR WIDGET VERCEL (como tenías) ====== */
-vercel-live-feedback{ display:none !important }
+.modalButtons-two button:first-child { background: #555; color: #fff; }
+.modalButtons-two button:first-child:hover { background: #444; }
+.modalButtons-two button:last-child  { background: #007bff; color: #fff; }
+.modalButtons-two button:last-child:hover  { background: #0056b3; }
 
 /* ====== RESPONSIVE ====== */
-@media (max-width: 768px){
-  .actionsContainer{ flex-direction:column; gap:10px }
-  .addAppointmentContainer,.addBulkAppointments{ width:100%; justify-content:center }
+@media (max-width: 768px) {
+  .actionsContainer { flex-direction: column; align-items: stretch; }
+  .addBulkAppointments { margin-left: 0; justify-content: center; }
+  .form-select { width: 100%; }
 }

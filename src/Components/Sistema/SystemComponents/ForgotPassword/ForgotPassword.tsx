@@ -1,90 +1,58 @@
-import React, { useState } from 'react';
-import { ToastContainer, toast } from 'react-toastify';
-
-import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '../../../../MockService/auth';
-
+import React, { useState } from 'react'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import api from '../../../../Services/api'
 
 const ForgotPassword = () => {
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [email, setEmail] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+    e.preventDefault()
     if (!email) {
-      setErrorMessage('Por favor ingresa tu correo electrónico');
-      return;
+      toast.error('Por favor ingresá tu correo electrónico')
+      return
     }
-    setIsLoading(true);
+    setIsLoading(true)
     try {
-      await sendPasswordResetEmail(auth, email, {
-        url: 'https://web-kinefit-front.vercel.app/resetPassword',
-        handleCodeInApp: true, // Asegura que Firebase use la URL personalizada
-      });
-      toast.success('Hemos enviado un enlace de recuperación a tu correo electrónico.Por favor revisa tu bandeja de entrada')
-      setEmail('');
-    } catch (error) {
-      
-      toast.error(errorMessage)
-      //@ts-expect-error error verificado
-      switch (error.code) {
-        case 'auth/invalid-email':
-          setErrorMessage('El correo electrónico no es válido');
-          break;
-        case 'auth/user-not-found':
-          setErrorMessage('No existe una cuenta con este correo electrónico');
-          break;
-        case 'auth/too-many-requests':
-          setErrorMessage('Demasiados intentos. Por favor, intenta más tarde');
-          break;
-        default:
-          setErrorMessage('Ocurrió un error al enviar el email. Por favor intenta nuevamente');
-      }
+      await api.post('/auth/forgot-password', { email })
+      toast.success('Si el email existe en el sistema, recibirás instrucciones para recuperar tu contraseña.')
+      setEmail('')
+    } catch {
+      toast.error('Ocurrió un error. Por favor intentá nuevamente.')
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
-    <div className="">
-      <div className="">
-        <div className="">
-          <h2 className="">¿Olvidaste tu contraseña?</h2>
-          <p className="">
-            Ingresa tu correo electrónico para recibir un enlace de recuperación.
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <input
-                type="email"
-                placeholder="Correo electrónico"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={{margin:'auto'}}
-                className="form-control"
-                disabled={isLoading}
-              />
-            </div>
-
-            <button
-              type="submit"
-              style={{margin:'auto'}}
-              className='btn align-self-start mt-3'
-              disabled={isLoading}
-            >
-              {isLoading ? 'Enviando...' : 'Enviar enlace de recuperación'}
-            </button>
-          </div>
-        </form>
+    <div>
+      <div>
+        <h2>¿Olvidaste tu contraseña?</h2>
+        <p>Ingresá tu correo electrónico para recibir instrucciones de recuperación.</p>
       </div>
-      <ToastContainer/>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          placeholder="Correo electrónico"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{ margin: 'auto' }}
+          className="form-control"
+          disabled={isLoading}
+        />
+        <button
+          type="submit"
+          style={{ margin: 'auto' }}
+          className="btn align-self-start mt-3"
+          disabled={isLoading}
+        >
+          {isLoading ? 'Enviando...' : 'Enviar instrucciones'}
+        </button>
+      </form>
+      <ToastContainer />
     </div>
-  );
-};
+  )
+}
 
-export default ForgotPassword;
+export default ForgotPassword

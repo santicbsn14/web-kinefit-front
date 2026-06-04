@@ -1,64 +1,62 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { onAuthStateChanged, User, signOut } from 'firebase/auth';
-import { auth } from '../MockService/auth';
-import { getUserByEmail } from '../MockService/users';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { IUser, AuthResponse } from '../Utils/Types/userTypes'
 
 interface AuthContextType {
-  user: User | null;
-  role: {name: string, permissions: string[]} | null | string; // Agregamos el rol
-  loading: boolean;
-  logout: () => Promise<void>;
+  user: IUser | null
+  token: string | null
+  loading: boolean
+  login: (data: AuthResponse) => void
+  logout: () => void
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  role: null, 
+  token: null,
   loading: true,
-  logout: async () => {},
-});
+  login: () => {},
+  logout: () => {},
+})
 
 interface AuthProviderProps {
-  children: ReactNode;
+  children: ReactNode
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<string | null>(null); 
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<IUser | null>(null)
+  const [token, setToken] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        try {
-          const response = await getUserByEmail(currentUser.email as unknown as string);
-          setRole(response.role); 
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-        }
-      } else {
-        setRole(null); 
-      }
+    const storedToken = localStorage.getItem('kinefit_token')
+    const storedUser = localStorage.getItem('kinefit_user')
 
-      setLoading(false);
-    });
+    if (storedToken && storedUser) {
+      setToken(storedToken)
+      setUser(JSON.parse(storedUser))
+    }
 
-    return () => {
-      unsubscribe();
-    };
-  }, []);
-  
-  const logout = async () => {
-    await signOut(auth);
-    setUser(null);
-    setRole(null); // Reinicia el rol al cerrar sesión
-  };
+    setLoading(false)
+  }, [])
+
+  const login = (data: AuthResponse) => {
+    setToken(data.token)
+    setUser(data.user)
+    localStorage.setItem('kinefit_token', data.token)
+    localStorage.setItem('kinefit_user', JSON.stringify(data.user))
+  }
+
+  const logout = () => {
+    setToken(null)
+    setUser(null)
+    localStorage.removeItem('kinefit_token')
+    localStorage.removeItem('kinefit_user')
+  }
 
   return (
-    <AuthContext.Provider value={{ user, role, loading, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
-  );
-};
+  )
+}
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext)

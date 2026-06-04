@@ -1,538 +1,332 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-import React, { useState, useEffect } from 'react';
-import './appointments.css';
-import { deleteAppointment, getAppointments, makeAppointment, updateAppointment } from '../../../../MockService/appointments';
-import { getProfessionals, Professional } from '../../../../MockService/professionals';
-import { getPatients, Patient } from '../../../../MockService/patients';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import BulkAppointments from './BulkAppointments';
-import { CreateAppointment, CreateAppointmentDto } from '../../../../Utils/Types/appointmentTypes';
-import { sendWhatsAppMessageConfirmAppointment } from '../../../../MockService/messages';
-import axios from 'axios';
-import { DaySchedule } from '../../../../Utils/Types/professionalTypes';
-import { useAuth } from '../../../../Contexts/authContext';
+import { useState, useEffect, useCallback } from 'react'
+import './appointments.css'
+import {  toast } from 'react-toastify'
+import { useAuth } from '../../../../Contexts/authContext'
+import { getAppointments, approveAppointment, rejectAppointment, cancelAppointmentBySecretary } from '../../../../Services/appointmentService'
+import { getProfessionals } from '../../../../Services/professionalService'
+import { IAppointment, PaginatedResult } from '../../../../Utils/Types/appointmentTypes'
+import { IProfessional } from '../../../../Utils/Types/professionalTypes'
+import BulkAppointments from './BulkAppointments'
 
-interface ConfirmDeleteModalProps {
-  isOpen:boolean;
-  onClose: () => void;         // Función que no devuelve nada
-  onConfirm: () => void;       // Función que no devuelve nada
-  patientName: string;    // Nombre del profesional, es un string
+const formatDate = (date: Date | string): string =>
+  new Date(date).toLocaleDateString('es-AR', { year: 'numeric', month: '2-digit', day: '2-digit' })
+
+const getPatientName = (appointment: IAppointment): string => {
+  if (typeof appointment.patientId === 'object' && appointment.patientId !== null) {
+    const p = appointment.patientId as any
+    return p.userId?.name || 'N/A'
+  }
+  return 'N/A'
 }
+
+
+const getProfessionalName = (appointment: IAppointment): string => {
+  if (typeof appointment.professionalId === 'object' && appointment.professionalId !== null) {
+    return appointment.professionalId.userId?.name || 'N/A'
+  }
+  return 'N/A'
+}
+
+const getSpecialtyName = (appointment: IAppointment): string => {
+  if (typeof appointment.specialtyId === 'object' && appointment.specialtyId !== null) {
+    return appointment.specialtyId.name
+  }
+  return 'N/A'
+}
+
+const getPatientPhone = (appointment: IAppointment): string | null => {
+  if (typeof appointment.patientId === 'object' && appointment.patientId !== null) {
+    const p = appointment.patientId as any
+    return p.phone || p.userId?.phone || null
+  }
+  return null
+}
+
+const buildWhatsAppUrl = (phone: string, appointment: IAppointment, type: 'confirm' | 'reminder'): string => {
+  const patientName = getPatientName(appointment)
+  const specialty = getSpecialtyName(appointment)
+  const date = formatDate(appointment.date)
+  const time = appointment.timeFrom
+
+  const message = type === 'confirm'
+    ? `Hola ${patientName}, tu turno de ${specialty} está confirmado para el ${date} a las ${time}hs. Cualquier consulta escribinos. ¡Te esperamos!`
+    : `Hola ${patientName}, te recordamos que mañana tenés turno de ${specialty} a las ${time}hs. ¡Te esperamos!`
+
+  return `https://wa.me/549${phone}?text=${encodeURIComponent(message)}`
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'Pendiente',
+  approved: 'Aprobado',
+  rejected: 'Rechazado',
+  cancelled: 'Cancelado',
+}
+
 const Appointments = (): JSX.Element => {
-  const [showForm, setShowForm] = useState(false);
+  const { user } = useAuth()
   const [loading, setLoading] = useState(true)
-  const [isEditing, setIsEditing] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [appointmentToDelete, setAppointmentToDelete] = useState<{ id: string; name: string } | null>(null);
-  const [editingAppointment, setEditingAppointment] = useState<CreateAppointment | null>(null);
-  const [showBulkForm, setShowBulkForm] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [filePreview, setFilePreview] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    pacient_id: '',
-    professional_id: '',
-    date_time: null as Date | null,
-    schedule: { week_day: 0, time_slots: { start_time: '', end_time: '' } },
-    state: '',
-    session_type: ''
-  });
-  const [currentPage, setCurrentPage] = useState(1); // Estado para la página actual
-  const [appointmentsPerPage] = useState(10); // Número de citas por página
+  const [appointments, setAppointments] = useState<IAppointment[]>([])
+  const [professionals, setProfessionals] = useState<IProfessional[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [filterProfessional, setFilterProfessional] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+  const [showBulkForm, setShowBulkForm] = useState(false)
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+    action: () => Promise<void>
+  }>({ isOpen: false, title: '', message: '', action: async () => {} })
+  const [secretaryNotes, setSecretaryNotes] = useState('')
 
-  const [professionals, setProfessionals] = useState<{ _id: string, user_id: { firstname: string, lastname:string, phone: string} }[]>([]);
-  const [patients, setPatients] = useState<{ _id: string, user_id: { firstname: string, lastname:string, phone: string } }[]>([]);
-  const [appointments, setAppointments] = useState<CreateAppointment[]>([]);
-  const {user} = useAuth()
-
-  const fetchAppointments = React.useCallback(async () => {
-    setLoading(true); // Inicia la carga
+  const fetchAppointments = useCallback(async (page = 1) => {
+    setLoading(true)
     try {
-      const appointmentsData = await getAppointments();
-      const filteredAppointments = appointmentsData.appointments.filter(
-        (appointment: CreateAppointment) => 
-          //@ts-expect-error si existe
-          appointment.professional_id.user_id.email === user.email
-      );
-      setAppointments(filteredAppointments);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error(errorMessage);
-    } finally {
-      setLoading(false); // Finaliza la carga
-    }
-  }, []); // Aquí puedes añadir dependencias si las hay
+      const data: PaginatedResult<IAppointment> = await getAppointments(page, 10)
+      let filtered = data.docs
 
-  const handleDeleteConfirm = React.useCallback(async () => {
-    if (appointmentToDelete) {
-      try {
-        await deleteAppointment(appointmentToDelete.id);
-        toast.success('¡El turno ha sido eliminado exitosamente!');
-        fetchAppointments();
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        toast.error(errorMessage);
+      if (user?.role === 'professional') {
+        filtered = filtered.filter((a) => {
+          const prof = a.professionalId
+          if (typeof prof === 'object') return prof.userId?._id === user._id
+          return false
+        })
       }
+
+      if (filterProfessional) {
+        filtered = filtered.filter((a) => {
+          const prof = a.professionalId
+          if (typeof prof === 'object') return prof._id === filterProfessional
+          return false
+        })
+      }
+
+      if (filterStatus) {
+        filtered = filtered.filter((a) => a.status === filterStatus)
+      }
+
+      setAppointments(filtered)
+      setTotalPages(data.totalPages)
+      setCurrentPage(page)
+    } catch {
+      toast.error('Error al cargar los turnos')
+    } finally {
+      setLoading(false)
     }
-    setShowDeleteModal(false);
-    setAppointmentToDelete(null);
-  }, [appointmentToDelete, fetchAppointments]);
+  }, [user, filterProfessional, filterStatus])
 
   useEffect(() => {
     const fetchProfessionals = async () => {
-      const professionalsData = await getProfessionals();
-      setProfessionals(professionalsData.professionals);
-    };
-    const fetchPatients = async () => {
-      const patientsData = await getPatients();
-      setPatients(patientsData.patients);
-    };
-
-    // Fetch all data concurrently
-    const fetchData = async () => {
-      await Promise.all([fetchProfessionals(), fetchPatients(), fetchAppointments()]);
-      setLoading(false); // Finaliza la carga después de todas las recuperaciones
-    };
-
-    fetchData();
-  }, []);
-  if(loading) return(
-    <div>
-      Cargando...
-    </div>
-  )
-  const uploadImageToCloudinary = async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', 'upload_test');
-    formData.append('cloud_name', 'ds8ilvysp');
-    
-    try {
-      const response = await axios.post('https://api.cloudinary.com/v1_1/ds8ilvysp/image/upload', formData);
-      return response.data.secure_url;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(error);
-      toast.error(errorMessage);
-    }
-  };
-  const formatDate = (date: Date): string => {
-    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' };
-    return new Date(date).toLocaleDateString(undefined, options);
-  };
-
-  const formatTime = (time: string): string => {
-    return new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const openPhotoOrder = (url:string) =>{
-    window.open(url, '_blank');
-  }
-  const calculateEndTime = (startTime: string): string => {
-    const [hours, minutes] = startTime.split(':').map(Number);
-    const endDate = new Date(2000, 0, 1, hours, minutes);
-
-    if (user && user.email === 'gda014@gmail.com') {
-      endDate.setMinutes(endDate.getMinutes() + 45);
-    } else {
-      endDate.setHours(endDate.getHours() + 1);
-    }
-  
-    return endDate.toTimeString().slice(0, 5);
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-  
-    if (name === 'date_time') {
-      const dateValue = value ? new Date(`${value}T00:00:00`) : null; // Forzamos la hora a medianoche
-      if (dateValue) {
-        const weekDayNumber = dateValue.getUTCDay();
-        setFormData(prevData => ({
-          ...prevData,
-          date_time: dateValue,
-          schedule: {
-            ...prevData.schedule,
-            week_day: weekDayNumber
-          }
-        }));
-      } else {
-        setFormData(prevData => ({
-          ...prevData,
-          date_time: null,
-          schedule: {
-            ...prevData.schedule,
-            week_day: 0
-          }
-        }));
+      try {
+        const data = await getProfessionals()
+        setProfessionals(data)
+      } catch {
+        toast.error('Error al cargar profesionales')
       }
-    } else if (name === 'start_time') {
-      const endTime = calculateEndTime(value);
-      setFormData(prevData => ({
-        ...prevData,
-        schedule: { 
-          ...prevData.schedule, 
-          time_slots: { start_time: value, end_time: endTime }
-        }
-      }));
-    } else {
-      setFormData({ ...formData, [name]: value });
     }
-  };
-  
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0] || null;
-    setFile(selectedFile);
-    if (selectedFile) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFilePreview(reader.result as string);
-      };
-      reader.readAsDataURL(selectedFile);
-    }
-  };
-  const isPatient = (id: Patient | string | null): id is Patient => {
-    // Verifica si 'id' es null o undefined antes de hacer la comprobación
-    if (id === null || id === undefined) {
-        return false; // Devuelve false si 'id' es null o undefined
-    }
-    
-    // Si no es null, intenta acceder a user_id
-    return (id as Patient).user_id !== undefined;
-};
+    fetchProfessionals()
+    fetchAppointments(1)
+  }, [fetchAppointments])
 
-const isProfessional = (id: Professional | string | null): id is Professional => {
-    if (id === null || id === undefined) {
-        return false; // Devuelve false si 'id' es null o undefined
-    }
-    
-    return (id as Professional).user_id !== undefined;
-};
-  const toggleForm = () => {
-    setShowForm(!showForm);
-    if (showForm) {
-      // Reset form data when closing the form
-      setFormData({
-        pacient_id: '',
-        professional_id: '',
-        date_time: null,
-        schedule: { week_day: 0, time_slots: { start_time: '', end_time: '' } },
-        state: '',
-        session_type: ''
-      });
-      setIsEditing(false);
-      setEditingAppointment(null);
-    }
-  };
-
-  const toggleBulkForm = () => {
-    setShowBulkForm(!showBulkForm);
-  }; 
-
-  const handleEdit = (appointment: CreateAppointment) => {
-    setIsEditing(true);
-    setEditingAppointment(appointment);
-  
-    setFormData({
-      //@ts-expect-error debo hostear!
-      pacient_id: typeof appointment.pacient_id !== 'string' ? appointment.pacient_id._id : '' , 
-      //@ts-expect-error debo hostear!
-      professional_id: typeof appointment.professional_id !== 'string' ? appointment.professional_id._id : '', 
-      date_time: appointment.date_time ? new Date(appointment.date_time) : null, 
-      schedule: appointment.schedule as unknown as  DaySchedule,
-      state: appointment.state as string,
-      session_type: appointment.session_type
-    });
-  
-    setShowForm(true);
-  };
-  
-  const handleDeleteClick = (appointmentId: string, patientName: string) => {
-    setAppointmentToDelete({ id: appointmentId, name: patientName });
-    setShowDeleteModal(true);
+  const openConfirmModal = (title: string, message: string, action: () => Promise<void>) => {
+    setConfirmModal({ isOpen: true, title, message, action })
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleConfirm = async () => {
     try {
-      e.preventDefault();
-      const { date_time, schedule } = formData;
-      let uploadedImageUrl = '';
-      if (file) {
-        uploadedImageUrl = await uploadImageToCloudinary(file);
-      }
-      if (date_time) {
-        const startTimeParts = schedule.time_slots.start_time.split(':');
-        const endTimeParts = schedule.time_slots.end_time.split(':');
-
-        const appointmentStartTime = new Date(date_time);
-        appointmentStartTime.setHours(Number(startTimeParts[0]), Number(startTimeParts[1]));
-
-        const appointmentEndTime = new Date(date_time);
-        appointmentEndTime.setHours(Number(endTimeParts[0]), Number(endTimeParts[1]));
-
-        const appointmentData = {
-          ...formData,
-          schedule: {
-            ...schedule,
-            time_slots: {
-              start_time: appointmentStartTime,
-              end_time: appointmentEndTime,
-            }
-          },
-          order_photo: uploadedImageUrl
-        };
-        
-        if (isEditing && editingAppointment) {
-          if(editingAppointment._id)
-          await updateAppointment(editingAppointment._id, appointmentData as unknown as CreateAppointmentDto);
-        } else {
-          await makeAppointment(appointmentData as unknown as CreateAppointmentDto);
-        }
-
-        fetchAppointments();
-        toast.success('El turno ha sido ' + (isEditing ? 'editado' : 'creado') + ' con éxito');
-        toggleForm(); // Close the form after submission
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error(errorMessage);
+      await confirmModal.action()
+      fetchAppointments(currentPage)
+    } catch {
+      toast.error('Error al realizar la acción')
+    } finally {
+      setConfirmModal(prev => ({ ...prev, isOpen: false }))
+      setSecretaryNotes('')
     }
-  };
-  const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({ onClose, onConfirm, patientName }) => {
-    if (!showDeleteModal) return (
-      <div></div>
+  }
+
+  const handleApprove = (appointment: IAppointment) => {
+    openConfirmModal(
+      'Aprobar turno',
+      `¿Confirmás que querés aprobar el turno de ${getPatientName(appointment)}?`,
+      async () => {
+        await approveAppointment(appointment._id!, secretaryNotes)
+        toast.success('Turno aprobado')
+      }
     )
-    return (
-      <div className="modal-two">
-        <div className="modalContent-two">
-          <h2>Confirmar eliminación</h2>
-          <p>¿Estás seguro que quieres eliminar el turno del paciente {patientName}?</p>
-          <div className="modalButtons-two">
-            <button onClick={onClose}>Cancelar</button>
-            <button onClick={onConfirm}>Confirmar</button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-  
-  const indexOfLastAppointment = currentPage * appointmentsPerPage;
-  const indexOfFirstAppointment = indexOfLastAppointment - appointmentsPerPage;
-  const currentAppointments = appointments.slice(indexOfFirstAppointment, indexOfLastAppointment);
+  }
 
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const handleReject = (appointment: IAppointment) => {
+    openConfirmModal(
+      'Rechazar turno',
+      `¿Confirmás que querés rechazar el turno de ${getPatientName(appointment)}?`,
+      async () => {
+        await rejectAppointment(appointment._id!, secretaryNotes)
+        toast.success('Turno rechazado')
+      }
+    )
+  }
 
-  // const totalPages = Math.ceil(appointments.length / appointmentsPerPage);
+  const handleCancel = (appointment: IAppointment) => {
+    openConfirmModal(
+      'Cancelar turno',
+      `¿Confirmás que querés cancelar el turno de ${getPatientName(appointment)}?`,
+      async () => {
+        await cancelAppointmentBySecretary(appointment._id!, secretaryNotes)
+        toast.success('Turno cancelado')
+      }
+    )
+  }
+
+  const handleWhatsApp = (appointment: IAppointment, type: 'confirm' | 'reminder') => {
+    const phone = getPatientPhone(appointment)
+    if (!phone) {
+      toast.warning('Este paciente no tiene teléfono registrado')
+      return
+    }
+    window.open(buildWhatsAppUrl(phone, appointment, type), '_blank')
+  }
+
+  if (loading) return <div>Cargando...</div>
+
   return (
     <div className="appointmentsContainer">
+
+      {/* Acciones */}
       <div className="actionsContainer">
-        <div className="addAppointmentContainer" onClick={toggleForm}>
+        <select
+          className="form-select"
+          value={filterProfessional}
+          onChange={(e) => setFilterProfessional(e.target.value)}
+        >
+          <option value="">Todos los profesionales</option>
+          {professionals.map((p) => (
+            <option key={p._id} value={p._id}>{p.userId?.name}</option>
+          ))}
+        </select>
+
+        <select
+          className="form-select"
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+        >
+          <option value="">Todos los estados</option>
+          <option value="pending">Pendiente</option>
+          <option value="approved">Aprobado</option>
+          <option value="rejected">Rechazado</option>
+          <option value="cancelled">Cancelado</option>
+        </select>
+
+        <div className="addBulkAppointments" onClick={() => setShowBulkForm(!showBulkForm)}>
           <i className="fa-solid fa-calendar-plus addAppointmentIcon"></i>
-          <span className="addAppointmentText">Agregar turno</span>
-        </div>
-        <div className="addBulkAppointments" onClick={toggleBulkForm}>
-          <i className="fa-solid fa-calendar-plus addAppointmentIcon"></i>
-          <span className="addAppointmentText">Carga Masiva de turnos</span>
+          <span className="addAppointmentText">Carga masiva</span>
         </div>
       </div>
+
+      {/* Tabla */}
       <div className="table-wrap">
-      <table className="appointmentsTable">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Fecha</th>
-      <th>Paciente</th>
-      <th>Profesional</th>
-      <th>Hora</th>
-      <th>Tratamiento</th>
-      <th>Estado</th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
-  {currentAppointments.length > 0 ? (
-    <tbody>
-      {currentAppointments.map((appointment) => (
-        <tr key={appointment._id}>
-          <>
-            <td>{appointment._id || 'N/A'}</td>
-            <td>{appointment.date_time ? formatDate(appointment.date_time as unknown as Date) : 'N/A'}</td>
-            <td>
-              {isPatient(appointment.pacient_id)
-                ? `${appointment.pacient_id.user_id.firstname} ${appointment.pacient_id.user_id.lastname}`
-                : 'N/A'}
-            </td>
-            <td>
-              {isProfessional(appointment.professional_id)
-                ? `${appointment.professional_id.user_id.firstname} ${appointment.professional_id.user_id.lastname}`
-                : 'N/A'}
-            </td>
-            <td>{appointment.schedule?.time_slots?.start_time ? formatTime(appointment.schedule.time_slots.start_time as unknown as string) : 'N/A'}</td>
-            <td>{appointment.session_type || 'N/A'}</td>
-            <td>
-              <span className={`statusIndicator ${appointment.state?.toLowerCase() || ''}`}></span>
-              {appointment.state || 'N/A'}
-            </td>
-      <td>
-        <button className='btn-ico btn-warning' onClick={() => handleEdit(appointment)}>
-          <i className="fa-solid fa-edit"></i>
-        </button>
-        <button className='btn-ico btn-success' onClick={() => {
-          if (isPatient(appointment.pacient_id) && appointment.date_time) {
-            sendWhatsAppMessageConfirmAppointment(
-              appointment.pacient_id.user_id.phone,
-              appointment.date_time,
-              formatTime(appointment.schedule.time_slots.start_time as unknown as string)
-            )
-          }
-        }}>
-          <i className="fa-brands fa-whatsapp"></i>
-        </button>
-        <button className="btn-ico btn-danger" onClick={() => {
-          if (appointment._id && isPatient(appointment.pacient_id)) {
-            handleDeleteClick(appointment._id, `${appointment.pacient_id.user_id?.firstname} ${appointment.pacient_id.user_id?.lastname}`)
-          }
-        }}>
-          <i className="fa-solid fa-trash"></i>
-        </button>
-        <button className='btn-ico btn-primary' onClick={() => {
-          if (typeof appointment.order_photo === 'string') openPhotoOrder(appointment.order_photo);
-        }}>
-          <i className="fa-regular fa-image"></i>
-        </button>
-      </td>
-          </>
-        </tr>
-      ))}
-    </tbody>
-  ) : loading?(
-    <tbody>
-      <tr>
-        <td colSpan={8}> Cargando...</td>
-      </tr>
-    </tbody>
-  ): (
-    <tbody>
-      <tr>
-        <td colSpan={8}> No hay turnos ingresados</td>
-      </tr>
-    </tbody>
-  )}
-</table>
-</div>
+        <table className="appointmentsTable">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Paciente</th>
+              <th>Profesional</th>
+              <th>Hora</th>
+              <th>Especialidad</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {appointments.length === 0 ? (
+              <tr>
+                <td colSpan={7}>No hay turnos registrados</td>
+              </tr>
+            ) : (
+              appointments.map((appointment) => (
+                <tr key={appointment._id}>
+                  <td>{formatDate(appointment.date)}</td>
+                  <td>{getPatientName(appointment)}</td>
+                  <td>{getProfessionalName(appointment)}</td>
+                  <td>{appointment.timeFrom} - {appointment.timeTo}</td>
+                  <td>{getSpecialtyName(appointment)}</td>
+                  <td>
+                    <span className={`statusIndicator ${appointment.status}`}></span>
+                    {STATUS_LABELS[appointment.status] || appointment.status}
+                  </td>
+                  <td>
+                    {appointment.status === 'pending' && (
+                      <>
+                        <button className="btn-ico btn-success" title="Aprobar" onClick={() => handleApprove(appointment)}>
+                          <i className="fa-solid fa-check"></i>
+                        </button>
+                        <button className="btn-ico btn-danger" title="Rechazar" onClick={() => handleReject(appointment)}>
+                          <i className="fa-solid fa-xmark"></i>
+                        </button>
+                      </>
+                    )}
+                    {['pending', 'approved'].includes(appointment.status) && (
+                      <button className="btn-ico btn-warning" title="Cancelar" onClick={() => handleCancel(appointment)}>
+                        <i className="fa-solid fa-ban"></i>
+                      </button>
+                    )}
+                    {appointment.status === 'approved' && (
+                      <button className="btn-ico btn-whatsapp" title="WhatsApp confirmación" onClick={() => handleWhatsApp(appointment, 'confirm')}>
+                        <i className="fa-brands fa-whatsapp"></i>
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Paginación */}
       <div className="pagination">
-        <button
-          onClick={() => paginate(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="paginationButton"  // Deshabilitar si está en la primera página
-        >
+        <button className="paginationButton" onClick={() => fetchAppointments(currentPage - 1)} disabled={currentPage === 1}>
           Anterior
         </button>
-
-        <button
-          onClick={() => paginate(currentPage + 1)}
-          disabled={currentPage === Math.ceil(appointments.length / appointmentsPerPage)}
-          className="paginationButton"  // Deshabilitar si está en la última página
-        >
+        <span>Página {currentPage} de {totalPages}</span>
+        <button className="paginationButton" onClick={() => fetchAppointments(currentPage + 1)} disabled={currentPage === totalPages}>
           Siguiente
         </button>
       </div>
 
-      {showForm && (
-        <form onSubmit={handleSubmit} className="appointmentForm">
-          <div>
-            <label htmlFor="pacient_id">Paciente:</label>
-            <select name="pacient_id" value={formData.pacient_id} onChange={handleInputChange}>
-              <option value="">Seleccione un paciente</option>
-              {patients.map((patient) => (
-                <option key={patient._id} value={patient._id}>
-                  {patient.user_id.firstname} {patient.user_id.lastname}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="professional_id">Profesional:</label>
-            <select name="professional_id" value={formData.professional_id} onChange={handleInputChange}>
-              <option value="">Seleccione un profesional</option>
-              {professionals.map((professional) => (
-                <option key={professional._id} value={professional._id}>
-                  {professional.user_id.firstname} {professional.user_id.lastname}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="date_time">Fecha y hora:</label>
-            <input
-              type="date"
-              name="date_time"
-              value={formData.date_time ? new Date(formData.date_time).toISOString().slice(0, 10) : ''}
-              onChange={handleInputChange}
-            />
-
-          </div>
-          <div>
-            <label htmlFor="start_time">Hora de inicio:</label>
-            <input
-              type="time"
-              name="start_time"
-              value={formData.schedule.time_slots.start_time}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="end_time">Hora de fin:</label>
-            <input
-              type="time"
-              name="end_time"
-              value={formData.schedule.time_slots.end_time}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="session_type">Tipo de sesión:</label>
-            <input
-              type="text"
-              name="session_type"
-              value={formData.session_type}
-              onChange={handleInputChange}
-              required
-            />
-            <label style={{ color: 'rgb(151, 143, 127)' }} htmlFor=""> Ingrese la imagen de la orden:
-              <input
-                type="file"
-                style={{ margin: '1rem' }}
-                onChange={handleFileChange}
-                accept="image/*"
-              />
-              {filePreview && <img src={filePreview} alt="Vista previa" style={{ maxWidth: '200px' }} />}
-            </label>
-          </div>
-          <div className="formActions">
-            <button type="submit">{isEditing ? 'Actualizar' : 'Crear'} Turno</button>
-            <button type="button" onClick={toggleForm}>Cancelar</button>
-          </div>
-        </form>
-      )}
+      {/* Bulk form */}
       {showBulkForm && (
         <BulkAppointments
-          patients={patients as unknown as Patient[]}
-          professionals={professionals as unknown as Professional[]}
-          onClose={toggleBulkForm}
-          onSuccess={fetchAppointments}
+          professionals={professionals}
+          onClose={() => setShowBulkForm(false)}
+          onSuccess={() => fetchAppointments(currentPage)}
         />
       )}
-      <ConfirmDeleteModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={handleDeleteConfirm}
-        patientName={appointmentToDelete?.name || ''}
-      />
-      <ToastContainer />
-    </div>
-  );
-};
 
-export default Appointments;
+      {/* Modal confirmación */}
+      {confirmModal.isOpen && (
+        <div className="modal-two">
+          <div className="modalContent-two">
+            <h2>{confirmModal.title}</h2>
+            <p>{confirmModal.message}</p>
+            <textarea
+              placeholder="Notas internas (opcional)"
+              value={secretaryNotes}
+              onChange={(e) => setSecretaryNotes(e.target.value)}
+              rows={3}
+            />
+            <div className="modalButtons-two">
+              <button onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}>
+                Cancelar
+              </button>
+              <button onClick={handleConfirm}>Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  )
+}
+
+export default Appointments

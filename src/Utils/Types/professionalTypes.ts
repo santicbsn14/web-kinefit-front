@@ -1,37 +1,39 @@
-export interface TimeSlot {
-    start_time: string;
-    end_time: string;
+export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+
+export interface IWeeklySlot {
+  day: DayOfWeek
+  timeFrom: string
+  timeTo: string
+  isAvailable: boolean
 }
 
-export interface DaySchedule {
-    week_day: number; 
-    time_slots: TimeSlot;
+export interface ISchedule {
+  _id?: string
+  professionalId: string
+  weeklySlots: IWeeklySlot[]
 }
 
-export interface ProfessionalTimeSlots {
-    _id?: string;
-    professional_id:string;
-    schedule: DaySchedule[];
-    state: 'Disponible' | 'No disponible' | 'Vacaciones' | 'Feriado' | 'Licencia';
-    date_range?: {
-        start_date: Date;
-        end_date: Date;
-    };
+export interface ISpecialty {
+  _id: string
+  name: string
+  description?: string
+  durationMinutes: number
+  maxCapacity: number
+  restriction: {
+    hasRestriction: boolean
+    days: DayOfWeek[]
+    timeFrom: string
+    timeTo: string
+  }
 }
-export interface DayScheduleBBDD {
-    week_day: number; 
-    time_slots: {
-        start_time: Date | string;
-        end_time: Date | string;
-    }
-}
-export interface ProfessionalTimeSlotsBBDD {
-    _id?: string;
-    professional_id:string;
-    schedule: DayScheduleBBDD[];
-    state: 'Disponible' | 'No disponible' | 'Vacaciones' | 'Feriado' | 'Licencia';
-    date_range?: {
-        start_date: Date;
-        end_date: Date;
-    };
+
+export interface IProfessional {
+  _id: string
+  userId: {
+    _id: string
+    name: string
+    email: string
+  }
+  specialties: ISpecialty[]
+  scheduleId?: ISchedule
 }

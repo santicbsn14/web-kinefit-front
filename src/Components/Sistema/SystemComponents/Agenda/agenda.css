@@ -128,3 +128,7 @@
   .turnoLabel{ font-size:11px; padding:3px 7px }
   .hourCell{ width: 62px }
 }
+.turnoLabel--pending  { background: rgba(240,173,78,.15);  border-color: #f0ad4e; color: #fde68a; }
+.turnoLabel--approved { background: rgba(34,197,94,.15);   border-color: #22c55e; color: #bbf7d0; }
+.turnoLabel--rejected { background: rgba(239,68,68,.15);   border-color: #ef4444; color: #fecaca; }
+.turnoLabel--cancelled{ background: rgba(156,163,175,.15); border-color: #9ca3af; color: #d1d5db; }

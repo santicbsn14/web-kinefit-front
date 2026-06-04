@@ -1,203 +1,207 @@
-/* ====== LAYOUT CON SIDEBAR FIJA ====== */
+/* ====== LAYOUT ====== */
 :root { --gutter: 24px; }
-.patientTableContainer{
+
+.patientTableContainer {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   margin-top: 5rem;
-   padding-left: calc(80px + var(--gutter));
+  padding-left: calc(80px + var(--gutter));
   padding-right: var(--gutter);
   min-width: 0;
-  transition: padding-left 0.3s ease; /* ⭐ IMPORTANTE: transición suave */
 }
 
-@media (max-width: 992px){
-  .patientTableContainer{ padding-left: var(--gutter); }
+@media (max-width: 992px) {
+  .patientTableContainer { padding-left: var(--gutter); }
 }
 
-/* ====== CTA superior ====== */
-.addPatientContainer{
-  display:flex; align-items:center; gap:8px; cursor:pointer;
-  padding:10px 14px; background:#007bff; border-radius:8px;
-  transition: background-color .2s ease;
-  width:max-content; margin: 0 0 16px;
-}
-.addPatientContainer:hover{ background:#0056b3 }
-.addPatientIcon{ font-size:20px; color:#fff }
-.addPatientText{ font-size:16px; color:#fff } /* antes negro sobre azul */
-
-/* ====== TABLA (DARK) ====== */
-.table-wrap{
-  width:100%;
-  overflow-x:auto;
-  -webkit-overflow-scrolling:touch;
-  border:1px solid rgba(255,165,0,.35);
-  border-radius:10px;
+/* ====== TABLA ====== */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid rgba(255,165,0,.35);
+  border-radius: 10px;
   background: transparent;
+  scrollbar-color: #555 transparent;
+  scrollbar-width: thin;
 }
+.table-wrap::-webkit-scrollbar { height: 10px; }
+.table-wrap::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
 
-.patientTable{
+.patientTable {
   border-collapse: collapse;
-  width:max-content; min-width:100%;
-  table-layout:auto;
-  font-size:14px;
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
+  font-size: 14px;
   background: transparent;
 }
 
-.patientTable th, .patientTable td{
-  padding:10px 12px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-  text-align:left;
-  color:#fff;
-  white-space:nowrap;
+.patientTable th,
+.patientTable td {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  text-align: left;
+  color: #fff;
+  white-space: nowrap;
+  vertical-align: middle;
 }
 
-.patientTable thead th{
-  position:sticky; top:0; z-index:1;
-  background: orange; color:#111; font-weight:700;
-  border-bottom:1px solid #e29900;
+.patientTable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: orange;
+  color: #111;
+  font-weight: 700;
+  border-bottom: 1px solid #e29900;
+}
+.patientTable thead th:first-child { border-top-left-radius: 10px; }
+.patientTable thead th:last-child  { border-top-right-radius: 10px; }
+
+.patientTable tbody tr:nth-child(odd) { background: rgba(255,255,255,.03); }
+.patientTable tbody tr:hover          { background: rgba(255,255,255,.06); }
+.patientTable tbody tr:last-child td  { border-bottom: none; }
+
+/* Columnas */
+.patientTable th:nth-child(1),
+.patientTable td:nth-child(1) { min-width: 160px; }
+
+.patientTable th:nth-child(2),
+.patientTable td:nth-child(2) { min-width: 200px; overflow-wrap: anywhere; }
+
+.patientTable th:nth-child(3),
+.patientTable td:nth-child(3) { min-width: 110px; }
+
+.patientTable th:nth-child(4),
+.patientTable td:nth-child(4) { min-width: 130px; }
+
+/* Historia clínica: puede ser larga */
+.patientTable th:nth-child(5),
+.patientTable td:nth-child(5) {
+  min-width: 220px;
+  white-space: normal;
+  line-height: 1.4;
+  max-width: 300px;
 }
 
-.patientTable tbody tr:nth-child(odd){ background: rgba(255,255,255,0.03) }
-.patientTable tbody tr:hover{ background: rgba(255,255,255,0.06) }
-
-/* semáforo estado (si lo usás) */
-.statusIndicator{
-  display:inline-block; width:10px; height:10px; border-radius:50%;
+.patientTable th:nth-child(6),
+.patientTable td:nth-child(6) {
+  min-width: 80px;
+  text-align: right;
 }
-.statusIndicator.activo{ background:#22c55e }
-.statusIndicator.inactivo{ background:#ef4444 }
 
-/* ====== BOTONES EN CELDA (compactos) ====== */
-.btn-ico{
-  display:inline-flex; align-items:center; justify-content:center;
-  width:34px; height:34px; border-radius:8px; border:0; cursor:pointer;
-  margin: 0 .25rem;
-  background:#e5e7eb; color:#111;
+.cell-medical { color: #cbd5e1; }
+.no-data { color: #6b7280; font-style: italic; }
+
+/* ====== BOTONES ====== */
+.btn-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 0;
+  cursor: pointer;
+  background: #e5e7eb;
+  color: #111;
   transition: transform .05s ease, opacity .2s;
 }
-.btn-ico:hover{ opacity:.9 }
-.btn-ico:active{ transform: translateY(1px) }
-.btn-warning{ background:#f59e0b; color:#111 }
-.btn-danger{ background:#ef4444; color:#fff }
-
-/* compat con clases existentes */
-.edit-button{
-  background:#f59e0b; color:#111; border:0; cursor:pointer;
-  padding:6px 10px; border-radius:6px; margin-right:6px;
-}
-.delete-button{
-  background:#ef4444; color:#fff; border:0; cursor:pointer;
-  padding:6px 10px; border-radius:6px;
-}
+.btn-ico:hover  { opacity: .9; }
+.btn-ico:active { transform: translateY(1px); }
+.btn-warning  { background: #f59e0b; color: #111; }
+.btn-danger   { background: #ef4444; color: #fff; }
+.btn-success  { background: #22c55e; color: #fff; }
+.btn-primary  { background: #3b82f6; color: #fff; }
+.btn-whatsapp { background: #25d366; color: #fff; }
+.btn-whatsapp:hover { background: #1da851; }
 
 /* ====== PAGINACIÓN ====== */
-.pagination{
-  display:flex; gap:8px; align-items:center; justify-content:flex-end;
-  width:100%; max-width:1200px; margin: 8px 0 0;
-}
-.paginationButton{
-  padding:.45rem .75rem; border-radius:8px; border:1px solid #555;
-  background:transparent; color:#fff; cursor:pointer;
-  transition: background-color .15s ease, border-color .15s ease, opacity .15s ease;
-}
-.paginationButton:hover{ background: rgba(255,255,255,.06) }
-.paginationButton:disabled{ opacity:.5; cursor:not-allowed }
-.pageInfo{ color:#9ca3af }
-
-/* ====== FORMULARIO (DARK) ====== */
-.patientForm{
-  display:flex; flex-direction:column; gap:10px;
-  width:min(100%, 760px);
-  background: rgba(255,255,255,.04);
-  padding:20px; border-radius:12px; margin:20px 0 3rem;
-  border:1px solid #555; color:#fff;
-}
-
-.patientForm label{ font-weight:700; margin-bottom:6px; display:block }
-
-.patientForm select,
-.patientForm input,
-.patientForm button,
-.patientForm textarea{
-  padding:10px; border:1px solid #555; border-radius:10px;
-  background: rgba(255,255,255,.06); color:#fff; outline:none;
-  transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
-  margin-bottom:10px;
-}
-.patientForm textarea{ resize:vertical; min-height:100px }
-
-.patientForm select:focus,
-.patientForm input:focus,
-.patientForm textarea:focus{
-  border-color:#007bff; box-shadow:0 0 0 3px rgba(0,123,255,.25);
-  background: rgba(255,255,255,.08);
-}
-
-/* opciones del select legibles en el dropdown nativo */
-.patientForm select option{
-  background:#111; color:#fff;
-}
-
-/* botones del form */
-.patientForm button{
-  background:#007bff; color:#fff; border:0; cursor:pointer;
-  transition: background-color .2s ease;
-}
-.patientForm button:hover{ background:#0056b3 }
-
-/* ====== RESPONSIVE ====== */
-@media (max-width: 768px){
-  .addPatientContainer{ width:100%; justify-content:center }
-}
-/* ====== Combobox buscador de usuarios ====== */
-.combo{
-  position: relative;
-  display: block;
-}
-.combo-input{
+.pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
   width: 100%;
-  padding: 10px;
-  border: 1px solid #555;
-  border-radius: 10px;
-  background: rgba(255,255,255,.06);
-  color: #fff;
-  outline: none;
-  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+  margin: 8px 0 0;
 }
-.combo-input:focus{
-  border-color:#007bff;
-  box-shadow:0 0 0 3px rgba(0,123,255,.25);
-  background: rgba(255,255,255,.08);
-}
-
-.combo-list{
-  position: absolute;
-  z-index: 50;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  max-height: 260px;
-  overflow-y: auto;
-  background: #111;
-  border: 1px solid #555;
-  border-radius: 10px;
-  padding: 6px;
-  box-shadow: 0 10px 24px rgba(0,0,0,.35);
-}
-.combo-option{
-  display: flex; align-items: center; gap: 8px;
-  padding: 10px;
+.paginationButton {
+  padding: .45rem .75rem;
   border-radius: 8px;
+  border: 1px solid #555;
+  background: transparent;
   color: #fff;
   cursor: pointer;
-  transition: background-color .12s ease;
+  transition: background-color .15s ease, opacity .15s ease;
 }
-.combo-option:hover{ background: rgba(255,255,255,.08) }
-.combo-option[aria-selected="true"]{ background: rgba(0,123,255,.20) }
+.paginationButton:hover    { background: rgba(255,255,255,.06); }
+.paginationButton:disabled { opacity: .5; cursor: not-allowed; }
+.pageInfo { color: #9ca3af; }
 
-.combo-primary{ font-weight: 700 }
-.combo-meta{ color: #9ca3af; font-size: .9rem }
-.combo-empty{
-  padding: 10px; color:#9ca3af; text-align: center;
+/* ====== MODAL EDITAR ====== */
+.modal-two {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.55);
+  z-index: 9999;
+}
+.modalContent-two {
+  background: rgba(20,20,20,.97);
+  color: #fff;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  padding: 24px;
+  width: min(92vw, 480px);
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+}
+.modalContent-two h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  color: #f0f0f0;
+}
+.medical-textarea {
+  width: 100%;
+  background: rgba(255,255,255,.06);
+  border: 1px solid #555;
+  border-radius: 8px;
+  color: #fff;
+  padding: 10px;
+  resize: vertical;
+  outline: none;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.medical-textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0,123,255,.25);
+  background: rgba(255,255,255,.08);
+}
+.modalButtons-two {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  justify-content: flex-end;
+}
+.modalButtons-two button {
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background-color .2s ease;
+}
+.modalButtons-two button:first-child { background: #555; color: #fff; }
+.modalButtons-two button:first-child:hover { background: #444; }
+.modalButtons-two button:last-child  { background: #007bff; color: #fff; }
+.modalButtons-two button:last-child:hover  { background: #0056b3; }
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 768px) {
+  .pagination { justify-content: center; }
 }

@@ -1,149 +1,126 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
-import dayjs, { Dayjs } from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
-import weekOfYear from 'dayjs/plugin/weekOfYear';
-import isBetween from 'dayjs/plugin/isBetween';
+import { useEffect, useMemo, useState, useCallback } from 'react'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
+import weekOfYear from 'dayjs/plugin/weekOfYear'
+import isBetween from 'dayjs/plugin/isBetween'
 
-import './agenda.css';
-import { getAppointments } from '../../../../MockService/appointments';
-import { CreateAppointment } from '../../../../Utils/Types/appointmentTypes';
-import { getAuth } from 'firebase/auth';
-import AppointmentCell from './AppointmentCell';
-import { Professional } from '../../../../MockService/professionals';
+import './agenda.css'
+import { getAppointments } from '../../../../Services/appointmentService'
+import { IAppointment } from '../../../../Utils/Types/appointmentTypes'
+import { useAuth } from '../../../../Contexts/authContext'
+import AppointmentCell from './AppointmentCell'
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
-dayjs.extend(weekOfYear);
-dayjs.extend(isBetween);
+dayjs.extend(utc)
+dayjs.extend(timezone)
+dayjs.extend(weekOfYear)
+dayjs.extend(isBetween)
 
-const HOUR_START = 8;   // 08:00
-const HOUR_BLOCKS = 12; // 12 bloques -> 20:00
+const HOUR_START = 8
+const HOUR_BLOCKS = 12
 
-// Helpers
-const toLocal = (d: string | Date | Dayjs | null | undefined): Dayjs => {
-  // si no viene nada, usamos un Date inválido para que dayjs sea inválido
-  const src = d ?? new Date(NaN);
-  return dayjs.isDayjs(src) ? src.utc() : dayjs(src).utc();
-};
-// Lunes como inicio de semana (devuelve día 00:00 en UTC)
 const startOfWeekMonday = (base = dayjs().utc()) => {
-  const dow = (base.day() + 6) % 7; // 0=Monday..6=Sunday
-  return base.startOf('day').subtract(dow, 'day');
-};
+  const dow = (base.day() + 6) % 7
+  return base.startOf('day').subtract(dow, 'day')
+}
 
-// Extrae "HH:mm" o lo que venga a minutos desde 00:00
-const toMinutes = (value: string | Date | Dayjs): number => {
-  if (dayjs.isDayjs(value)) {
-    const d = value.utc();
-    return d.hour() * 60 + d.minute();
-  }
-  if (value instanceof Date) {
-    const h = value.getUTCHours();
-    const m = value.getUTCMinutes();
-    return h * 60 + m;
-  }
-  // string: "HH:mm" o ISO
-  if (/^\d{2}:\d{2}$/.test(value)) {
-    const [h, m] = value.split(':').map(Number);
-    return h * 60 + m;
-  }
-  const d = dayjs(value).utc();
-  return d.hour() * 60 + d.minute();
-};
+const toMinutes = (time: string): number => {
+  const [h, m] = time.split(':').map(Number)
+  return h * 60 + m
+}
 
 const Agenda = () => {
-  const [appointments, setAppointments] = useState<CreateAppointment[]>([]);
-  const [professionalEmail, setProfessionalEmail] = useState<string | null>(null);
+  const { user } = useAuth()
+  const [appointments, setAppointments] = useState<IAppointment[]>([])
 
   const hours = useMemo(
-    () => Array.from({ length: HOUR_BLOCKS }, (_, i) => `${String(HOUR_START + i).padStart(2, '0')}:00`),
+    () => Array.from({ length: HOUR_BLOCKS }, (_, i) =>
+      `${String(HOUR_START + i).padStart(2, '0')}:00`
+    ),
     []
-  );
+  )
 
   const weekDays = useMemo(() => {
-    const startMonday = startOfWeekMonday();
-    return Array.from({ length: 5 }, (_, i) => startMonday.add(i, 'day')); // Lunes..Viernes
-  }, []);
+    const startMonday = startOfWeekMonday()
+    return Array.from({ length: 5 }, (_, i) => startMonday.add(i, 'day'))
+  }, [])
 
   const fetchAppointments = useCallback(async () => {
-    const appointmentsData = await getAppointments();
-    setAppointments(appointmentsData.appointments);
-  }, []);
+    try {
+      // Traemos todos los turnos — para admin/secretary traemos todo
+      // Para professional filtramos por su perfil
+      const data = await getAppointments(1, 200)
+      setAppointments(data.docs)
+    } catch (error) {
+      console.error('Error al cargar turnos', error)
+    }
+  }, [])
 
   useEffect(() => {
-    fetchAppointments();
-    const auth = getAuth();
-    const user = auth.currentUser;
-    if (user) setProfessionalEmail(user.email);
-  }, [fetchAppointments]);
+    fetchAppointments()
+  }, [fetchAppointments])
 
-  const isProfessional = (id: Professional | string): id is Professional =>
-    (id as Professional)?.user_id !== undefined;
-
-  // Filtra por el profesional logueado
+  // Filtra según el rol del usuario logueado
   const myAppointments = useMemo(() => {
-    if (!professionalEmail) return [];
-    return appointments.filter((a) => {
-      if (!isProfessional(a.professional_id)) return false;
-      return a.professional_id.user_id.email === professionalEmail;
-    });
-  }, [appointments, professionalEmail]);
+    if (!user) return []
 
-  // KPI: hoy
-  const todayUtc = dayjs().utc().startOf('day');
-const kpiToday = useMemo(() => {
-  const list = myAppointments.filter(
-    (a) => a.date_time && toLocal(a.date_time).startOf('day').isSame(todayUtc)
-  );
+    if (user.role === 'professional') {
+      return appointments.filter((a) => {
+        const prof = a.professionalId
+        if (typeof prof === 'object' && prof !== null) {
+          return prof.userId?._id === user._id
+        }
+        return false
+      })
+    }
 
-  const count = list.length;
-  const last = count
-    ? list.reduce((latest, a) =>
-        toLocal(latest.schedule.time_slots.end_time).isAfter(
-          toLocal(a.schedule.time_slots.end_time)
-        )
-          ? latest
-          : a
-      )
-    : null;
+    // admin y secretary ven todos
+    return appointments
+  }, [appointments, user])
 
-  return {
-    count,
-    lastEndTime: last
-      ? toLocal(last.schedule.time_slots.end_time).format('HH:mm')
-      : 'No hay turnos',
-  };
-}, [myAppointments, todayUtc]);
+  // KPIs
+  const todayUtc = dayjs().utc().startOf('day')
 
+  const kpiToday = useMemo(() => {
+    const todayList = myAppointments.filter((a) =>
+      dayjs(a.date).utc().startOf('day').isSame(todayUtc)
+    )
 
-  // Turnos por día/hora
-const getTurnos = (dayIndex: number, hourLabel: string) => {
-  const targetDate = weekDays[dayIndex];
-  const [hh, mm] = hourLabel.split(':').map(Number);
-  const targetMinutes = hh * 60 + mm;
+    const count = todayList.length
 
-  return myAppointments.filter((a) => {
-    if (!a.date_time) return false;                        // <-- guarda
-    const aDate = toLocal(a.date_time);
-    if (!aDate.isSame(targetDate, 'day')) return false;    // mismo día
+    const lastEndTime = count
+      ? todayList.reduce((latest, a) =>
+          toMinutes(a.timeTo) > toMinutes(latest.timeTo) ? a : latest
+        ).timeTo
+      : null
 
-    const startMin = toMinutes(a.schedule.time_slots.start_time as unknown as string | Date | Dayjs);
-    return startMin === targetMinutes;
-  });
-};
+    return { count, lastEndTime }
+  }, [myAppointments, todayUtc])
+
+  // Turnos por celda
+  const getTurnos = (dayIndex: number, hourLabel: string): IAppointment[] => {
+    const targetDate = weekDays[dayIndex]
+    const targetMinutes = toMinutes(hourLabel)
+
+    return myAppointments.filter((a) => {
+      const aDate = dayjs(a.date).utc()
+      if (!aDate.isSame(targetDate, 'day')) return false
+      return toMinutes(a.timeFrom) === targetMinutes
+    })
+  }
 
   return (
     <div className="mainAgenda">
+
       {/* KPIs */}
       <div className="agendaKpis">
         <div className="kpiCard">
           <i className="fa-solid fa-hospital-user"></i>
-          Hoy tienes asignado un total de: {kpiToday.count} pacientes
+          Hoy tenés asignado un total de: {kpiToday.count} pacientes
         </div>
         <div className="kpiCard">
           <i className="fa-solid fa-clock"></i>
-          El último turno de hoy es a las: {kpiToday.lastEndTime}
+          El último turno de hoy es a las: {kpiToday.lastEndTime ?? 'No hay turnos'}
         </div>
       </div>
 
@@ -169,16 +146,19 @@ const getTurnos = (dayIndex: number, hourLabel: string) => {
               <tr key={rIdx}>
                 <th className="hourCell stickyCol">{h}</th>
                 {weekDays.map((_, cIdx) => {
-                  const turnos = getTurnos(cIdx, h);
+                  const turnos = getTurnos(cIdx, h)
                   return (
                     <td key={`${rIdx}-${cIdx}`}>
                       <div className="agendaCell">
                         {turnos.map((appointment, i) => (
-                          <AppointmentCell key={`${appointment._id || i}`} appointment={appointment} />
+                          <AppointmentCell
+                            key={appointment._id || i}
+                            appointment={appointment}
+                          />
                         ))}
                       </div>
                     </td>
-                  );
+                  )
                 })}
               </tr>
             ))}
@@ -186,7 +166,7 @@ const getTurnos = (dayIndex: number, hourLabel: string) => {
         </table>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Agenda;
+export default Agenda

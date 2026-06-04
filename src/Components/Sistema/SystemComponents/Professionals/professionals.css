@@ -1,456 +1,431 @@
-/* ========== LAYOUT CON SIDEBAR FIJA ========== */
-/* ====== LAYOUT CON SIDEBAR FIJA ====== */
+/* ========== LAYOUT ========== */
 :root { --gutter: 24px; }
 
-.professionalTableContainer{
-  display:flex; flex-direction:column; align-items:stretch;
-  margin-top:5rem;
+.professionalTableContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-top: 5rem;
   padding-left: calc(80px + var(--gutter));
   padding-right: var(--gutter);
-  min-width:0;
+  min-width: 0;
 }
 
-@media (max-width: 992px){
-  .professionalTableContainer{ padding-left: var(--gutter); }
+@media (max-width: 992px) {
+  .professionalTableContainer { padding-left: var(--gutter); }
 }
 
-/* ========== ACCIONES SUPERIORES ========== */
-.actionsContainer{
-  display:flex; align-items:center; justify-content:space-between;
-  width:100%; max-width: 1200px; margin: 0 auto 20px; gap:15px; padding:0;
+/* ========== ACCIONES ========== */
+.actionsContainer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  gap: 15px;
+  padding: 0;
 }
 
-.addPatientContainer, .scheduleConfigContainer{
-  display:flex; align-items:center; gap:8px; cursor:pointer;
-  padding:10px 14px; background:#007bff; border-radius:8px;
+.addPatientContainer,
+.scheduleConfigContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 10px 14px;
+  background: #007bff;
+  border-radius: 8px;
   transition: background-color .2s ease;
 }
-.addPatientContainer:hover, .scheduleConfigContainer:hover{ background:#0056b3 }
-.addPatientContainer span, .scheduleConfigContainer span{ color:#fff }
-.addPatientIcon, .addScheduleIcon{ font-size:20px; color:#fff }
+.addPatientContainer:hover,
+.scheduleConfigContainer:hover { background: #0056b3; }
+.addPatientContainer span,
+.scheduleConfigContainer span { color: #fff; }
+.addPatientIcon,
+.addScheduleIcon { font-size: 20px; color: #fff; }
 
-/* ========== TABLA PROFESIONALES — ESTILO "USUARIOS" ========== */
-/* Wrapper tipo card */
-.table-wrap-professional{
-  width:100%;
-  overflow:auto;
-  -webkit-overflow-scrolling:touch;
-  border:1px solid #333;                 /* adiós borde blanco */
-  border-radius:12px;
+/* ========== TABLA ========== */
+.table-wrap-professional {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #333;
+  border-radius: 12px;
   background: rgba(255,255,255,.04);
   box-shadow: 0 6px 18px rgba(0,0,0,.25);
-  margin-top:10px;
+  margin-top: 10px;
+  scrollbar-color: #555 transparent;
+  scrollbar-width: thin;
 }
+.table-wrap-professional::-webkit-scrollbar { height: 10px; }
+.table-wrap-professional::-webkit-scrollbar-thumb { background: #555; border-radius: 10px; }
 
-/* Tabla */
-.professionalTable{
+.professionalTable {
   border-collapse: collapse;
   border-spacing: 0;
   background: transparent;
-  table-layout: fixed;                    /* evita que una celda rompa el ancho */
   width: 100%;
+  min-width: 600px;
   font-size: 15px;
 }
 
 .professionalTable th,
-.professionalTable td{
-  padding:14px 16px !important;
-  border: none !important;                               /* mata borders heredados claros */
-  border-bottom:1px solid #2a2a2a !important;            /* línea inferior oscura */
-  color:#e5e7eb;
+.professionalTable td {
+  padding: 14px 16px !important;
+  border: none !important;
+  border-bottom: 1px solid #2a2a2a !important;
+  color: #e5e7eb;
   vertical-align: middle;
-  text-align:left;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.professionalTable thead th {
+  background: orange;
+  color: #111;
+  font-weight: 700;
+  border-bottom: 1px solid #e29900 !important;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
+.professionalTable thead th:first-child { border-top-left-radius: 12px; }
+.professionalTable thead th:last-child  { border-top-right-radius: 12px; }
 
-/* Cabecera */
-.professionalTable thead th{
-  background:orange; color:#111; font-weight:700;
-  border-bottom:1px solid #e29900 !important;
-}
-.professionalTable thead th:first-child{ border-top-left-radius:12px; }
-.professionalTable thead th:last-child { border-top-right-radius:12px; }
+.professionalTable tbody tr:nth-child(odd) { background: rgba(255,255,255,.02) !important; }
+.professionalTable tbody tr:hover          { background: rgba(255,255,255,.08) !important; }
+.professionalTable tbody tr:last-child td  { border-bottom: none !important; }
 
-/* Rayado y hover */
-.professionalTable tbody tr:nth-child(odd){ background: rgba(255,255,255,.02) !important; }
-.professionalTable tbody tr:hover{ background: rgba(255,255,255,.08) !important; }
-.professionalTable tbody tr:last-child td{ border-bottom: none !important; }
-
-/* Anchos/Comportamientos por columna:
-   1 Nombre | 2 Apellido | 3 Especialidades | 4 Email | 5 Teléfono | 6 Acciones */
+/* Columnas: Nombre | Email | Especialidades | Acciones */
 .professionalTable th:nth-child(1),
-.professionalTable td:nth-child(1){ width:14%; }
+.professionalTable td:nth-child(1) { width: 20%; white-space: nowrap; }
 
 .professionalTable th:nth-child(2),
-.professionalTable td:nth-child(2){ width:12%; }
+.professionalTable td:nth-child(2) { width: 25%; white-space: nowrap; overflow-wrap: anywhere; }
 
-/* Especialidades: envolver texto y permitir varias líneas */
 .professionalTable th:nth-child(3),
-.professionalTable td:nth-child(3){
-  width:36%;
-  white-space: normal;                    /* permite salto de línea */
-  line-height: 1.35;
-}
+.professionalTable td:nth-child(3) { width: 40%; white-space: normal; line-height: 1.4; }
 
-/* Email: cortar en cualquier parte si es largo */
 .professionalTable th:nth-child(4),
-.professionalTable td:nth-child(4){
-  width:20%;
-  white-space: normal;
-  overflow-wrap: anywhere;                /* quiebra emails largos */
+.professionalTable td:nth-child(4) { width: 15%; text-align: right; white-space: nowrap; }
+
+/* ========== BOTONES DE ACCIÓN ========== */
+.cell-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
 }
 
-/* Teléfono: angosto */
-.professionalTable th:nth-child(5),
-.professionalTable td:nth-child(5){ width:12%; }
-
-/* Acciones: a la derecha, ancho fijo */
-.professionalTable th:nth-child(6),
-.professionalTable td:nth-child(6){
-  width:130px;
-  text-align:right;
+.btn-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 0;
+  cursor: pointer;
+  background: #e5e7eb;
+  color: #111;
+  transition: transform .05s ease, opacity .2s;
 }
+.btn-ico:hover  { opacity: .9; }
+.btn-ico:active { transform: translateY(1px); }
 
-/* Contenedor de botones de acción (si se usa) */
-.cell-actions{
-  display:flex; gap:8px; align-items:center; justify-content:flex-end;
-  position: static;
-  background: transparent;
-  box-shadow: none;
+.btn-danger  { background: #ef4444; color: #fff; }
+.btn-success { background: #22c55e; color: #fff; }
+.btn-warning { background: #f59e0b; color: #111; }
+.btn-primary { background: #3b82f6; color: #fff; }
+.btn-whatsapp { background: #25d366; color: #fff; }
+.btn-whatsapp:hover { background: #1da851; }
+
+/* ========== FORM CREAR PROFESIONAL ========== */
+.professionalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 760px);
+  background: rgba(255,255,255,.04);
+  padding: 20px;
+  border-radius: 12px;
+  margin: 20px auto 0;
+  border: 1px solid #555;
 }
-
-/* ========== BOTONES DE ACCIÓN EN CELDA ========== */
-.btn-ico{
-  display:inline-flex; align-items:center; justify-content:center;
-  width:34px; height:34px; border-radius:8px; border:0; cursor:pointer;
-  background:#e5e7eb; color:#111; transition: transform .05s ease, opacity .2s;
-}
-.btn-ico:hover{ opacity:.9 }
-.btn-ico:active{ transform: translateY(1px) }
-
-.btn-danger{ background:#ef4444; color:#fff }
-.btn-success{ background:#22c55e; color:#fff }
-.btn-warning{ background:#f59e0b; color:#111 }
-
-/* ========== FORMULARIO AGREGAR (DARK + CHIPS) ========== */
-.professionalForm{
-  display:flex; flex-direction:column; gap:12px; width:min(100%, 760px);
-  background-color: rgba(255, 255, 255, .04) !important;
-  padding:20px; border-radius:12px; margin:20px auto 0;
-  border:1px solid #555;
-}
-.professionalForm label{
-  font-size:16px; margin-bottom:5px; color:#fff; display:block; font-weight:700;
+.professionalForm label {
+  font-size: 16px;
+  margin-bottom: 5px;
+  color: #fff;
+  display: block;
+  font-weight: 700;
 }
 .professionalForm select,
-.professionalForm input,
-.professionalForm button{
-  padding:10px; border:1px solid #555; border-radius:10px;
-  background: rgba(255,255,255,.06); color:#fff; outline:none;
-  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
-  margin-bottom:10px;
+.professionalForm input[type="text"],
+.professionalForm input[type="email"],
+.professionalForm input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #555;
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  outline: none;
+  margin-bottom: 10px;
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
 .professionalForm select:focus,
-.professionalForm input:focus{
-  border-color:#007bff;
-  box-shadow:0 0 0 3px rgba(0,123,255,.25);
+.professionalForm input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0,123,255,.25);
   background: rgba(255,255,255,.08);
 }
-.professionalForm select option{ background:#111; color:#fff }
-
-.professionalForm button{
-  background:#007bff; color:#fff; border:0; cursor:pointer;
-  transition: background-color .2s ease; align-self:flex-end;
-}
-.professionalForm button:hover{ background:#0056b3 }
+.professionalForm select option { background: #111; color: #fff; }
 
 /* Chips de especialidades */
-.professionalForm input[type="checkbox"]{
-  position:absolute; opacity:0; pointer-events:none;
+.specialtiesGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
 }
-.professionalForm input[type="checkbox"] + label{
-  display:inline-block; cursor:pointer;
-  padding:.35rem .65rem; border-radius:999px;
-  border:1px solid #555; color:#fff; background:rgba(255,255,255,.06);
-  margin:4px 6px 0 0; user-select:none;
-  transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
-  font-size:.92rem;
+.specialtiesGrid > label:first-child {
+  flex-basis: 100%;
+  color: #fff;
+  font-weight: 700;
 }
-.professionalForm input[type="checkbox"] + label:hover{ background:rgba(255,255,255,.1) }
-.professionalForm input[type="checkbox"]:checked + label{
-  background:rgba(0,123,255,.18); border-color:#007bff;
-  box-shadow:0 0 0 3px rgba(0,123,255,.2);
+.specialtiesGrid input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
-.professionalForm > div{ display:flex; flex-wrap:wrap; align-items:center; gap:6px }
-.professionalForm > div > label:first-child{ flex-basis:100%; margin-bottom:2px }
-
-/* ========== FORMULARIO EDITAR (SE MANTIENE) ========== */
-.editForm{
-  display:flex; flex-direction:column; gap:10px; width:min(100%, 760px);
-  background:#f8f9fa; padding:20px; border-radius:8px; margin:20px auto 0;
-  border:1px solid #e5e7eb;
+.specialtiesGrid input[type="checkbox"] + label {
+  display: inline-block;
+  cursor: pointer;
+  padding: .35rem .65rem;
+  border-radius: 999px;
+  border: 1px solid #555;
+  color: #fff;
+  background: rgba(255,255,255,.06);
+  user-select: none;
+  transition: background-color .15s ease, border-color .15s ease;
+  font-size: .92rem;
 }
-.professionalForm button:hover, .editForm button:hover{ background:#0056b3 }
-.editForm label{ font-size:16px; margin-bottom:5px; color:#333 }
-.editForm input[type="checkbox"]{ width:auto; margin-right:10px }
-
-.editForm input[type="text"],
-.editForm input[type="checkbox"]{
-  margin-bottom:10px; padding:8px; border:1px solid #ddd; border-radius:4px; width:100%;
-}
-.editForm button{
-  background:#007bff; color:#fff; border:0; cursor:pointer;
-  padding:10px; border-radius:4px; transition: background-color .2s ease;
+.specialtiesGrid input[type="checkbox"] + label:hover { background: rgba(255,255,255,.1); }
+.specialtiesGrid input[type="checkbox"]:checked + label {
+  background: rgba(0,123,255,.18);
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0,123,255,.2);
 }
 
-/* ========== MODALES (HORARIOS) ========== */
-.modal{
-  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
-  background:rgba(0,0,0,.5); z-index:9999;
+/* ========== FORM ACTIONS ========== */
+.formActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
 }
+.formActions button {
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background-color .2s ease;
+}
+.formActions button[type="submit"],
+.formActions button:first-child { background: #007bff; color: #fff; }
+.formActions button[type="submit"]:hover,
+.formActions button:first-child:hover { background: #0056b3; }
+.formActions button[type="button"],
+.formActions button:last-child { background: #555; color: #fff; }
+.formActions button[type="button"]:hover,
+.formActions button:last-child:hover { background: #444; }
 
-/* Panel */
-.modalContent{
-  background: rgba(20,20,20,.96) !important;
-  color:#fff;
-  border:1px solid #3a3a3a;
-  border-radius:12px;
+/* ========== MODALES ========== */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.5);
+  z-index: 9999;
+}
+.modalContent {
+  position: relative;
+  background: rgba(20,20,20,.96);
+  color: #fff;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0,0,0,.6);
-  width:min(92vw, 560px);
-  max-height:80vh;
-  overflow:auto;
+  width: min(92vw, 560px);
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 24px;
   backdrop-filter: blur(2px);
 }
-
-/* Cerrar */
-.closeModal{
-  position:absolute;
-  top:12px; right:12px;
-  width:40px; height:40px;
-  border-radius:50%;
-  display:inline-grid; place-items:center;
-  border:1px solid #3a3a3a;
+.closeModal {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid #3a3a3a;
   background: rgba(255,255,255,.06);
-  color: transparent;           /* oculto la “×” textual */
-  cursor:pointer;
-  transition: background .2s, border-color .2s, transform .06s, box-shadow .2s;
-  z-index:3;
+  color: transparent;
+  cursor: pointer;
+  transition: background .2s, border-color .2s, transform .06s;
+  z-index: 3;
 }
 .closeModal::before,
-.closeModal::after{
-  content:"";
-  position:absolute;
-  width:18px; height:2px;
-  background:#e5e7eb;
-  border-radius:2px;
+.closeModal::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 2px;
+  background: #e5e7eb;
+  border-radius: 2px;
 }
-.closeModal::before{ transform: rotate(45deg); }
-.closeModal::after { transform: rotate(-45deg); }
-.closeModal:hover{
-  background: rgba(255,255,255,.12);
-  border-color:#555;
-  box-shadow: 0 6px 16px rgba(0,0,0,.35);
-}
-.closeModal:hover::before,
-.closeModal:hover::after{ background:#fff; }
-.closeModal:active{ transform: translateY(1px); }
-.closeModal:focus-visible{
-  outline: none; box-shadow: 0 0 0 3px rgba(0,123,255,.35);
-}
+.closeModal::before { transform: rotate(45deg); }
+.closeModal::after  { transform: rotate(-45deg); }
+.closeModal:hover { background: rgba(255,255,255,.12); border-color: #555; }
 
-/* Form modal */
-.scheduleForm{ display:flex; flex-direction:column; gap:16px }
-.scheduleForm h2{
-  position: sticky; top: 0; z-index: 2;
-  margin:0; padding:14px 4px 12px;
-  text-align:center; color:#fff; font-size:26px; letter-spacing:-0.015em;
-  background: rgba(20,20,20,.96); border-bottom:1px solid #2d2d2d;
+/* Modal de confirmación */
+.modal-two {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.5);
+  z-index: 9999;
 }
-.scheduleForm label{
-  display:block; margin:0 0 6px; color:#cbd5e1; font-weight:600; font-size:14px;
+.modalContent-two {
+  background: rgba(20,20,20,.96);
+  color: #fff;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+  padding: 24px;
+  width: min(92vw, 440px);
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+}
+.modalContent-two h2 { margin-top: 0; font-size: 20px; }
+.modalContent-two textarea {
+  width: 100%;
+  background: rgba(255,255,255,.06);
+  border: 1px solid #555;
+  border-radius: 8px;
+  color: #fff;
+  padding: 10px;
+  resize: vertical;
+  outline: none;
+}
+.modalButtons-two {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  justify-content: flex-end;
+}
+.modalButtons-two button {
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background-color .2s ease;
+}
+.modalButtons-two button:first-child { background: #555; color: #fff; }
+.modalButtons-two button:first-child:hover { background: #444; }
+.modalButtons-two button:last-child  { background: #007bff; color: #fff; }
+.modalButtons-two button:last-child:hover  { background: #0056b3; }
+
+/* ========== FORM HORARIOS ========== */
+.scheduleForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.scheduleForm h2 {
+  margin: 0 0 8px;
+  text-align: center;
+  color: #fff;
+  font-size: 22px;
+}
+.scheduleForm label {
+  display: block;
+  margin: 0 0 6px;
+  color: #cbd5e1;
+  font-weight: 600;
+  font-size: 14px;
 }
 .scheduleForm select,
-.scheduleForm input[type="time"],
-.scheduleForm input[type="text"]{
-  width:100%; height:44px; padding:10px 12px;
-  border:1px solid #555; border-radius:10px;
-  background: rgba(255,255,255,.06); color:#fff; font-size:15px; outline:none;
-  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+.scheduleForm input[type="time"] {
+  width: 100%;
+  height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #555;
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  color: #fff;
+  font-size: 15px;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
-.scheduleForm input[type="time"]::-webkit-calendar-picker-indicator{ filter: invert(1) opacity(.85) }
-.scheduleForm select option{ background:#111; color:#fff }
-.scheduleForm select:focus, .scheduleForm input:focus{
-  border-color:#007bff; box-shadow:0 0 0 3px rgba(0,123,255,.25); background: rgba(255,255,255,.08);
+.scheduleForm input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1) opacity(.85); }
+.scheduleForm select option { background: #111; color: #fff; }
+.scheduleForm select:focus,
+.scheduleForm input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0,123,255,.25);
+  background: rgba(255,255,255,.08);
 }
 
-/* Bloques de horario */
-.scheduleSlot{
-  display:grid;
+.scheduleSlot {
+  display: grid;
   grid-template-columns: 1.1fr 1fr 1fr auto;
-  gap:12px; align-items:end; padding:12px;
-  border:1px solid #444; border-radius:12px; background: rgba(255,255,255,.03);
+  gap: 12px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid #444;
+  border-radius: 12px;
+  background: rgba(255,255,255,.03);
   transition: border-color .15s ease, background-color .15s ease;
 }
-.scheduleSlot:hover{ border-color:#555; background: rgba(255,255,255,.04) }
-.scheduleSlot label{ margin:0 }
-@media (max-width: 680px){ .scheduleSlot{ grid-template-columns: 1fr } }
+.scheduleSlot:hover { border-color: #555; background: rgba(255,255,255,.04); }
+.scheduleSlot label { margin: 0; }
 
-/* Botones del modal */
-.scheduleForm .deleteScheduleButton{
-  background:#ef4444; color:#fff; border:0; padding:.65rem .9rem; border-radius:10px; white-space:nowrap;
+@media (max-width: 680px) {
+  .scheduleSlot { grid-template-columns: 1fr; }
 }
-.scheduleForm .deleteScheduleButton:hover{ filter: brightness(.95) }
-.scheduleForm > button[type="button"]{
-  align-self:flex-start; background:#f59e0b; color:#111; border:0; padding:.65rem .9rem; border-radius:10px;
+
+.deleteScheduleButton {
+  background: #ef4444;
+  color: #fff;
+  border: 0;
+  padding: .65rem .9rem;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.deleteScheduleButton:hover { filter: brightness(.95); }
+
+.scheduleForm > button[type="button"] {
+  align-self: flex-start;
+  background: #f59e0b;
+  color: #111;
+  border: 0;
+  padding: .65rem .9rem;
+  border-radius: 10px;
+  cursor: pointer;
   transition: filter .2s ease, transform .05s ease;
 }
-.scheduleForm > button[type="button"]:hover{ filter: brightness(.97) }
-.scheduleForm > button[type="button"]:active{ transform: translateY(1px) }
-.scheduleForm > button[type="submit"]{
-  position: sticky; bottom: -1px; align-self:flex-end;
-  background:#007bff; color:#fff; border:0; padding:.65rem 1rem; border-radius:10px;
-  box-shadow: 0 -6px 18px rgba(0,0,0,.35);
-}
-.scheduleForm > button[type="submit"]:hover{ background:#0056b3 }
-
-/* ========== TABLA DE HORARIOS (DETALLE) — LOOK “USUARIOS” ========== */
-.profesionalTimeSlotsTable{
-  border-collapse: collapse;
-  width: min(100%, 1100px);
-  margin: 2rem auto 0;
-  background: rgba(255,255,255,.04);
-  border:1px solid #333;
-  border-radius:12px;
-  overflow:hidden;
-  box-shadow: 0 6px 18px rgba(0,0,0,.25);
-}
-.profesionalTimeSlotsTable th, 
-.profesionalTimeSlotsTable td{
-  padding:12px 14px;
-  border-bottom:1px solid #2a2a2a;
-  text-align:center;
-  color:#e5e7eb;
-}
-.profesionalTimeSlotsTable thead th{
-  background:orange; color:#111; font-weight:700; border-bottom:1px solid #e29900;
-}
-.profesionalTimeSlotsTable tbody tr:nth-child(odd){ background: rgba(255,255,255,.02) }
-.profesionalTimeSlotsTable tbody tr:hover{ background: rgba(255,255,255,.06) }
-.profesionalIdColumn{ background:orange; font-weight:700; width:100px }
-.timeSlotCell{ height:50px }
-
-.professional-time-slots-container{ padding:20px }
-.header-container{ display:flex; justify-content:space-between; align-items:center; margin-bottom:20px }
-.close-button:hover{ background:#d32f2f }
-
-/* ========== BOTONES ANTIGUOS (COMPAT) ========== */
-.delete-button{
-  background:#ef4444; color:#fff; border:0; cursor:pointer;
-  padding:5px 10px; margin-left:5px; border-radius:6px;
-}
-.delete-button:hover{ background:#be2f2f }
-
-.schedule-button{
-  background:#28a745; color:#fff; border:0; cursor:pointer;
-  padding:5px 10px; margin-left:5px; border-radius:6px;
-}
-.schedule-button:hover{ background:#218838 }
-
-.saveChange{
-  background:#007bff; width:8rem; height:3rem; border-radius:6px;
-  color:#fff; border:0; cursor:pointer; transition: background-color .2s ease; margin-top:1rem;
-}
+.scheduleForm > button[type="button"]:hover { filter: brightness(.97); }
 
 /* ========== RESPONSIVE ========== */
-@media screen and (max-width: 768px){
-  .actionsContainer{ flex-direction:column; gap:10px }
-  .addPatientContainer, .scheduleConfigContainer{ width:100%; justify-content:center }
-  .cell-wrap{ max-width:220px }
+@media screen and (max-width: 768px) {
+  .actionsContainer { flex-direction: column; gap: 10px; }
+  .addPatientContainer,
+  .scheduleConfigContainer { width: 100%; justify-content: center; }
 }
-
-@media screen and (max-width: 480px){
-  .actionsContainer{ padding:0 10px }
-  .addPatientIcon, .addScheduleIcon{ font-size:18px }
-}
-/* === Scroll horizontal + tabla ancha (sin cortar datos) === */
-.table-wrap-professional{
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* la tabla se estira tanto como necesite el contenido */
-.professionalTable{
-  width: max-content;   /* clave para que se ensanche */
-  min-width: 100%;      /* pero nunca menos que el contenedor */
-  table-layout: auto;
-}
-
-/* por defecto: permitir salto de línea correcto */
-.professionalTable th,
-.professionalTable td{
-  white-space: normal;
-  word-break: normal;
-  overflow-wrap: anywhere;   /* evita desbordes feos */
-}
-
-/* ID */
-.professionalTable th:nth-child(1),
-.professionalTable td:nth-child(1){
-  white-space: nowrap;
-  min-width: 220px;
-}
-
-/* Nombre */
-.professionalTable th:nth-child(2),
-.professionalTable td:nth-child(2){
-  min-width: 160px;
-}
-
-/* Apellido */
-.professionalTable th:nth-child(3),
-.professionalTable td:nth-child(3){
-  min-width: 160px;
-}
-
-/* Especialidades (dejar que envuelva) */
-.professionalTable th:nth-child(4),
-.professionalTable td:nth-child(4){
-  min-width: 420px;
-  white-space: normal;
-}
-
-/* Email */
-.professionalTable th:nth-child(5),
-.professionalTable td:nth-child(5){
-  white-space: nowrap;
-  min-width: 260px;
-}
-
-/* Teléfono */
-.professionalTable th:nth-child(6),
-.professionalTable td:nth-child(6){
-  white-space: nowrap;
-  min-width: 160px;
-}
-
-/* Acciones = última columna (robusto si cambia el orden) */
-.professionalTable th:last-child,
-.professionalTable td:last-child{
-  white-space: nowrap;
-  min-width: 160px;
-  text-align: right;
-  padding-right: 12px;
-  overflow: visible !important;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
-}
-
-/* scroll-bar visible (opcional, queda lindo en dark) */
-.table-wrap-professional::-webkit-scrollbar{ height: 10px; }
-.table-wrap-professional::-webkit-scrollbar-thumb{ background:#555; border-radius: 10px; }
-.table-wrap-professional{ scrollbar-color:#555 transparent; scrollbar-width: thin; }

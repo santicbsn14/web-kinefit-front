@@ -1,263 +1,149 @@
-import React, { useEffect, useState } from 'react';
-import './patients.css';
-import { getUsers } from '../../../../MockService/users';
-import { createPatient, getPatients, deletePatient, updatePatient, Patient } from '../../../../MockService/patients';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { useEffect, useState, useCallback } from 'react'
+import './patients.css'
+import { toast } from 'react-toastify'
+import api from '../../../../Services/api'
+import { IPatient } from '../../../../Utils/Types/userTypes'
+import { IUser } from '../../../../Utils/Types/userTypes'
 
 const Patients = () => {
-  const [showForm, setShowForm] = useState(false);
-  const [users, setUsers] = useState<{ id: string, firstname: string, lastname: string, mutual: string }[]>([]);
-  const [patients, setPatients] = useState<{ _id: string, user_id: { firstname: string; lastname: string; email: string; phone: string }, mutual: string, clinical_data: string[] }[]>([]);
-  const [formData, setFormData] = useState({
-    user_id: '',
-    mutual: '',
-    clinical_data: [''], // Cambiado a un array vacío
-  });
-  const [isEditing, setIsEditing] = useState(false);
-  const [userQuery, setUserQuery] = useState("");
-const [showUserList, setShowUserList] = useState(false);
+  const [patients, setPatients] = useState<IPatient[]>([])
+  const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingPatient, setEditingPatient] = useState<IPatient | null>(null)
+  const [medicalHistory, setMedicalHistory] = useState('')
 
-  const [currentPatientId, setCurrentPatientId] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const patientsPerPage = 6;
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-
-    if (name === "clinical_data") {
-      const newClinicalData = [...formData.clinical_data];
-      newClinicalData[0] = value; // Si solo hay un campo, se actualiza directamente
-      setFormData({ ...formData, clinical_data: newClinicalData });
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
-  };
-
-  const addClinicalDataField = () => {
-    setFormData({ ...formData, clinical_data: [...formData.clinical_data, ''] }); // Añadir un nuevo campo
-  };
-
-  const toggleForm = () => {
-    setShowForm(!showForm);
-    setIsEditing(false); // Reiniciar estado de edición al abrir el formulario
-    setFormData({ user_id: '', mutual: '', clinical_data: [''] }); // Reiniciar datos del formulario
-  };
-
-  const fetchUsers = async () => {
-    const usersData = await getUsers();
-    setUsers(usersData.users);
-  };
-
-  const fetchPatients = async () => {
-    const patientsData = await getPatients();
-    setPatients(patientsData.patients);
-  };
-
-  useEffect(() => {
-    fetchUsers();
-    fetchPatients();
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const fetchPatients = useCallback(async (page = 1) => {
+    setLoading(true)
     try {
-      if (isEditing && currentPatientId) {
-        await updatePatient(currentPatientId, formData as unknown as Patient);
-        toast.success('¡Actualización de paciente exitosa!');
-      } else {
-        await createPatient(formData as unknown as Patient);
-        toast.success('¡Creación de paciente exitosa!');
-      }
-      fetchPatients();
-      toggleForm();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error(errorMessage);
+      const response = await api.get('/patients', { params: { page, limit: 10 } })
+      setPatients(response.data.docs)
+      setTotalPages(response.data.totalPages)
+      setCurrentPage(page)
+    } catch {
+      toast.error('Error al cargar los pacientes')
+    } finally {
+      setLoading(false)
     }
-  };
+  }, [])
 
-  const handleEdit = (patient: Patient) => {
-    setFormData({
-      user_id: patient.user_id._id,
-      mutual: patient?.mutual || 'No hay mutual',
-      clinical_data: patient.clinical_data as string[],
-    });
-    setCurrentPatientId(patient._id as unknown as string);
-    setIsEditing(true);
-    setShowForm(true);
-  };
+  useEffect(() => { fetchPatients(1) }, [fetchPatients])
 
-  const handleDelete = async (patientId: string) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este paciente?')) {
-      try {
-        await deletePatient(patientId);
-        fetchPatients();
-        toast.success('¡Paciente eliminado exitosamente!');
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        toast.error(errorMessage);
-      }
+  const getUser = (patient: IPatient): IUser | null => {
+    if (typeof patient.userId === 'object') return patient.userId as IUser
+    return null
+  }
+
+  const handleEditClick = (patient: IPatient) => {
+    setEditingPatient(patient)
+    setMedicalHistory(patient.medicalHistory || '')
+    setShowEditModal(true)
+  }
+
+  const handleEditSave = async () => {
+    if (!editingPatient) return
+    try {
+      await api.put(`/patients/${editingPatient._id}`, { medicalHistory })
+      toast.success('Historia clínica actualizada')
+      setShowEditModal(false)
+      fetchPatients(currentPage)
+    } catch {
+      toast.error('Error al actualizar la historia clínica')
     }
-  };
-    // Lógica de paginación
-    const indexOfLastPatient = currentPage * patientsPerPage;
-    const indexOfFirstPatient = indexOfLastPatient - patientsPerPage;
-    const currentPatients = patients.slice(indexOfFirstPatient, indexOfLastPatient);
-  
-    const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  }
+
+  if (loading) return <div>Cargando...</div>
 
   return (
     <div className="patientTableContainer">
-      <div className="addPatientContainer" onClick={toggleForm}>
-        <i className="fa-solid fa-user-plus addPatientIcon"></i>
-        <span className="addPatientText">Agregar paciente</span>
-      </div>
       <div className="table-wrap">
-      <table className="patientTable">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Apellido</th>
-            <th>Mutual</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentPatients.map((paciente) => (
-            <tr key={paciente._id}>
-              <td>{paciente._id}</td>
-              <td>{paciente.user_id.firstname}</td>
-              <td>{paciente.user_id.lastname}</td>
-              <td>{paciente.mutual}</td>
-              <td>
-                <span className={`statusIndicator`}></span>
-              </td>
-              <td>
-                <button className='edit-button' onClick={() => handleEdit(paciente as unknown as Patient)}>
-                <i className="fa-solid fa-edit"></i>
-                </button>
-                <button className='delete-button' onClick={() => handleDelete(paciente._id)}>
-                <i className="fa-solid fa-trash"></i>
-                </button>
-              </td>
+        <table className="patientTable">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>DNI</th>
+              <th>Teléfono</th>
+              <th>Historia clínica</th>
+              <th>Acciones</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {patients.length === 0 ? (
+              <tr><td colSpan={6}>No hay pacientes registrados</td></tr>
+            ) : (
+              patients.map((patient) => {
+                const user = getUser(patient)
+                return (
+                  <tr key={patient._id}>
+                    <td>{user?.name || 'N/A'}</td>
+                    <td>{user?.email || 'N/A'}</td>
+                    <td>{patient.dni}</td>
+                    <td>{patient.phone}</td>
+                    <td className="cell-medical">
+                      {patient.medicalHistory
+                        ? patient.medicalHistory.substring(0, 60) + (patient.medicalHistory.length > 60 ? '...' : '')
+                        : <span className="no-data">Sin datos</span>}
+                    </td>
+                    <td>
+                      <button
+                        className="btn-ico btn-warning"
+                        title="Editar historia clínica"
+                        onClick={() => handleEditClick(patient)}
+                      >
+                        <i className="fa-solid fa-edit"></i>
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })
+            )}
+          </tbody>
+        </table>
       </div>
+
+      {/* Paginación */}
       <div className="pagination">
-        <button 
-          onClick={() => paginate(currentPage - 1)} 
-          disabled={currentPage === 1}
+        <button
           className="paginationButton"
+          onClick={() => fetchPatients(currentPage - 1)}
+          disabled={currentPage === 1}
         >
           Anterior
         </button>
-        <span className="pageInfo">{`Página ${currentPage} de ${Math.ceil(users.length / patientsPerPage)}`}</span>
-        <button 
-          onClick={() => paginate(currentPage + 1)} 
-          disabled={indexOfLastPatient>= patients.length}
+        <span className="pageInfo">Página {currentPage} de {totalPages}</span>
+        <button
           className="paginationButton"
+          onClick={() => fetchPatients(currentPage + 1)}
+          disabled={currentPage === totalPages}
         >
           Siguiente
         </button>
       </div>
-      {showForm && (
-        <form onSubmit={handleSubmit} className="patientForm">
-          <label>
-            Nombre Usuario:
 
-  <div
-    className="combo"
-    role="combobox"
-    aria-expanded={showUserList}
-    aria-owns="user-listbox"
-    aria-haspopup="listbox"
-  >
-    <input
-      className="combo-input"
-      type="text"
-      placeholder="Buscá por nombre o apellido"
-      value={userQuery}
-      onChange={(e) => {
-        setUserQuery(e.target.value);
-        setShowUserList(true);
-      }}
-      onFocus={() => setShowUserList(true)}
-      onBlur={() => setTimeout(() => setShowUserList(false), 120)} /* deja hacer click en opciones */
-      aria-autocomplete="list"
-      aria-controls="user-listbox"
-    />
-
-    {showUserList && (
-      <ul className="combo-list" role="listbox" id="user-listbox">
-        {users
-          .filter(u => {
-            const q = userQuery.trim().toLowerCase();
-            if (!q) return true;
-            return (
-              u.firstname.toLowerCase().includes(q) ||
-              u.lastname.toLowerCase().includes(q)
-            );
-          })
-          .slice(0, 12) /* límite para no hacerla eterna */
-          .map(u => (
-            <li
-              key={u.id}
-              role="option"
-              className="combo-option"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                setFormData(prev => ({ ...prev, user_id: u.id }));
-                setUserQuery(`${u.firstname} ${u.lastname}`);
-                setShowUserList(false);
-              }}
-              aria-selected={formData.user_id === u.id}
-            >
-              <span className="combo-primary">{u.firstname} {u.lastname}</span>
-              {u.mutual && <span className="combo-meta">• {u.mutual}</span>}
-            </li>
-          ))}
-        {users.length === 0 && (
-          <li className="combo-empty">No hay usuarios</li>
-        )}
-      </ul>
-    )}
-  </div>
-
-          </label>
-          <input
-            type="text"
-            name="mutual"
-            value={formData.mutual}
-            onChange={handleInputChange}
-            placeholder="Mutual (opcional)"
-          />
-          {formData.clinical_data.map((data, index) => (
-            <input
-              key={index}
-              type="text"
-              name="clinical_data"
-              value={data}
-              onChange={(e) => {
-                const newClinicalData = [...formData.clinical_data];
-                newClinicalData[index] = e.target.value; // Actualiza el valor específico
-                setFormData({ ...formData, clinical_data: newClinicalData });
-              }}
-              placeholder="Datos clínicos"
-              required
+      {/* Modal editar historia clínica */}
+      {showEditModal && editingPatient && (
+        <div className="modal-two">
+          <div className="modalContent-two">
+            <h2>Historia clínica — {getUser(editingPatient)?.name}</h2>
+            <textarea
+              className="medical-textarea"
+              value={medicalHistory}
+              onChange={(e) => setMedicalHistory(e.target.value)}
+              placeholder="Ingresá los datos clínicos del paciente..."
+              rows={6}
             />
-          ))}
-          <button type="button" onClick={addClinicalDataField}>Agregar campo de datos clínicos</button>
-          <button type="submit">{isEditing ? 'Actualizar Paciente' : 'Agregar Paciente'}</button>
-        </form>
+            <div className="modalButtons-two">
+              <button onClick={() => setShowEditModal(false)}>Cancelar</button>
+              <button onClick={handleEditSave}>Guardar</button>
+            </div>
+          </div>
+        </div>
       )}
-      <ToastContainer />
-    </div>
-  );
-};
 
-export default Patients;
+    </div>
+  )
+}
+
+export default Patients

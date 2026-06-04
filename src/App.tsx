@@ -20,11 +20,16 @@ import ResetPassword from './Components/Sistema/SystemComponents/ForgotPassword/
 import ForgotPassword from './Components/Sistema/SystemComponents/ForgotPassword/ForgotPassword'
 import ContactForm from './Components/Contacto/Contact'
 import Footer from './Components/Footer/Footer'
+import Specialties from './Components/Sistema/SystemComponents/Specialties/Specialties'
+import Register from './Components/Sistema/SystemComponents/Login/Register'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 function App() {
   return (
     <AuthProvider>
       <div className='open-sans'>
         <BrowserRouter>
+        <ToastContainer position="top-right" autoClose={3000} />
           <NavBar></NavBar>
           <Routes>
             <Route path='/' element={<Home/>}/>
@@ -33,6 +38,7 @@ function App() {
             <Route path='/obrasSociales' element={<ObrasSociales/>}/>
             <Route path='/contact' element={<ContactForm/>}/>
             <Route path='/login' element={<LoginComponent/>}/>
+            <Route path='/register' element={<Register/>}/>
             <Route path='/forgotPassword' element={<ForgotPassword/>}/>
             <Route path='/resetPassword' element={<ResetPassword/>}/>
             <Route element={<ProtectedRoute/>}>
@@ -43,7 +49,9 @@ function App() {
                 <Route path='professionals' element={<Professionals/>}/>
                 <Route path='appointments' element={<Appointments/>}/>
                 <Route path='patients' element={<Patients/>}/>
+                <Route path='specialties' element={<Specialties/>}/>
                 <Route path='patient-dashboard' element={<PatientDashboard />} />
+                
               </Route>
             </Route>
           </Routes>
