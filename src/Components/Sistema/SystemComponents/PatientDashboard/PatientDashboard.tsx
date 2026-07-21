@@ -154,8 +154,8 @@ const PatientDashboard = () => {
         <i className={`fa-solid ${nextAppointment ? 'fa-hospital-user' : 'fa-calendar-xmark'}`}></i>
         {nextAppointment
           ? <>
-              Próximo turno: <strong>{dayjs(nextAppointment.date).utc().format('dddd D [de] MMMM')}</strong> a las <strong>{nextAppointment.timeFrom}</strong> — {getSpecialtyName(nextAppointment)}
-            </>
+            Próximo turno: <strong>{dayjs(nextAppointment.date).utc().format('dddd D [de] MMMM')}</strong> a las <strong>{nextAppointment.timeFrom}</strong> — {getSpecialtyName(nextAppointment)}
+          </>
           : 'No tenés turnos aprobados próximamente'
         }
       </div>
@@ -275,11 +275,21 @@ const PatientDashboard = () => {
                       ).join(', ')}
                     </td>
                     <td>
-                      {p.scheduleId?.weeklySlots?.map((slot, i) => (
-                        <span key={i} className="scheduleChip">
-                          {DAY_LABELS[slot.day] || slot.day}: {slot.timeFrom}-{slot.timeTo}
-                        </span>
-                      )) || 'No configurado'}
+                      {p.scheduleId?.weeklySlots?.length
+                        ? (() => {
+                          const grouped: Record<string, string[]> = {}
+                          p.scheduleId!.weeklySlots.forEach(slot => {
+                            if (!grouped[slot.day]) grouped[slot.day] = []
+                            grouped[slot.day].push(`${slot.timeFrom}-${slot.timeTo}`)
+                          })
+                          return Object.entries(grouped).map(([day, horarios]) => (
+                            <span key={day} className="scheduleChip">
+                              {DAY_LABELS[day] || day}: {horarios.join(' / ')}
+                            </span>
+                          ))
+                        })()
+                        : 'No configurado'
+                      }
                     </td>
                   </tr>
                 ))}
