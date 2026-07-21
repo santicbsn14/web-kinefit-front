@@ -21,6 +21,16 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: 'Cancelado',
 }
 
+const DAY_LABELS: Record<string, string> = {
+  monday: 'Lunes',
+  tuesday: 'Martes',
+  wednesday: 'Miércoles',
+  thursday: 'Jueves',
+  friday: 'Viernes',
+  saturday: 'Sábado',
+  sunday: 'Domingo',
+}
+
 const PatientDashboard = () => {
   const { user } = useAuth()
   const [professionals, setProfessionals] = useState<IProfessional[]>([])
@@ -59,7 +69,6 @@ const PatientDashboard = () => {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  // Cuando cambia el profesional seleccionado, filtrar sus especialidades
   useEffect(() => {
     if (!selectedProfessionalId) {
       setFilteredSpecialties([])
@@ -80,11 +89,10 @@ const PatientDashboard = () => {
       setFormData(prev => ({ ...prev, professionalId: value, specialtyId: '' }))
     }
 
-    // Avisar si la especialidad tiene restricciones
     if (name === 'specialtyId') {
       const spec = specialties.find(s => s._id === value)
       if (spec?.restriction.hasRestriction) {
-        const days = spec.restriction.days.join(', ')
+        const days = spec.restriction.days.map(d => DAY_LABELS[d] || d).join(', ')
         toast.info(
           `"${spec.name}" solo se atiende los días: ${days}, de ${spec.restriction.timeFrom} a ${spec.restriction.timeTo}`,
           { autoClose: 6000 }
@@ -93,26 +101,26 @@ const PatientDashboard = () => {
     }
   }
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  try {
-    await createAppointment({
-      professionalId: formData.professionalId,
-      specialtyId: formData.specialtyId,
-      date: formData.date,
-      timeFrom: formData.timeFrom,
-      notes: formData.notes,
-    })
-    toast.success('¡Turno solicitado exitosamente! Quedará pendiente de aprobación.')
-    fetchData()
-    setTimeout(() => {
-      setShowForm(false)
-      setFormData({ professionalId: '', specialtyId: '', date: '', timeFrom: '', notes: '' })
-    }, 1500)
-  } catch (error: any) {
-    toast.error(error?.response?.data?.error || 'Error al solicitar el turno')
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      await createAppointment({
+        professionalId: formData.professionalId,
+        specialtyId: formData.specialtyId,
+        date: formData.date,
+        timeFrom: formData.timeFrom,
+        notes: formData.notes,
+      })
+      toast.success('¡Turno solicitado exitosamente! Quedará pendiente de aprobación.')
+      fetchData()
+      setTimeout(() => {
+        setShowForm(false)
+        setFormData({ professionalId: '', specialtyId: '', date: '', timeFrom: '', notes: '' })
+      }, 1500)
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'Error al solicitar el turno')
+    }
   }
-}
 
   const handleCancel = async (id: string) => {
     try {
@@ -124,7 +132,6 @@ const handleSubmit = async (e: React.FormEvent) => {
     }
   }
 
-  // Próximo turno aprobado
   const nextAppointment = appointments
     .filter(a => a.status === 'approved' && dayjs(a.date).isAfter(dayjs()))
     .sort((a, b) => dayjs(a.date).diff(dayjs(b.date)))[0]
@@ -270,7 +277,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     <td>
                       {p.scheduleId?.weeklySlots?.map((slot, i) => (
                         <span key={i} className="scheduleChip">
-                          {slot.day}: {slot.timeFrom}-{slot.timeTo}
+                          {DAY_LABELS[slot.day] || slot.day}: {slot.timeFrom}-{slot.timeTo}
                         </span>
                       )) || 'No configurado'}
                     </td>
