@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import './viewLogin.css'
 import * as React from 'react'
-import {  toast } from 'react-toastify'
+import { toast } from 'react-toastify'
 import { login } from '../../../../Services/authService'
 import { useAuth } from '../../../../Contexts/authContext'
 
@@ -46,9 +46,12 @@ const LoginComponent = () => {
               onChange={(e) => setPassword(e.target.value)}
             />
             <button className='btn align-self-start mt-3' type="submit">Iniciar sesión</button>
-            <p style={{textAlign:'center'}}>
-  ¿No tenés cuenta? <Link to="/register">Registrate acá</Link>
-</p>
+            <p style={{ textAlign: 'center' }}>
+              ¿No tenés cuenta? <Link to="/register">Registrate acá</Link>
+            </p>
+            <p style={{ textAlign: 'center' }}>
+              ¿Olvidaste tu contraseña? <Link to="/forgotPassword">Recuperala acá</Link>
+            </p>
           </div>
         </form>
         <div className="col-lg-6">
