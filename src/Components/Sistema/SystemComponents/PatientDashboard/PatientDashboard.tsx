@@ -10,6 +10,7 @@ import { getMyAppointments, createAppointment, cancelAppointmentByPatient } from
 import { getSpecialties } from '../../../../Services/specialtyService'
 import { IProfessional, ISpecialty } from '../../../../Utils/Types/professionalTypes'
 import { IAppointment } from '../../../../Utils/Types/appointmentTypes'
+import { DayOfWeek } from '../../../../Utils/Types/professionalTypes'
 
 dayjs.extend(utc)
 dayjs.locale('es')
@@ -31,6 +32,17 @@ const DAY_LABELS: Record<string, string> = {
   sunday: 'Domingo',
 }
 
+// Mapeo de DayOfWeek a número JS (0=domingo, 1=lunes, etc.)
+const DAY_TO_NUMBER: Record<string, number> = {
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+}
+
 const PatientDashboard = () => {
   const { user } = useAuth()
   const [professionals, setProfessionals] = useState<IProfessional[]>([])
@@ -41,6 +53,7 @@ const PatientDashboard = () => {
   const [showProfessionals, setShowProfessionals] = useState(false)
   const [selectedProfessionalId, setSelectedProfessionalId] = useState('')
   const [filteredSpecialties, setFilteredSpecialties] = useState<ISpecialty[]>([])
+  const [selectedSpecialty, setSelectedSpecialty] = useState<ISpecialty | null>(null)
   const [formData, setFormData] = useState({
     professionalId: '',
     specialtyId: '',
@@ -75,10 +88,17 @@ const PatientDashboard = () => {
       return
     }
     const prof = professionals.find(p => p._id === selectedProfessionalId)
-    if (prof) {
-      setFilteredSpecialties(prof.specialties as ISpecialty[])
-    }
+    if (prof) setFilteredSpecialties(prof.specialties as ISpecialty[])
   }, [selectedProfessionalId, professionals])
+
+  // Calcula si una fecha está deshabilitada según la restricción de la especialidad
+  const isDateDisabled = (dateStr: string): boolean => {
+    if (!selectedSpecialty?.restriction.hasRestriction) return false
+    const date = new Date(dateStr + 'T00:00:00')
+    const dayNumber = date.getDay()
+    const allowedDayNumbers = selectedSpecialty.restriction.days.map(d => DAY_TO_NUMBER[d])
+    return !allowedDayNumbers.includes(dayNumber)
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -86,11 +106,14 @@ const PatientDashboard = () => {
 
     if (name === 'professionalId') {
       setSelectedProfessionalId(value)
-      setFormData(prev => ({ ...prev, professionalId: value, specialtyId: '' }))
+      setSelectedSpecialty(null)
+      setFormData(prev => ({ ...prev, professionalId: value, specialtyId: '', date: '' }))
     }
 
     if (name === 'specialtyId') {
       const spec = specialties.find(s => s._id === value)
+      setSelectedSpecialty(spec || null)
+      setFormData(prev => ({ ...prev, specialtyId: value, date: '' }))
       if (spec?.restriction.hasRestriction) {
         const days = spec.restriction.days.map(d => DAY_LABELS[d] || d).join(', ')
         toast.info(
@@ -99,10 +122,29 @@ const PatientDashboard = () => {
         )
       }
     }
+
+    if (name === 'date' && selectedSpecialty?.restriction.hasRestriction) {
+      if (isDateDisabled(value)) {
+        const days = selectedSpecialty.restriction.days.map(d => DAY_LABELS[d] || d).join(', ')
+        toast.error(`Esta especialidad solo se atiende los días: ${days}`)
+        setFormData(prev => ({ ...prev, date: '' }))
+        return
+      }
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Validación en el front antes de mandar al backend
+    if (selectedSpecialty?.restriction.hasRestriction && formData.date) {
+      if (isDateDisabled(formData.date)) {
+        const days = selectedSpecialty.restriction.days.map(d => DAY_LABELS[d] || d).join(', ')
+        toast.error(`Esta especialidad solo se atiende los días: ${days}`)
+        return
+      }
+    }
+
     try {
       await createAppointment({
         professionalId: formData.professionalId,
@@ -115,9 +157,13 @@ const PatientDashboard = () => {
       fetchData()
       setTimeout(() => {
         setShowForm(false)
+        setSelectedSpecialty(null)
         setFormData({ professionalId: '', specialtyId: '', date: '', timeFrom: '', notes: '' })
       }, 1500)
     } catch (error: any) {
+      console.log('=== ERROR TURNO ===')
+      console.log(error?.response?.data)
+      console.log('===================')
       toast.error(error?.response?.data?.error || 'Error al solicitar el turno')
     }
   }
@@ -222,6 +268,11 @@ const PatientDashboard = () => {
                 required
                 min={dayjs().format('YYYY-MM-DD')}
               />
+              {selectedSpecialty?.restriction.hasRestriction && (
+                <small style={{ color: '#fde68a', marginTop: '4px', display: 'block' }}>
+                  Solo días disponibles: {selectedSpecialty.restriction.days.map(d => DAY_LABELS[d] || d).join(', ')}
+                </small>
+              )}
             </label>
 
             <label>Hora:
@@ -231,7 +282,14 @@ const PatientDashboard = () => {
                 value={formData.timeFrom}
                 onChange={handleInputChange}
                 required
+                min={selectedSpecialty?.restriction.hasRestriction ? selectedSpecialty.restriction.timeFrom : undefined}
+                max={selectedSpecialty?.restriction.hasRestriction ? selectedSpecialty.restriction.timeTo : undefined}
               />
+              {selectedSpecialty?.restriction.hasRestriction && (
+                <small style={{ color: '#fde68a', marginTop: '4px', display: 'block' }}>
+                  Horario: {selectedSpecialty.restriction.timeFrom} - {selectedSpecialty.restriction.timeTo}
+                </small>
+              )}
             </label>
 
             <label>Notas (opcional):
@@ -347,7 +405,6 @@ const PatientDashboard = () => {
           </div>
         )}
       </div>
-
     </div>
   )
 }
