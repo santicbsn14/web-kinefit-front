@@ -50,6 +50,8 @@ const PatientDashboard = () => {
   const [appointments, setAppointments] = useState<IAppointment[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [showProfessionals, setShowProfessionals] = useState(false)
   const [selectedProfessionalId, setSelectedProfessionalId] = useState('')
   const [filteredSpecialties, setFilteredSpecialties] = useState<ISpecialty[]>([])
@@ -133,50 +135,67 @@ const PatientDashboard = () => {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
 
-    // Validación en el front antes de mandar al backend
-    if (selectedSpecialty?.restriction.hasRestriction && formData.date) {
-      if (isDateDisabled(formData.date)) {
-        const days = selectedSpecialty.restriction.days.map(d => DAY_LABELS[d] || d).join(', ')
-        toast.error(`Esta especialidad solo se atiende los días: ${days}`)
-        return
-      }
-    }
-
-    try {
-      await createAppointment({
-        professionalId: formData.professionalId,
-        specialtyId: formData.specialtyId,
-        date: formData.date,
-        timeFrom: formData.timeFrom,
-        notes: formData.notes,
-      })
-      toast.success('¡Turno solicitado exitosamente! Quedará pendiente de aprobación.')
-      fetchData()
-      setTimeout(() => {
-        setShowForm(false)
-        setSelectedSpecialty(null)
-        setFormData({ professionalId: '', specialtyId: '', date: '', timeFrom: '', notes: '' })
-      }, 1500)
-    } catch (error: any) {
-      console.log('=== ERROR TURNO ===')
-      console.log(error?.response?.data)
-      console.log('===================')
-      toast.error(error?.response?.data?.error || 'Error al solicitar el turno')
+  // Validación en el front antes de mandar al backend
+  if (selectedSpecialty?.restriction.hasRestriction && formData.date) {
+    if (isDateDisabled(formData.date)) {
+      const days = selectedSpecialty.restriction.days.map(d => DAY_LABELS[d] || d).join(', ')
+      toast.error(`Esta especialidad solo se atiende los días: ${days}`)
+      return
     }
   }
 
-  const handleCancel = async (id: string) => {
-    try {
-      await cancelAppointmentByPatient(id)
-      toast.success('Turno cancelado')
-      fetchData()
-    } catch {
-      toast.error('Error al cancelar el turno')
+  setSubmitting(true)
+  try {
+    const newAppointment = await createAppointment({
+      professionalId: formData.professionalId,
+      specialtyId: formData.specialtyId,
+      date: formData.date,
+      timeFrom: formData.timeFrom,
+      notes: formData.notes,
+    })
+    toast.success('¡Turno solicitado exitosamente! Quedará pendiente de aprobación.')
+
+    const populatedProfessional = professionals.find(p => p._id === newAppointment.professionalId)
+    const populatedSpecialty = specialties.find(s => s._id === newAppointment.specialtyId)
+    const populatedAppointment: IAppointment = {
+      ...newAppointment,
+      professionalId: populatedProfessional ?? newAppointment.professionalId,
+      specialtyId: populatedSpecialty ?? newAppointment.specialtyId,
     }
+
+    setAppointments(prev => [populatedAppointment, ...prev])
+    setTimeout(() => {
+      setShowForm(false)
+      setSelectedSpecialty(null)
+      setFormData({ professionalId: '', specialtyId: '', date: '', timeFrom: '', notes: '' })
+    }, 1500)
+  } catch (error: any) {
+    console.log('=== ERROR TURNO ===')
+    console.log(error?.response?.data)
+    console.log('===================')
+    toast.error(error?.response?.data?.error || 'Error al solicitar el turno')
+  } finally {
+    setSubmitting(false)
   }
+}
+
+const handleCancel = async (id: string) => {
+  setCancellingId(id)
+  try {
+    await cancelAppointmentByPatient(id)
+    setAppointments(prev =>
+      prev.map(a => (a._id === id ? { ...a, status: 'cancelled' as const } : a))
+    )
+    toast.success('Turno cancelado')
+  } catch {
+    toast.error('Error al cancelar el turno')
+  } finally {
+    setCancellingId(null)
+  }
+}
 
   const nextAppointment = appointments
     .filter(a => a.status === 'approved' && dayjs(a.date).isAfter(dayjs()))
@@ -303,7 +322,15 @@ const PatientDashboard = () => {
             </label>
 
             <div className="formActions">
-              <button type="submit">Solicitar turno</button>
+              <button type="submit" disabled={submitting}>
+  {submitting ? (
+    <>
+      <i className="fa-solid fa-spinner fa-spin"></i> Solicitando...
+    </>
+  ) : (
+    'Solicitar turno'
+  )}
+</button>
               <button type="button" onClick={() => setShowForm(false)}>Cancelar</button>
             </div>
           </form>
@@ -388,15 +415,19 @@ const PatientDashboard = () => {
                       </span>
                     </td>
                     <td>
-                      {['pending', 'approved'].includes(a.status) && (
-                        <button
-                          className="btn-ico btn-danger"
-                          title="Cancelar turno"
-                          onClick={() => handleCancel(a._id!)}
-                        >
-                          <i className="fa-solid fa-xmark"></i>
-                        </button>
-                      )}
+{['pending', 'approved'].includes(a.status) && (
+  <button
+    className="btn-ico btn-danger"
+    title="Cancelar turno"
+    onClick={() => handleCancel(a._id!)}
+    disabled={cancellingId === a._id}
+  >
+    {cancellingId === a._id
+      ? <i className="fa-solid fa-spinner fa-spin"></i>
+      : <i className="fa-solid fa-xmark"></i>
+    }
+  </button>
+)}
                     </td>
                   </tr>
                 ))}

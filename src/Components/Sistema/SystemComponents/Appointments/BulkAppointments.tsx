@@ -66,7 +66,12 @@ const BulkAppointments: React.FC<BulkAppointmentsProps> = ({
         })
       )
     )
-
+        // 👇 temporal, para ver el motivo real de cada rechazo
+    results.forEach((r, i) => {
+      if (r.status === 'rejected') {
+        console.log(`Turno ${i} falló:`, r.reason?.response?.data || r.reason)
+      }
+    })
     const succeeded = results.filter(r => r.status === 'fulfilled').length
     const failed = results.filter(r => r.status === 'rejected').length
 

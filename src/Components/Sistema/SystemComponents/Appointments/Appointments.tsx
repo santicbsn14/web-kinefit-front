@@ -1,12 +1,16 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import './appointments.css'
-import {  toast } from 'react-toastify'
+import { toast } from 'react-toastify'
 import { useAuth } from '../../../../Contexts/authContext'
 import { getAppointments, approveAppointment, rejectAppointment, cancelAppointmentBySecretary } from '../../../../Services/appointmentService'
 import { getProfessionals } from '../../../../Services/professionalService'
+import { getSpecialties } from '../../../../Services/specialtyService'
 import { IAppointment, PaginatedResult } from '../../../../Utils/Types/appointmentTypes'
-import { IProfessional } from '../../../../Utils/Types/professionalTypes'
+import { IProfessional, ISpecialty } from '../../../../Utils/Types/professionalTypes'
 import BulkAppointments from './BulkAppointments'
+
+const PAGE_SIZE = 10
+const FETCH_ALL_LIMIT = 1000 // ver nota sobre este workaround
 
 const formatDate = (date: Date | string): string =>
   new Date(date).toLocaleDateString('es-AR', { year: 'numeric', month: '2-digit', day: '2-digit' })
@@ -18,7 +22,6 @@ const getPatientName = (appointment: IAppointment): string => {
   }
   return 'N/A'
 }
-
 
 const getProfessionalName = (appointment: IAppointment): string => {
   if (typeof appointment.professionalId === 'object' && appointment.professionalId !== null) {
@@ -52,7 +55,7 @@ const buildWhatsAppUrl = (phone: string, appointment: IAppointment, type: 'confi
     ? `Hola ${patientName}, tu turno de ${specialty} está confirmado para el ${date} a las ${time}hs. Cualquier consulta escribinos. ¡Te esperamos!`
     : `Hola ${patientName}, te recordamos que mañana tenés turno de ${specialty} a las ${time}hs. ¡Te esperamos!`
 
-  return `https://wa.me/549${phone}?text=${encodeURIComponent(message)}`
+  return `https://api.whatsapp.com/send/?phone=549${phone}&text=${encodeURIComponent(message)}&type=phone_number&app_absent=0`
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -64,14 +67,28 @@ const STATUS_LABELS: Record<string, string> = {
 
 const Appointments = (): JSX.Element => {
   const { user } = useAuth()
-  const [loading, setLoading] = useState(true)
+
+  const [initialLoading, setInitialLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const hasLoadedOnce = useRef(false)
+
   const [appointments, setAppointments] = useState<IAppointment[]>([])
   const [professionals, setProfessionals] = useState<IProfessional[]>([])
+  const [specialties, setSpecialties] = useState<ISpecialty[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+
   const [filterProfessional, setFilterProfessional] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
+  const [filterSpecialty, setFilterSpecialty] = useState('')
+  const [filterDateFrom, setFilterDateFrom] = useState('')
+  const [filterDateTo, setFilterDateTo] = useState('')
+  const [searchPatientInput, setSearchPatientInput] = useState('')
+  const [searchPatient, setSearchPatient] = useState('')
+
+  const [showFiltersModal, setShowFiltersModal] = useState(false)
   const [showBulkForm, setShowBulkForm] = useState(false)
+  const [confirmSubmitting, setConfirmSubmitting] = useState(false)
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean
     title: string
@@ -80,10 +97,18 @@ const Appointments = (): JSX.Element => {
   }>({ isOpen: false, title: '', message: '', action: async () => {} })
   const [secretaryNotes, setSecretaryNotes] = useState('')
 
+  // Debounce del buscador de paciente: espera 400ms sin tipear antes de disparar el fetch
+  useEffect(() => {
+    const timeout = setTimeout(() => setSearchPatient(searchPatientInput), 400)
+    return () => clearTimeout(timeout)
+  }, [searchPatientInput])
+
   const fetchAppointments = useCallback(async (page = 1) => {
-    setLoading(true)
+    if (hasLoadedOnce.current) setRefreshing(true)
+
     try {
-      const data: PaginatedResult<IAppointment> = await getAppointments(page, 10)
+      const data: PaginatedResult<IAppointment> = await getAppointments(1, FETCH_ALL_LIMIT)
+
       let filtered = data.docs
 
       if (user?.role === 'professional') {
@@ -106,40 +131,88 @@ const Appointments = (): JSX.Element => {
         filtered = filtered.filter((a) => a.status === filterStatus)
       }
 
-      setAppointments(filtered)
-      setTotalPages(data.totalPages)
+      if (filterSpecialty) {
+        filtered = filtered.filter((a) => {
+          const spec = a.specialtyId
+          if (typeof spec === 'object') return spec._id === filterSpecialty
+          return false
+        })
+      }
+
+      if (filterDateFrom) {
+        filtered = filtered.filter((a) => new Date(a.date) >= new Date(filterDateFrom + 'T00:00:00'))
+      }
+
+      if (filterDateTo) {
+        filtered = filtered.filter((a) => new Date(a.date) <= new Date(filterDateTo + 'T23:59:59'))
+      }
+
+      if (searchPatient.trim()) {
+        const term = searchPatient.trim().toLowerCase()
+        filtered = filtered.filter((a) => getPatientName(a).toLowerCase().includes(term))
+      }
+
+      const sorted = [...filtered].sort((a, b) => {
+        const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime()
+        if (dateDiff !== 0) return dateDiff
+        return b.timeFrom.localeCompare(a.timeFrom)
+      })
+
+      const start = (page - 1) * PAGE_SIZE
+      setAppointments(sorted.slice(start, start + PAGE_SIZE))
+      setTotalPages(Math.max(1, Math.ceil(sorted.length / PAGE_SIZE)))
       setCurrentPage(page)
     } catch {
       toast.error('Error al cargar los turnos')
     } finally {
-      setLoading(false)
+      setInitialLoading(false)
+      setRefreshing(false)
+      hasLoadedOnce.current = true
     }
-  }, [user, filterProfessional, filterStatus])
+  }, [user, filterProfessional, filterStatus, filterSpecialty, filterDateFrom, filterDateTo, searchPatient])
 
   useEffect(() => {
-    const fetchProfessionals = async () => {
+    const fetchFilterData = async () => {
       try {
-        const data = await getProfessionals()
-        setProfessionals(data)
+        const [profs, specs] = await Promise.all([getProfessionals(), getSpecialties()])
+        setProfessionals(profs)
+        setSpecialties(specs)
       } catch {
-        toast.error('Error al cargar profesionales')
+        toast.error('Error al cargar profesionales o especialidades')
       }
     }
-    fetchProfessionals()
-    fetchAppointments(1)
-  }, [fetchAppointments])
+    fetchFilterData()
+  }, [])
+
+  useEffect(() => { fetchAppointments(1) }, [fetchAppointments])
+
+  const handleClearFilters = () => {
+    setFilterProfessional('')
+    setFilterStatus('')
+    setFilterSpecialty('')
+    setFilterDateFrom('')
+    setFilterDateTo('')
+    setSearchPatientInput('')
+  }
+
+  const activeFilterCount = [
+    filterProfessional, filterStatus, filterSpecialty,
+    filterDateFrom, filterDateTo, searchPatientInput,
+  ].filter(Boolean).length
 
   const openConfirmModal = (title: string, message: string, action: () => Promise<void>) => {
     setConfirmModal({ isOpen: true, title, message, action })
   }
 
   const handleConfirm = async () => {
+    setConfirmSubmitting(true)
     try {
       await confirmModal.action()
-      fetchAppointments(currentPage)
+      await fetchAppointments(currentPage)
     } catch {
       toast.error('Error al realizar la acción')
     } finally {
+      setConfirmSubmitting(false)
       setConfirmModal(prev => ({ ...prev, isOpen: false }))
       setSecretaryNotes('')
     }
@@ -187,35 +260,17 @@ const Appointments = (): JSX.Element => {
     window.open(buildWhatsAppUrl(phone, appointment, type), '_blank')
   }
 
-  if (loading) return <div>Cargando...</div>
+  if (initialLoading) return <div className="loadingState">Cargando turnos...</div>
 
   return (
     <div className="appointmentsContainer">
 
       {/* Acciones */}
       <div className="actionsContainer">
-        <select
-          className="form-select"
-          value={filterProfessional}
-          onChange={(e) => setFilterProfessional(e.target.value)}
-        >
-          <option value="">Todos los profesionales</option>
-          {professionals.map((p) => (
-            <option key={p._id} value={p._id}>{p.userId?.name}</option>
-          ))}
-        </select>
-
-        <select
-          className="form-select"
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-        >
-          <option value="">Todos los estados</option>
-          <option value="pending">Pendiente</option>
-          <option value="approved">Aprobado</option>
-          <option value="rejected">Rechazado</option>
-          <option value="cancelled">Cancelado</option>
-        </select>
+        <button type="button" className="filtersToggleBtn" onClick={() => setShowFiltersModal(true)}>
+          <i className="fa-solid fa-filter"></i> Filtros
+          {activeFilterCount > 0 && <span className="filtersBadge">{activeFilterCount}</span>}
+        </button>
 
         <div className="addBulkAppointments" onClick={() => setShowBulkForm(!showBulkForm)}>
           <i className="fa-solid fa-calendar-plus addAppointmentIcon"></i>
@@ -224,7 +279,12 @@ const Appointments = (): JSX.Element => {
       </div>
 
       {/* Tabla */}
-      <div className="table-wrap">
+      <div className={`table-wrap ${refreshing ? 'is-refreshing' : ''}`}>
+        {refreshing && (
+          <div className="tableRefreshOverlay">
+            <i className="fa-solid fa-spinner fa-spin"></i>
+          </div>
+        )}
         <table className="appointmentsTable">
           <thead>
             <tr>
@@ -240,7 +300,7 @@ const Appointments = (): JSX.Element => {
           <tbody>
             {appointments.length === 0 ? (
               <tr>
-                <td colSpan={7}>No hay turnos registrados</td>
+                <td colSpan={7}>No hay turnos que coincidan con los filtros</td>
               </tr>
             ) : (
               appointments.map((appointment) => (
@@ -257,16 +317,16 @@ const Appointments = (): JSX.Element => {
                   <td>
                     {appointment.status === 'pending' && (
                       <>
-                        <button className="btn-ico btn-success" title="Aprobar" onClick={() => handleApprove(appointment)}>
+                        <button className="btn-ico btn-success" title="Aprobar" disabled={refreshing} onClick={() => handleApprove(appointment)}>
                           <i className="fa-solid fa-check"></i>
                         </button>
-                        <button className="btn-ico btn-danger" title="Rechazar" onClick={() => handleReject(appointment)}>
+                        <button className="btn-ico btn-danger" title="Rechazar" disabled={refreshing} onClick={() => handleReject(appointment)}>
                           <i className="fa-solid fa-xmark"></i>
                         </button>
                       </>
                     )}
                     {['pending', 'approved'].includes(appointment.status) && (
-                      <button className="btn-ico btn-warning" title="Cancelar" onClick={() => handleCancel(appointment)}>
+                      <button className="btn-ico btn-warning" title="Cancelar" disabled={refreshing} onClick={() => handleCancel(appointment)}>
                         <i className="fa-solid fa-ban"></i>
                       </button>
                     )}
@@ -285,11 +345,11 @@ const Appointments = (): JSX.Element => {
 
       {/* Paginación */}
       <div className="pagination">
-        <button className="paginationButton" onClick={() => fetchAppointments(currentPage - 1)} disabled={currentPage === 1}>
+        <button className="paginationButton" onClick={() => fetchAppointments(currentPage - 1)} disabled={refreshing || currentPage === 1}>
           Anterior
         </button>
         <span>Página {currentPage} de {totalPages}</span>
-        <button className="paginationButton" onClick={() => fetchAppointments(currentPage + 1)} disabled={currentPage === totalPages}>
+        <button className="paginationButton" onClick={() => fetchAppointments(currentPage + 1)} disabled={refreshing || currentPage === totalPages}>
           Siguiente
         </button>
       </div>
@@ -303,6 +363,97 @@ const Appointments = (): JSX.Element => {
         />
       )}
 
+      {/* Modal filtros */}
+      {showFiltersModal && (
+        <div className="modal-two" onClick={() => setShowFiltersModal(false)}>
+          <div className="modalContent-two filtersModalContent" onClick={(e) => e.stopPropagation()}>
+            <h2>Filtros</h2>
+
+            <label className="filterFieldLabel">
+              Profesional
+              <select
+                className="form-select"
+                value={filterProfessional}
+                onChange={(e) => setFilterProfessional(e.target.value)}
+              >
+                <option value="">Todos los profesionales</option>
+                {professionals.map((p) => (
+                  <option key={p._id} value={p._id}>{p.userId?.name}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="filterFieldLabel">
+              Especialidad
+              <select
+                className="form-select"
+                value={filterSpecialty}
+                onChange={(e) => setFilterSpecialty(e.target.value)}
+              >
+                <option value="">Todas las especialidades</option>
+                {specialties.map((s) => (
+                  <option key={s._id} value={s._id}>{s.name}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="filterFieldLabel">
+              Estado
+              <select
+                className="form-select"
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="">Todos los estados</option>
+                <option value="pending">Pendiente</option>
+                <option value="approved">Aprobado</option>
+                <option value="rejected">Rechazado</option>
+                <option value="cancelled">Cancelado</option>
+              </select>
+            </label>
+
+            <div className="filterDateRow">
+              <label className="filterFieldLabel">
+                Desde
+                <input
+                  type="date"
+                  className="form-select"
+                  value={filterDateFrom}
+                  onChange={(e) => setFilterDateFrom(e.target.value)}
+                />
+              </label>
+              <label className="filterFieldLabel">
+                Hasta
+                <input
+                  type="date"
+                  className="form-select"
+                  value={filterDateTo}
+                  onChange={(e) => setFilterDateTo(e.target.value)}
+                />
+              </label>
+            </div>
+
+            <label className="filterFieldLabel">
+              Paciente
+              <input
+                type="text"
+                className="form-select"
+                placeholder="Buscar por nombre..."
+                value={searchPatientInput}
+                onChange={(e) => setSearchPatientInput(e.target.value)}
+              />
+            </label>
+
+            <div className="modalButtons-two">
+              <button onClick={handleClearFilters} disabled={activeFilterCount === 0}>
+                Limpiar filtros
+              </button>
+              <button onClick={() => setShowFiltersModal(false)}>Aplicar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal confirmación */}
       {confirmModal.isOpen && (
         <div className="modal-two">
@@ -314,12 +465,18 @@ const Appointments = (): JSX.Element => {
               value={secretaryNotes}
               onChange={(e) => setSecretaryNotes(e.target.value)}
               rows={3}
+              disabled={confirmSubmitting}
             />
             <div className="modalButtons-two">
-              <button onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}>
+              <button onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} disabled={confirmSubmitting}>
                 Cancelar
               </button>
-              <button onClick={handleConfirm}>Confirmar</button>
+              <button onClick={handleConfirm} disabled={confirmSubmitting}>
+                {confirmSubmitting
+                  ? <><i className="fa-solid fa-spinner fa-spin"></i> Confirmando...</>
+                  : 'Confirmar'
+                }
+              </button>
             </div>
           </div>
         </div>

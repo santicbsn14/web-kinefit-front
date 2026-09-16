@@ -224,3 +224,103 @@ body { overflow-x: hidden; }
   .addBulkAppointments { margin-left: 0; justify-content: center; }
   .form-select { width: 100%; }
 }
+.table-wrap {
+  position: relative;
+}
+
+.tableRefreshOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.5);
+  font-size: 1.5rem;
+  color: #555;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.is-refreshing table {
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.clearFiltersBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.clearFiltersBtn:hover {
+  background: #f5f5f5;
+}
+
+.searchInput {
+  min-width: 180px;
+}
+
+.loadingState {
+  padding: 40px;
+  text-align: center;
+  color: #666;
+}
+.filtersToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  position: relative;
+}
+
+.filtersToggleBtn:hover {
+  background: #f5f5f5;
+}
+
+.filtersBadge {
+  background: #2563eb;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  min-width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+}
+
+.filtersModalContent {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 420px;
+}
+
+.filterFieldLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.filterDateRow {
+  display: flex;
+  gap: 12px;
+}
+
+.filterDateRow .filterFieldLabel {
+  flex: 1;
+}
