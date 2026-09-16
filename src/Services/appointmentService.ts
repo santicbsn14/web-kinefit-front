@@ -26,6 +26,11 @@ export const createAppointment = async (data: CreateAppointmentDTO): Promise<IAp
   return response.data
 }
 
+export const createAppointmentByStaff = async (data: CreateAppointmentDTO & { patientId: string }): Promise<IAppointment> => {
+  const response = await api.post('/appointments/staff', data)
+  return response.data
+}
+
 export const approveAppointment = async (id: string, secretaryNotes?: string): Promise<IAppointment> => {
   const response = await api.patch(`/appointments/${id}/approve`, { secretaryNotes })
   return response.data

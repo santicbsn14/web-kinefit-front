@@ -1,9 +1,11 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import dayjs from 'dayjs'
 import './bulkAppointments.css'
 import { IProfessional, ISpecialty } from '../../../../Utils/Types/professionalTypes'
-import { createAppointment } from '../../../../Services/appointmentService'
+import { IPatient } from '../../../../Utils/Types/userTypes'
+import { createAppointmentByStaff } from '../../../../Services/appointmentService'
+import { getPatients } from '../../../../Services/patientService'
 
 interface AppointmentInput {
   date: string
@@ -21,6 +23,8 @@ const BulkAppointments: React.FC<BulkAppointmentsProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const [patients, setPatients] = useState<IPatient[]>([])
+  const [selectedPatientId, setSelectedPatientId] = useState('')
   const [selectedProfessionalId, setSelectedProfessionalId] = useState('')
   const [selectedSpecialtyId, setSelectedSpecialtyId] = useState('')
   const [appointments, setAppointments] = useState<AppointmentInput[]>([
@@ -28,8 +32,17 @@ const BulkAppointments: React.FC<BulkAppointmentsProps> = ({
   ])
   const [loading, setLoading] = useState(false)
 
+  useEffect(() => {
+    getPatients()
+      .then(result => setPatients(result.docs))
+      .catch(() => toast.error('Error al cargar los pacientes.'))
+  }, [])
+
   const selectedProfessional = professionals.find(p => p._id === selectedProfessionalId)
   const availableSpecialties = (selectedProfessional?.specialties || []) as ISpecialty[]
+
+  const getPatientLabel = (patient: IPatient) =>
+    typeof patient.userId === 'object' ? patient.userId.name : patient.dni
 
   const handleAppointmentChange = (index: number, field: keyof AppointmentInput, value: string) => {
     const updated = [...appointments]
@@ -45,8 +58,8 @@ const BulkAppointments: React.FC<BulkAppointmentsProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!selectedProfessionalId || !selectedSpecialtyId) {
-      toast.error('Seleccioná un profesional y una especialidad.')
+    if (!selectedPatientId || !selectedProfessionalId || !selectedSpecialtyId) {
+      toast.error('Seleccioná un paciente, un profesional y una especialidad.')
       return
     }
 
@@ -58,7 +71,8 @@ const BulkAppointments: React.FC<BulkAppointmentsProps> = ({
     setLoading(true)
     const results = await Promise.allSettled(
       appointments.map(a =>
-        createAppointment({
+        createAppointmentByStaff({
+          patientId: selectedPatientId,
           professionalId: selectedProfessionalId,
           specialtyId: selectedSpecialtyId,
           date: a.date,
@@ -66,17 +80,24 @@ const BulkAppointments: React.FC<BulkAppointmentsProps> = ({
         })
       )
     )
-        // 👇 temporal, para ver el motivo real de cada rechazo
-    results.forEach((r, i) => {
-      if (r.status === 'rejected') {
-        console.log(`Turno ${i} falló:`, r.reason?.response?.data || r.reason)
-      }
-    })
+
     const succeeded = results.filter(r => r.status === 'fulfilled').length
-    const failed = results.filter(r => r.status === 'rejected').length
+    const failedResults = results.filter(
+      (r): r is PromiseRejectedResult => r.status === 'rejected'
+    )
 
     if (succeeded > 0) toast.success(`${succeeded} turno(s) creados exitosamente.`)
-    if (failed > 0) toast.error(`${failed} turno(s) no pudieron crearse.`)
+
+    if (failedResults.length > 0) {
+      const reasons = new Set(
+        failedResults.map((r) => {
+          const appointment = appointments[results.indexOf(r)]
+          const message = r.reason?.response?.data?.error || 'Error desconocido'
+          return appointment ? `Turno del ${appointment.date} ${appointment.timeFrom}: ${message}` : message
+        })
+      )
+      reasons.forEach(reason => toast.error(reason))
+    }
 
     setLoading(false)
     onSuccess()
@@ -87,6 +108,19 @@ const BulkAppointments: React.FC<BulkAppointmentsProps> = ({
     <div className="bulkAppointmentsContainer">
       <h2 className="bulkAppointmentsTitle">Carga Masiva de Turnos</h2>
       <form onSubmit={handleSubmit} className="bulkAppointmentsForm">
+
+        <div className="formGroup">
+          <select
+            value={selectedPatientId}
+            onChange={e => setSelectedPatientId(e.target.value)}
+            required
+          >
+            <option value="">Seleccioná un paciente</option>
+            {patients.map(p => (
+              <option key={p._id} value={p._id}>{getPatientLabel(p)}</option>
+            ))}
+          </select>
+        </div>
 
         <div className="formGroup">
           <select
