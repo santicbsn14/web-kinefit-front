@@ -10,7 +10,7 @@ import { getMyAppointments, createAppointment, cancelAppointmentByPatient } from
 import { getSpecialties } from '../../../../Services/specialtyService'
 import { IProfessional, ISpecialty } from '../../../../Utils/Types/professionalTypes'
 import { IAppointment } from '../../../../Utils/Types/appointmentTypes'
-import { DayOfWeek } from '../../../../Utils/Types/professionalTypes'
+
 
 dayjs.extend(utc)
 dayjs.locale('es')
