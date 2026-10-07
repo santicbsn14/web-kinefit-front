@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { toast } from 'react-toastify'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
@@ -8,7 +8,7 @@ import { useAuth } from '../../../../Contexts/authContext'
 import { getProfessionals } from '../../../../Services/professionalService'
 import { getMyAppointments, createAppointment, cancelAppointmentByPatient } from '../../../../Services/appointmentService'
 import { getSpecialties } from '../../../../Services/specialtyService'
-import { IProfessional, ISpecialty } from '../../../../Utils/Types/professionalTypes'
+import { IProfessional, ISpecialty, DayOfWeek } from '../../../../Utils/Types/professionalTypes'
 import { IAppointment } from '../../../../Utils/Types/appointmentTypes'
 
 
@@ -41,6 +41,50 @@ const DAY_TO_NUMBER: Record<string, number> = {
   thursday: 4,
   friday: 5,
   saturday: 6,
+}
+
+// Inverso: número JS de getDay() a DayOfWeek
+const NUMBER_TO_DAY: DayOfWeek[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+
+// "HH:MM" -> minutos desde medianoche
+const toMinutes = (time: string): number => {
+  const [h, m] = time.split(':').map(Number)
+  return h * 60 + m
+}
+
+// minutos desde medianoche -> "HH:MM"
+const toHHMM = (minutes: number): string =>
+  `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+
+// Genera los horarios de inicio posibles para profesional + especialidad + fecha.
+// Solo usa datos ya cargados: no contempla ocupación real ni maxCapacity (lo valida el backend).
+const generateTimeSlots = (
+  professional: IProfessional | undefined,
+  specialty: ISpecialty | null,
+  dateStr: string
+): string[] => {
+  const duration = specialty?.durationMinutes
+  if (!professional || !specialty || !dateStr || !duration || duration <= 0) return []
+
+  const day = NUMBER_TO_DAY[new Date(dateStr + 'T00:00:00').getDay()]
+  const ranges = (professional.scheduleId?.weeklySlots ?? [])
+    .filter(s => s.day === day && s.isAvailable !== false)
+
+  const { restriction } = specialty
+  const slots = new Set<number>()
+
+  ranges.forEach(range => {
+    let from = toMinutes(range.timeFrom)
+    let to = toMinutes(range.timeTo)
+    // Intersección con la ventana horaria de la especialidad (la grilla arranca al inicio de la intersección)
+    if (restriction.hasRestriction && restriction.timeFrom && restriction.timeTo) {
+      from = Math.max(from, toMinutes(restriction.timeFrom))
+      to = Math.min(to, toMinutes(restriction.timeTo))
+    }
+    for (let start = from; start + duration <= to; start += duration) slots.add(start)
+  })
+
+  return [...slots].sort((a, b) => a - b).map(toHHMM)
 }
 
 const PatientDashboard = () => {
@@ -93,6 +137,17 @@ const PatientDashboard = () => {
     if (prof) setFilteredSpecialties(prof.specialties as ISpecialty[])
   }, [selectedProfessionalId, professionals])
 
+  // Slots de hora para profesional + especialidad + fecha elegidos
+  const timeSlots = useMemo(
+    () => generateTimeSlots(
+      professionals.find(p => p._id === formData.professionalId),
+      selectedSpecialty,
+      formData.date
+    ),
+    [professionals, formData.professionalId, selectedSpecialty, formData.date]
+  )
+  const canPickTime = !!(formData.professionalId && selectedSpecialty && formData.date)
+
   // Calcula si una fecha está deshabilitada según la restricción de la especialidad
   const isDateDisabled = (dateStr: string): boolean => {
     if (!selectedSpecialty?.restriction.hasRestriction) return false
@@ -109,13 +164,13 @@ const PatientDashboard = () => {
     if (name === 'professionalId') {
       setSelectedProfessionalId(value)
       setSelectedSpecialty(null)
-      setFormData(prev => ({ ...prev, professionalId: value, specialtyId: '', date: '' }))
+      setFormData(prev => ({ ...prev, professionalId: value, specialtyId: '', date: '', timeFrom: '' }))
     }
 
     if (name === 'specialtyId') {
       const spec = specialties.find(s => s._id === value)
       setSelectedSpecialty(spec || null)
-      setFormData(prev => ({ ...prev, specialtyId: value, date: '' }))
+      setFormData(prev => ({ ...prev, specialtyId: value, date: '', timeFrom: '' }))
       if (spec?.restriction.hasRestriction) {
         const days = spec.restriction.days.map(d => DAY_LABELS[d] || d).join(', ')
         toast.info(
@@ -123,6 +178,10 @@ const PatientDashboard = () => {
           { autoClose: 6000 }
         )
       }
+    }
+
+    if (name === 'date') {
+      setFormData(prev => ({ ...prev, timeFrom: '' }))
     }
 
     if (name === 'date' && selectedSpecialty?.restriction.hasRestriction) {
@@ -295,15 +354,22 @@ const handleCancel = async (id: string) => {
             </label>
 
             <label>Hora:
-              <input
-                type="time"
+              <select
                 name="timeFrom"
                 value={formData.timeFrom}
                 onChange={handleInputChange}
                 required
-                min={selectedSpecialty?.restriction.hasRestriction ? selectedSpecialty.restriction.timeFrom : undefined}
-                max={selectedSpecialty?.restriction.hasRestriction ? selectedSpecialty.restriction.timeTo : undefined}
-              />
+                disabled={!canPickTime || timeSlots.length === 0}
+              >
+                <option value="">
+                  {canPickTime && timeSlots.length === 0
+                    ? 'No hay horarios disponibles para esta fecha'
+                    : 'Seleccioná un horario'}
+                </option>
+                {timeSlots.map(slot => (
+                  <option key={slot} value={slot}>{slot}</option>
+                ))}
+              </select>
               {selectedSpecialty?.restriction.hasRestriction && (
                 <small style={{ color: '#fde68a', marginTop: '4px', display: 'block' }}>
                   Horario: {selectedSpecialty.restriction.timeFrom} - {selectedSpecialty.restriction.timeTo}
